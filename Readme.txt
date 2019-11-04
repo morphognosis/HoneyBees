@@ -17,7 +17,7 @@ Senses:
 Relative to its orientation, bee can sense the contents of the cell immediately in front of it:
 1. Adjacent bee:
    a. Orientation, or NA.
-   b. Distance signal to nectar: none, near, medium, far, or NA.
+   b. Distance signal to nectar: distance or NA.
 2. Object: hive, outside, nearest flower distance or NA, adjacent flower with nectar or no nectar.
 
 Responses: wait, forward, turn left, turn right, extract nectar, deposit nectar, signal nectar distance: near, medium, far.
