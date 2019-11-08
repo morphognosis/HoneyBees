@@ -24,9 +24,11 @@
 
 // Main.
 
-package morphognosis.honeybees;
+package morphognosis.honey_bees;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -44,9 +46,6 @@ public class Main
    // Version.
    public static final String VERSION = "1.0";
 
-   // Nest image.
-   public static final String NEST_IMAGE_FILE = "pufferfish_nest.png";
-
    // Default random seed.
    public static final int DEFAULT_RANDOM_SEED = 4517;
 
@@ -54,15 +53,23 @@ public class Main
    public static final String Usage =
       "Usage:\n" +
       "  New run:\n" +
-      "    java morphognosis.pufferfish.Main\n" +
+      "    java morphognosis.honey_bees.Main\n" +
       "      [-steps <steps> | -display (default)]\n" +
-      "      Nest properties:\n" +
-      "        [-nestDimensions <width> <height> (default=" + Nest.WIDTH + " " + Nest.HEIGHT + ")]\n" +
-      "        [-maxElevation <quantity> (default=" + Nest.MAX_ELEVATION + ")]\n" +
-      "        [-centerRadius <quantity> (default=" + Nest.CENTER_RADIUS + ")]\n" +
-      "        [-numSpokes <quantity> (default=" + Nest.NUM_SPOKES + ")]\n" +
-      "        [-spokeLength <quantity> (default=" + Nest.SPOKE_LENGTH + ")]\n" +
-      "        [-spokeRippleLength <quantity> (default=" + Nest.SPOKE_RIPPLE_LENGTH + ")]\n" +
+      "      World properties:\n" +
+      "        [-worldDimensions <width> <height> (default=" + Parameters.WORLD_WIDTH + " " + Parameters.WORLD_HEIGHT + ")]\n" +
+      "        [-hiveRadius <radius> (default=" + Parameters.HIVE_RADIUS + ")]\n" +
+      "      Flower properties:\n" +      
+      "        [-flowerSproutProbability <probability> (default=" + Parameters.FLOWER_SPROUT_PROBABILITY + ")]\n" +
+      "        [-flowerDeathProbability <probability> (default=" + Parameters.FLOWER_DEATH_PROBABILITY + ")]\n" +
+      "        [-flowerNectarCapacity <quantity> (default=" + Parameters.FLOWER_NECTAR_CAPACITY + ")]\n" +
+      "        [-flowerNectarProductionProbability <probability> (default=" + Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY + ")]\n" +      
+      "      Honey bee properties:\n" +
+      "        [-numBees <quantity> (default=" + Parameters.NUM_BEES + ")]\n" +
+      "        [-beeForageTurnProbability <probability> (default=" + Parameters.BEE_FORAGE_TURN_PROBABILITY + ")]\n" +
+      "        [-beeHiveTurnProbability <probability> (default=" + Parameters.BEE_HIVE_TURN_PROBABILITY + ")]\n" +
+      "        [-beeLeaveHiveToForageProbability <probability> (default=" + Parameters.BEE_LEAVE_HIVE_TO_FORAGE_PROBABILITY + ")]\n" +
+      "        [-beeReturnToHiveProbability <probability> (default=" + Parameters.BEE_RETURN_TO_HIVE_PROBABILITY + ")]\n" +
+      "        [-beeDanceDuration <quantity> (default=" + Parameters.BEE_DANCE_DURATION + ")]\n" +      
       "      Morphognosis parameters:\n" +
       "        [-numNeighborhoods <quantity> (default=" + Morphognostic.DEFAULT_NUM_NEIGHBORHOODS + ")]\n" +
       "        [-neighborhoodInitialDimension <quantity> (default=" + Morphognostic.DEFAULT_NEIGHBORHOOD_INITIAL_DIMENSION + ")]\n" +
@@ -70,42 +77,39 @@ public class Main
       "        [-neighborhoodDimensionMultiplier <quantity> (default=" + Morphognostic.DEFAULT_NEIGHBORHOOD_DIMENSION_MULTIPLIER + ")]\n" +
       "        [-epochIntervalStride <quantity> (default=" + Morphognostic.DEFAULT_EPOCH_INTERVAL_STRIDE + ")]\n" +
       "        [-epochIntervalMultiplier <quantity> (default=" + Morphognostic.DEFAULT_EPOCH_INTERVAL_MULTIPLIER + ")]\n" +
-      "        [-equivalentMorphognosticDistance <distance> (default=" + Pufferfish.EQUIVALENT_MORPHOGNOSTIC_DISTANCE + ")]\n" +
-      "     [-driver <metamorphRules | autopilot> (pufferfish driver: default=autopilot)]\n" +
+      "        [-equivalentMorphognosticDistance <distance> (default=" + HoneyBee.EQUIVALENT_MORPHOGNOSTIC_DISTANCE + ")]\n" +
+      "     [-driver <metamorphRules | autopilot> (honey bees driver: default=autopilot)]\n" +
       "     [-randomSeed <random number seed> (default=" + DEFAULT_RANDOM_SEED + ")]\n" +
       "     [-save <file name>]\n" +
       "     [-print (print parameters and properties)]\n" +
-      "     [-writeMetamorphDataset <file name> (write metamorph dataset file, default=" + Pufferfish.DATASET_FILE_NAME + ")]\n" +
+      "     [-writeMetamorphDataset <file name> (write metamorph dataset file, default=" + HoneyBee.DATASET_FILE_NAME + ")]\n" +
       "  Resume run:\n" +
-      "    java morphognosis.pufferfish.Main\n" +
+      "    java morphognosis.honey_bees.Main\n" +
       "      -load <file name>\n" +
       "     [-steps <steps> | -display (default)]\n" +
       "     [-driver <metamorphRules | autopilot> (default=autopilot)]\n" +
       "     [-randomSeed <random number seed>]\n" +
       "     [-save <file name>]\n" +
       "     [-print (print parameters and properties)]\n" +
-      "     [-writeMetamorphDataset <file name> (write metamorph dataset file, default=" + Pufferfish.DATASET_FILE_NAME + ")]\n" +
+      "     [-writeMetamorphDataset <file name> (write metamorph dataset file, default=" + HoneyBee.DATASET_FILE_NAME + ")]\n" +
       "  Version:\n" +
-      "    java morphognosis.pufferfish.Main -version\n" +
+      "    java morphognosis.honey_bees.Main -version\n" +
       "Exit codes:\n" +
       "  0=success\n" +
       "  1=error";
 
-   // Pufferfish.
-   public Pufferfish pufferfish;
+   // World.
+   public World world;
 
-   // Nest.
-   public Nest nest;
+   // Honey bees.
+   public HoneyBee[] bees;
 
    // Display.
-   public NestDisplay display;
+   public WorldDisplay display;
 
    // Random numbers.
    public int          randomSeed;
    public SecureRandom random;
-
-   // Previous response.
-   public static int previousResponse = Pufferfish.WAIT;
 
    // Constructor.
    public Main(int randomSeed)
@@ -124,52 +128,22 @@ public class Main
                     int EPOCH_INTERVAL_STRIDE,
                     int EPOCH_INTERVAL_MULTIPLIER)
    {
-      // Create nest.
-      nest = new Nest(randomSeed);
+      // Create world.
+      world = new World(randomSeed);
 
-      // Create pufferfish.
-      pufferfish = new Pufferfish(nest, randomSeed,
+      // Create bees.
+      bees = new HoneyBee[Parameters.NUM_BEES];
+      for (int i = 0; i < Parameters.NUM_BEES; i++)
+      {
+      bees[i] = new HoneyBee(world, randomSeed,
                                   NUM_NEIGHBORHOODS,
                                   NEIGHBORHOOD_INITIAL_DIMENSION,
                                   NEIGHBORHOOD_DIMENSION_STRIDE,
                                   NEIGHBORHOOD_DIMENSION_MULTIPLIER,
                                   EPOCH_INTERVAL_STRIDE,
                                   EPOCH_INTERVAL_MULTIPLIER);
+      }
    }
-
-
-   // Reset.
-   public void reset()
-   {
-      random.setSeed(randomSeed);
-      if (nest != null)
-      {
-         nest.restore();
-      }
-      if (pufferfish != null)
-      {
-         pufferfish.reset();
-      }
-      if (display != null)
-      {
-         display.close();
-      }
-      previousResponse = Pufferfish.WAIT;
-   }
-
-
-   // Clear.
-   public void clear()
-   {
-      if (display != null)
-      {
-         display.close();
-         display = null;
-      }
-      nest       = null;
-      pufferfish = null;
-   }
-
 
    // Save to file.
    public void save(String filename) throws IOException
@@ -192,42 +166,52 @@ public class Main
    // Save.
    public void save(DataOutputStream writer) throws IOException
    {
-      // Save cells.
-      nest.save(writer);
+	   // Save parameters.
+	   Parameters.save(writer);
+	   
+      // Save world.
+      world.save(writer);
 
-      // Save pufferfish.
-      pufferfish.save(writer);
+      // Save bees.
+      for (int i = 0; i < Parameters.NUM_BEES; i++)
+      {
+    	  bees[i].save(writer);
+      }
    }
 
 
    // Load from file.
    public void load(String filename) throws IOException
    {
-      FileInputStream input;
+      DataInputStream reader;
 
       try
       {
-         input = new FileInputStream(new File(filename));
+          reader = new DataInputStream(new BufferedInputStream(new FileInputStream(new File(filename))));
       }
       catch (Exception e)
       {
          throw new IOException("Cannot open input file " + filename + ":" + e.getMessage());
       }
-      load(input);
-      input.close();
+      load(reader);
+      reader.close();
    }
 
 
    // Load.
-   public void load(FileInputStream input) throws IOException
+   public void load(DataInputStream reader) throws IOException
    {
-      // Load cells.
-      nest = new Nest();
-      nest.load(input);
+	   // Load parameters.
+	   Parameters.load(reader);
+	   
+      // Load world.
+      world.load(reader);
 
-      // Load pufferfish.
-      pufferfish = new Pufferfish(nest, randomSeed);
-      pufferfish.load(input);
+      // Load bees.
+      for (int i = 0; i < Parameters.NUM_BEES; i++)
+      {
+    	  bees[i].load(reader);
+      }
    }
 
 
@@ -239,42 +223,48 @@ public class Main
       {
          for ( ; steps > 0; steps--)
          {
-            stepPufferfish();
+            stepBees();
          }
       }
       else
       {
          for (int i = 0; updateDisplay(i); i++)
          {
-            stepPufferfish();
+            stepBees();
          }
       }
    }
 
 
-   // Step pufferfish.
-   public void stepPufferfish()
+   // Step bees.
+   public void stepBees()
    {
       int x, y, toX, toY, width, height;
 
-      float[] sensors = new float[Pufferfish.NUM_SENSORS];
+      float[] sensors = new float[HoneyBee.NUM_SENSORS];
 
-      width  = nest.size.width;
-      height = nest.size.height;
+      width  = Parameters.WORLD_WIDTH;
+      height = Parameters.WORLD_HEIGHT;
+      
+      // Run bees in random starting order.
+      int n = random.nextInt(Parameters.NUM_BEES);
+      for (int i = 0; i < Parameters.NUM_BEES; i++, n = (n + 1) % Parameters.NUM_BEES)
+      {
 
       // Update landmarks.
-      pufferfish.landmarkMap[pufferfish.x][pufferfish.y] = true;
+      HoneyBee bee = bees[n];
+      bee.landmarkMap[bee.x][bee.y] = true;
 
       // Initialize sensors.
       toX = toY = 0;
-      for (int i = 0, j = Pufferfish.NUM_SENSORS - 1; i < j; i++)
+      for (int j = 0, k = HoneyBee.NUM_SENSORS - 1; j < k; j++)
       {
-         x = pufferfish.x;
-         y = pufferfish.y;
-         switch (i)
+         x = bee.x;
+         y = bee.y;
+         switch (j)
          {
          case 0:
-            switch (pufferfish.orientation)
+            switch (bee.orientation)
             {
             case Orientation.NORTH:
                x--;
@@ -303,7 +293,7 @@ public class Main
             break;
 
          case 1:
-            switch (pufferfish.orientation)
+            switch (bee.orientation)
             {
             case Orientation.NORTH:
                y = ((y + 1) % height);
@@ -328,7 +318,7 @@ public class Main
             break;
 
          case 2:
-            switch (pufferfish.orientation)
+            switch (bee.orientation)
             {
             case Orientation.NORTH:
                x = ((x + 1) % width);
@@ -356,20 +346,10 @@ public class Main
             }
             break;
          }
-         if (Pufferfish.IGNORE_ELEVATION_SENSOR_VALUES)
-         {
-            sensors[i] = 0.0f;
-         }
-         else
-         {
-            sensors[i] = (float)nest.cells[x][y][Nest.ELEVATION_CELL_INDEX];
-         }
       }
-      sensors[Pufferfish.PREVIOUS_RESPONSE_INDEX] = (float)previousResponse;
 
-      // Cycle pufferfish.
-      previousResponse = pufferfish.response;
-      int response = pufferfish.cycle(sensors);
+      // Cycle bee.
+      int response = bee.cycle(sensors);
 
       // Process response.
       switch (response)
@@ -404,6 +384,7 @@ public class Main
          nest.cells[pufferfish.x][pufferfish.y][Nest.ELEVATION_CELL_INDEX] = 2;
          break;
       }
+      }
    }
 
 
@@ -412,7 +393,7 @@ public class Main
    {
       if (display == null)
       {
-         display = new NestDisplay(nest, pufferfish, randomSeed);
+         display = new WorldDisplay(world, bees, randomSeed);
       }
    }
 
@@ -461,7 +442,7 @@ public class Main
    {
       // Get options.
       int     steps             = -1;
-      int     driver            = Pufferfish.DRIVER_TYPE.AUTOPILOT.getValue();
+      int     driver            = HoneyBee.DRIVER_TYPE.AUTOPILOT.getValue();
       int     randomSeed        = DEFAULT_RANDOM_SEED;
       String  loadfile          = null;
       String  savefile          = null;

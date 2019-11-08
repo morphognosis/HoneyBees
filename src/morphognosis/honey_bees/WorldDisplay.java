@@ -2,7 +2,7 @@
 
 // World display.
 
-package morphognosis.honeybees;
+package morphognosis.honey_bees;
 
 import java.awt.BorderLayout;
 import java.awt.Canvas;
@@ -35,14 +35,14 @@ public class WorldDisplay extends JFrame
 {
    private static final long serialVersionUID = 0L;
 
-   // Honeybee.
-   Honeybee honeybee;
-
-   // Pufferfish dashboard.
-   Dashboard dashboard;
-
    // World.
    World world;
+   
+   // Honey bees.
+   HoneyBee[] bees;
+
+   // Dashboard.
+   Dashboard dashboard;
 
    // Dimensions.
    public static final Dimension DISPLAY_SIZE = new Dimension(600, 700);
@@ -66,10 +66,10 @@ public class WorldDisplay extends JFrame
    int          randomSeed;
 
    // Constructor.
-   public WorldDisplay(World world, Honeybee honeybee, int randomSeed)
+   public WorldDisplay(World world, HoneyBee[] bees, int randomSeed)
    {
-      this.nest       = nest;
-      this.pufferfish = pufferfish;
+      this.world       = world;
+      this.bees = bees;
 
       // Random numbers.
       randomSeed      = pufferfish.randomSeed;
@@ -78,7 +78,7 @@ public class WorldDisplay extends JFrame
       random.setSeed(randomSeed);
 
       // Set up display.
-      setTitle("Pufferfish nest building");
+      setTitle("Honey bees nectar foraging");
       addWindowListener(new WindowAdapter()
                         {
                            public void windowClosing(WindowEvent e)

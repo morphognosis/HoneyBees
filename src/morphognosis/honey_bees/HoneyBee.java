@@ -2,7 +2,7 @@
 
 // Honeybee: morphognosis organism.
 
-package morphognosis.honeybees;
+package morphognosis.honey_bees;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
@@ -23,19 +23,39 @@ import morphognosis.Morphognostic.Neighborhood;
 import morphognosis.Orientation;
 import morphognosis.Utility;
 
-public class Honeybee
+public class HoneyBee
 {
    // Properties.
    public int          x, y;
    public int          orientation;
+   public boolean nectar_carry;
    public World         world;
-   public int          x2, y2;
-   public int          orientation2;
    public int          driver;
    public int          driverResponse;
    public int          randomSeed;
    public SecureRandom random;
 
+   // Sensors.   
+   public static final int HIVE_PRESENCE_INDEX         = 0;
+   public static final int ADJACENT_FLOWER_NECTAR_QUANTITY_INDEX       = 1;
+   public static final int ADJACENT_BEE_ORIENTATION_INDEX        = 2; 
+   public static final int ADJACENT_BEE_NECTAR_DISTANCE_INDEX = 3;
+   public static final int NUM_SENSORS             = 4;
+   float[] sensors;
+
+   // Response.
+   // First responses are turns in compass directions.
+   public static final int FORWARD       = Compass.NUM_COMPASS; 
+   public static final int EXTRACT_NECTAR        = FORWARD + 1;
+   public static final int DEPOSIT_NECTAR         = EXTRACT_NECTAR + 1;
+   public static final int DISPLAY_NECTAR_DISTANCE         = DEPOSIT_NECTAR + 1;
+   public static final int WAIT          = DISPLAY_NECTAR_DISTANCE + 1;  
+   public static final int NUM_RESPONSES = WAIT + 1;
+   int response;
+
+   // Metamorph dataset file name.
+   public static String METAMORPH_DATASET_FILE_NAME = "metamorphs.csv";
+   
    // Maximum distance between equivalent morphognostics.
    public static float EQUIVALENT_MORPHOGNOSTIC_DISTANCE = 0.0f;
 
@@ -45,34 +65,14 @@ public class Honeybee
    // Metamorphs.
    public ArrayList<Metamorph> metamorphs;
 
-   // Sensors.
-   public static final int LEFT_CELL_INDEX         = 0;
-   public static final int CENTER_CELL_INDEX       = 1;
-   public static final int RIGHT_CELL_INDEX        = 2;
-   public static final int PREVIOUS_RESPONSE_INDEX = 3;
-   public static final int NUM_SENSORS             = 4;
-   float[] sensors;
-   public static boolean IGNORE_ELEVATION_SENSOR_VALUES = false;
-
-   // Response.
-   public static final int WAIT          = 0;
-   public static final int FORWARD       = 1;
-   public static final int TURN_LEFT     = 2;
-   public static final int TURN_RIGHT    = 3;
-   public static final int SMOOTH        = 4;
-   public static final int RAISE         = 5;
-   public static final int LOWER         = 6;
-   public static final int NUM_RESPONSES = 7;
-   int response;
-
-   // Dataset file name.
-   public static String DATASET_FILE_NAME = "metamorphs.csv";
-
    // Navigation.
    public boolean[][] landmarkMap;
    public int         maxEventAge;
    public class Event
    {
+	   // Values: 
+	   // { <hive presence>, <adjacent flower nectar quantity>, <adjacent bee orientation>, <adjacent bee nectar distance> }
+	   // <adjacent bee orientation>: [<compass point>]	   
       public int[] values;
       public int   x;
       public int   y;
@@ -137,7 +137,7 @@ public class Honeybee
    ArrayList<SpokePoint> spokePath;
 
    // Constructors.
-   public Honeybee(World world, int randomSeed)
+   public HoneyBee(World world, int randomSeed)
    {
       this.world       = world;
       this.randomSeed = randomSeed;
@@ -149,7 +149,7 @@ public class Honeybee
       {
          numEventTypes[i] = Nest.MAX_ELEVATION + 1;
       }
-      numEventTypes[NUM_SENSORS - 1] = Pufferfish.NUM_RESPONSES;
+      numEventTypes[NUM_SENSORS - 1] = HoneyBee.NUM_RESPONSES;
       morphognostic = new Morphognostic(Orientation.NORTH, numEventTypes);
       Morphognostic.Neighborhood n = morphognostic.neighborhoods.get(morphognostic.NUM_NEIGHBORHOODS - 1);
       maxEventAge = n.epoch + n.duration - 1;
@@ -157,7 +157,7 @@ public class Honeybee
    }
 
 
-   public Honeybee(World world, int randomSeed,
+   public HoneyBee(World world, int randomSeed,
                      int NUM_NEIGHBORHOODS,
                      int NEIGHBORHOOD_INITIAL_DIMENSION,
                      int NEIGHBORHOOD_DIMENSION_STRIDE,
@@ -175,7 +175,7 @@ public class Honeybee
       {
          numEventTypes[i] = Nest.MAX_ELEVATION + 1;
       }
-      numEventTypes[NUM_SENSORS - 1] = Pufferfish.NUM_RESPONSES;
+      numEventTypes[NUM_SENSORS - 1] = HoneyBee.NUM_RESPONSES;
       morphognostic = new Morphognostic(Orientation.NORTH, numEventTypes,
                                         NUM_NEIGHBORHOODS,
                                         NEIGHBORHOOD_INITIAL_DIMENSION,
@@ -301,12 +301,9 @@ public class Honeybee
 
 
    // Load pufferfish.
-   public void load(FileInputStream input) throws IOException
+   public void load(DataInputStream reader) throws IOException
    {
       // Load the properties.
-      // DataInputStream is for unbuffered input.
-      DataInputStream reader = new DataInputStream(input);
-
       x             = Utility.loadInt(reader);
       y             = Utility.loadInt(reader);
       orientation   = Utility.loadInt(reader);

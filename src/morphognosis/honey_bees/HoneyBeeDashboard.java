@@ -1,8 +1,8 @@
 // For conditions of distribution and use, see copyright notice in Main.java
 
-// Honeybees dashboard.
+// Honey bee dashboard.
 
-package morphognosis.honeybees;
+package morphognosis.honey_bees;
 
 import java.awt.BorderLayout;
 import java.awt.Choice;
@@ -27,7 +27,7 @@ import javax.swing.JTextField;
 import morphognosis.MorphognosticDisplay;
 import morphognosis.Orientation;
 
-public class Dashboard extends JFrame
+public class HoneyBeeDashboard extends JFrame
 {
    private static final long serialVersionUID = 0L;
 
@@ -38,11 +38,11 @@ public class Dashboard extends JFrame
    OperationsPanel      operations;
 
    // Targets.
-   Pufferfish  pufferfish;
-   NestDisplay nestDisplay;
+   HoneyBee  bee;
+   WorldDisplay worldDisplay;
 
    // Constructor.
-   public Dashboard(Pufferfish pufferfish, NestDisplay nestDisplay)
+   public Dashboard(HoneyBee bee, NestDisplay nestDisplay)
    {
       this.pufferfish  = pufferfish;
       this.nestDisplay = nestDisplay;
