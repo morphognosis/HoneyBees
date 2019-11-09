@@ -25,6 +25,13 @@ public class Cell
 	   bee = null;
    }
    
+   // Clear.
+   public void clear()
+   {
+	   flower = null;
+	   bee = null;
+   }
+   
    // Save cell.
    public void save(DataOutputStream writer) throws IOException
    {
@@ -72,12 +79,4 @@ public class Cell
 		   bee.load(reader);
 	   }	   
    } 
-   
-   // Clear cell.
-   public void clear()
-   {
-	   hive = false;
-	   flower = null;
-	   bee = null;
-   }
 }

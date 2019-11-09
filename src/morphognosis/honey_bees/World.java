@@ -33,29 +33,33 @@ public class World
       random.setSeed(randomSeed);
 
       // Create cells.
+      double cx = Parameters.WORLD_WIDTH / 2.0;
+      double cy = Parameters.WORLD_HEIGHT / 2.0;
       cells        = new Cell[Parameters.WORLD_WIDTH][Parameters.WORLD_HEIGHT];
       for (int x = 0; x < Parameters.WORLD_WIDTH; x++)
       {
          for (int y = 0; y < Parameters.WORLD_HEIGHT; y++)
          {
                cells[x][y] = new Cell();
+               if (Math.sqrt(((double)y - cy) * ((double)y - cy) + ((double)x - cx) * (
+            		   (double)x - cx)) <= (double)Parameters.HIVE_RADIUS)
+               {
+            	   cells[x][y].hive = true;
+               }
          }
       }
    }
 
-   // Cell distance.
-   public int cellDist(int fromX, int fromY, int toX, int toY)
+   // Clear cells.
+   public void clear()
    {
-      int w  = Parameters.WORLD_WIDTH;
-      int w2 = w / 2;
-      int h  = Parameters.WORLD_HEIGHT;
-      int h2 = h / 2;
-      int dx = Math.abs(toX - fromX);
-
-      if (dx > w2) { dx = w - dx; }
-      int dy = Math.abs(toY - fromY);
-      if (dy > h2) { dy = h - dy; }
-      return(dx + dy);
+      for (int x = 0; x < Parameters.WORLD_WIDTH; x++)
+      {
+         for (int y = 0; y < Parameters.WORLD_HEIGHT; y++)
+         {
+               cells[x][y].clear();
+         }
+      }
    }
 
    // Save cells.
@@ -115,19 +119,6 @@ public class World
          for (int y = 0; y < Parameters.WORLD_HEIGHT; y++)
          {
                cells[x][y].load(reader);
-         }
-      }
-   }
-
-
-   // Clear cells.
-   public void clear()
-   {
-      for (int x = 0; x < Parameters.WORLD_WIDTH; x++)
-      {
-         for (int y = 0; y < Parameters.WORLD_HEIGHT; y++)
-         {
-               cells[x][y].clear();
          }
       }
    }
@@ -204,4 +195,19 @@ public class World
       }
       return(result);
    }
+   
+   // Cell wrap-around city-block distance.
+   public int cellDist(int fromX, int fromY, int toX, int toY)
+   {
+      int w  = Parameters.WORLD_WIDTH;
+      int w2 = w / 2;
+      int h  = Parameters.WORLD_HEIGHT;
+      int h2 = h / 2;
+      int dx = Math.abs(toX - fromX);
+
+      if (dx > w2) { dx = w - dx; }
+      int dy = Math.abs(toY - fromY);
+      if (dy > h2) { dy = h - dy; }
+      return(dx + dy);
+   }  
 }

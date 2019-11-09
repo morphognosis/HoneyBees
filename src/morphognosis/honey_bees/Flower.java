@@ -20,6 +20,12 @@ public class Flower
 	   nectar = 0;
    }
    
+   // Clear.
+   public void clear()
+   {
+	   nectar = 0;
+   }
+   
    // Save flower.
    public void save(DataOutputStream writer) throws IOException
    {

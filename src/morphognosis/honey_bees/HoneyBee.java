@@ -4,6 +4,7 @@
 
 package morphognosis.honey_bees;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
 import java.io.DataInputStream;
@@ -26,9 +27,11 @@ import morphognosis.Utility;
 public class HoneyBee
 {
    // Properties.
-   public int          x, y;
-   public int          orientation;
-   public boolean nectar_carry;
+   public int          x, y, x2, y2;
+   public int          orientation, orientation2;
+   public boolean nectarCarry;
+   public boolean foraging;
+   public int danceCount;
    public World         world;
    public int          driver;
    public int          driverResponse;
@@ -45,7 +48,7 @@ public class HoneyBee
 
    // Response.
    // First responses are turns in compass directions.
-   public static final int FORWARD       = Compass.NUM_COMPASS; 
+   public static final int FORWARD       = Compass.NUM_POINTS; 
    public static final int EXTRACT_NECTAR        = FORWARD + 1;
    public static final int DEPOSIT_NECTAR         = EXTRACT_NECTAR + 1;
    public static final int DISPLAY_NECTAR_DISTANCE         = DEPOSIT_NECTAR + 1;
@@ -72,7 +75,7 @@ public class HoneyBee
    {
 	   // Values: 
 	   // { <hive presence>, <adjacent flower nectar quantity>, <adjacent bee orientation>, <adjacent bee nectar distance> }
-	   // <adjacent bee orientation>: [<compass point>]	   
+	   // <adjacent bee orientation>: [<compass point true/false> x8]	   
       public int[] values;
       public int   x;
       public int   y;
@@ -114,28 +117,6 @@ public class HoneyBee
       }
    }
 
-   // Autopilot response.
-   int     state;
-   int     radius;
-   int     ring;
-   int     step;
-   boolean smoothStep = true;
-   int     spoke;
-   int     spokeIndex;
-   int     spokeDir;
-   class SpokePoint
-   {
-      int     x, y;
-      boolean raise;
-      boolean lower;
-      SpokePoint(int x, int y)
-      {
-         this.x = x;
-         this.y = y;
-      }
-   };
-   ArrayList<SpokePoint> spokePath;
-
    // Constructors.
    public HoneyBee(World world, int randomSeed)
    {
@@ -145,12 +126,11 @@ public class HoneyBee
       random.setSeed(randomSeed);
       init();
       int [] numEventTypes = new int[NUM_SENSORS];
-      for (int i = 0, j = NUM_SENSORS - 1; i < j; i++)
-      {
-         numEventTypes[i] = Nest.MAX_ELEVATION + 1;
-      }
-      numEventTypes[NUM_SENSORS - 1] = HoneyBee.NUM_RESPONSES;
-      morphognostic = new Morphognostic(Orientation.NORTH, numEventTypes);
+      numEventTypes[HIVE_PRESENCE_INDEX] = 2;
+      numEventTypes[ADJACENT_FLOWER_NECTAR_QUANTITY_INDEX] = Parameters.FLOWER_NECTAR_CAPACITY + 1;
+      numEventTypes[ADJACENT_BEE_ORIENTATION_INDEX] = Compass.NUM_POINTS;
+      numEventTypes[ADJACENT_BEE_NECTAR_DISTANCE_INDEX] = Math.max(Parameters.WORLD_WIDTH, Parameters.WORLD_HEIGHT) / 2;
+      morphognostic = new Morphognostic(Compass.NORTH, numEventTypes);
       Morphognostic.Neighborhood n = morphognostic.neighborhoods.get(morphognostic.NUM_NEIGHBORHOODS - 1);
       maxEventAge = n.epoch + n.duration - 1;
       metamorphs  = new ArrayList<Metamorph>();
@@ -171,11 +151,10 @@ public class HoneyBee
       random.setSeed(randomSeed);
       init();
       int [] numEventTypes = new int[NUM_SENSORS];
-      for (int i = 0, j = NUM_SENSORS - 1; i < j; i++)
-      {
-         numEventTypes[i] = Nest.MAX_ELEVATION + 1;
-      }
-      numEventTypes[NUM_SENSORS - 1] = HoneyBee.NUM_RESPONSES;
+      numEventTypes[HIVE_PRESENCE_INDEX] = 2;
+      numEventTypes[ADJACENT_FLOWER_NECTAR_QUANTITY_INDEX] = Parameters.FLOWER_NECTAR_CAPACITY + 1;
+      numEventTypes[ADJACENT_BEE_ORIENTATION_INDEX] = Compass.NUM_POINTS;
+      numEventTypes[ADJACENT_BEE_NECTAR_DISTANCE_INDEX] = Math.max(Parameters.WORLD_WIDTH, Parameters.WORLD_HEIGHT) / 2;
       morphognostic = new Morphognostic(Orientation.NORTH, numEventTypes,
                                         NUM_NEIGHBORHOODS,
                                         NEIGHBORHOOD_INITIAL_DIMENSION,
@@ -192,9 +171,30 @@ public class HoneyBee
    // Initialize.
    void init()
    {
-      x           = x2 = nest.size.width / 2;
-      y           = y2 = nest.size.height / 2;
-      orientation = orientation2 = Orientation.NORTH;
+	   // Start in hive.
+	  for (int i = 0; i < 10; i++)
+	  {
+		  int dx = random.nextInt(Parameters.HIVE_RADIUS);
+		  if (random.nextBoolean()) dx = -dx;
+		  int dy = random.nextInt(Parameters.HIVE_RADIUS);
+		  if (random.nextBoolean()) dy = -dy;		  
+	      x           = x2 = (Parameters.WORLD_WIDTH / 2) + dx;
+	      y           = y2 = (Parameters.WORLD_HEIGHT / 2) + dy;
+	      if (world.cells[x][y].hive && world.cells[x][y].bee == null)
+	      {
+	    	  world.cells[x][y].bee = this;
+	    	  break;
+	      }
+	      if (i == 9)
+	      {
+	    	  System.err.println("Cannot place bee in world");
+	    	  System.exit(1);
+	      }
+   	  }
+      orientation = orientation2 = random.nextInt(Compass.NUM_POINTS);
+      nectarCarry = false;
+      foraging = false;
+      danceCount = 0;
       sensors     = new float[NUM_SENSORS];
       for (int n = 0; n < NUM_SENSORS; n++)
       {
@@ -203,10 +203,10 @@ public class HoneyBee
       response       = WAIT;
       driver         = DRIVER_TYPE.AUTOPILOT.getValue();
       driverResponse = WAIT;
-      landmarkMap    = new boolean[nest.size.width][nest.size.height];
-      for (int i = 0; i < nest.size.width; i++)
+      landmarkMap    = new boolean[Parameters.WORLD_WIDTH][Parameters.WORLD_HEIGHT];
+      for (int i = 0; i < Parameters.WORLD_WIDTH; i++)
       {
-         for (int j = 0; j < nest.size.height; j++)
+         for (int j = 0; j < Parameters.WORLD_HEIGHT; j++)
          {
             landmarkMap[i][j] = false;
          }
@@ -217,22 +217,26 @@ public class HoneyBee
    }
 
 
-   // Reset state.
+   // Reset.
    void reset()
    {
       random.setSeed(randomSeed);
       x           = x2;
       y           = y2;
       orientation = orientation2;
+      nectarCarry = false;
+      foraging = false;
+      danceCount = 0;      
+	  world.cells[x][y].bee = this;
       for (int i = 0; i < NUM_SENSORS; i++)
       {
          sensors[i] = 0.0f;
       }
       response       = WAIT;
       driverResponse = WAIT;
-      for (int i = 0; i < nest.size.width; i++)
+      for (int i = 0; i < Parameters.WORLD_WIDTH; i++)
       {
-         for (int j = 0; j < nest.size.height; j++)
+         for (int j = 0; j < Parameters.WORLD_HEIGHT; j++)
          {
             landmarkMap[i][j] = false;
          }
@@ -243,7 +247,7 @@ public class HoneyBee
    }
 
 
-   // Save pufferfish to file.
+   // Save bee to file.
    public void save(String filename) throws IOException
    {
       DataOutputStream writer;
@@ -261,7 +265,7 @@ public class HoneyBee
    }
 
 
-   // Save pufferfish.
+   // Save bee.
    public void save(DataOutputStream writer) throws IOException
    {
       Utility.saveInt(writer, x);
@@ -270,6 +274,19 @@ public class HoneyBee
       Utility.saveInt(writer, x2);
       Utility.saveInt(writer, y2);
       Utility.saveInt(writer, orientation2);
+      if (nectarCarry)
+      {
+    	  Utility.saveInt(writer, 1);
+      } else {
+    	  Utility.saveInt(writer, 0);    	  
+      }
+      if (foraging)
+      {
+    	  Utility.saveInt(writer, 1);
+      } else {
+    	  Utility.saveInt(writer, 0);    	  
+      } 
+      Utility.saveInt(writer, danceCount);
       morphognostic.save(writer);
       Utility.saveInt(writer, maxEventAge);
       Utility.saveInt(writer, metamorphs.size());
@@ -282,25 +299,25 @@ public class HoneyBee
    }
 
 
-   // Load pufferfish from file.
+   // Load bee from file.
    public void load(String filename) throws IOException
    {
-      FileInputStream input;
+      DataInputStream reader;
 
       try
       {
-         input = new FileInputStream(new File(filename));
+          reader = new DataInputStream(new BufferedInputStream(new FileInputStream(new File(filename)))); 
       }
       catch (Exception e)
       {
          throw new IOException("Cannot open input file " + filename + ":" + e.getMessage());
       }
-      load(input);
-      input.close();
+      load(reader);
+      reader.close();
    }
 
 
-   // Load pufferfish.
+   // Load bee.
    public void load(DataInputStream reader) throws IOException
    {
       // Load the properties.
@@ -310,6 +327,19 @@ public class HoneyBee
       x2            = Utility.loadInt(reader);
       y2            = Utility.loadInt(reader);
       orientation2  = Utility.loadInt(reader);
+      if (Utility.loadInt(reader) == 1)
+      {
+    	  nectarCarry = true;
+      } else {
+    	  nectarCarry = false;
+      }
+      if (Utility.loadInt(reader) == 1)
+      {
+    	  foraging = true;
+      } else {
+    	  foraging = false;
+      }
+      danceCount = Utility.loadInt(reader);
       morphognostic = Morphognostic.load(reader);
       maxEventAge   = Utility.loadInt(reader);
       metamorphs.clear();
@@ -338,8 +368,8 @@ public class HoneyBee
       {
          events.remove(0);
       }
-      int w = nest.size.width;
-      int h = nest.size.height;
+      int w = Parameters.WORLD_WIDTH;
+      int h = Parameters.WORLD_HEIGHT;
       int a = maxEventAge + 1;
       int morphEvents[][][][] = new int[w][h][NUM_SENSORS][a];
       for (int x2 = 0; x2 < w; x2++)

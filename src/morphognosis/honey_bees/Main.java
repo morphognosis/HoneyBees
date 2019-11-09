@@ -144,7 +144,41 @@ public class Main
                                   EPOCH_INTERVAL_MULTIPLIER);
       }
    }
+   
+   // Reset.
+   public void reset()
+   {
+      random.setSeed(randomSeed);
+      if (world != null)
+      {
+         world.clear();
+      }
+      if (bees != null)
+      {
+	      for (int i = 0; i < Parameters.NUM_BEES; i++)
+	      {
+	      bees[i].reset();
+	      }
+   }
+      if (display != null)
+      {
+         display.close();
+      }
+   }
 
+
+   // Clear.
+   public void clear()
+   {
+      if (display != null)
+      {
+         display.close();
+         display = null;
+      }
+      bees = null;
+      world       = null;
+   }
+   
    // Save to file.
    public void save(String filename) throws IOException
    {
@@ -354,16 +388,23 @@ public class Main
       // Process response.
       switch (response)
       {
-      case Pufferfish.FORWARD:
-         pufferfish.x = toX;
-         pufferfish.y = toY;
-         break;
+      case Compass.NORTH:
+    	  break;
+      case HoneyBee.FORWARD:
+          bee.x = toX;
+          bee.y = toY;
+          break;
+   	  
+    	   public static final int EXTRACT_NECTAR        = FORWARD + 1;
+    	   public static final int DEPOSIT_NECTAR         = EXTRACT_NECTAR + 1;
+    	   public static final int DISPLAY_NECTAR_DISTANCE         = DEPOSIT_NECTAR + 1;
+    	   public static final int WAIT          = DISPLAY_NECTAR_DISTANCE + 1;    	  
 
       case Pufferfish.TURN_LEFT:
-         pufferfish.orientation--;
+         bee.orientation--;
          if (pufferfish.orientation < 0)
          {
-            pufferfish.orientation += Orientation.NUM_ORIENTATIONS;
+            pufferfish.orientation += Compass.NUM_POINTS;
          }
          break;
 

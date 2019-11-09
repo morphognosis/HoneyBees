@@ -12,5 +12,5 @@ public class Compass
    public static final int SOUTHWEST = 5;
    public static final int WEST = 6;
    public static final int NORTHWEST = 7;
-   public static final int NUM_COMPASS = 8;
+   public static final int NUM_POINTS = 8;
 }
