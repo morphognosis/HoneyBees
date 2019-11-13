@@ -27,11 +27,14 @@ import morphognosis.Utility;
 public class HoneyBee
 {
    // Properties.
+	public int id;
    public int          x, y, x2, y2;
    public int          orientation, orientation2;
    public boolean nectarCarry;
+   public int nectarDistance;
+   public int nectarX, nectarY;
+   public int danceCount;   
    public boolean foraging;
-   public int danceCount;
    public World         world;
    public int          driver;
    public int          driverResponse;
@@ -47,12 +50,13 @@ public class HoneyBee
    float[] sensors;
 
    // Response.
-   // First responses are turns in compass directions.
+   // Initial responses are turns in compass directions.
+   // There are NUM_BEE_DISTANCE_VALUES responses, starting with DISPLAY_NECTAR_DISTANCE.
    public static final int FORWARD       = Compass.NUM_POINTS; 
    public static final int EXTRACT_NECTAR        = FORWARD + 1;
    public static final int DEPOSIT_NECTAR         = EXTRACT_NECTAR + 1;
    public static final int DISPLAY_NECTAR_DISTANCE         = DEPOSIT_NECTAR + 1;
-   public static final int WAIT          = DISPLAY_NECTAR_DISTANCE + 1;  
+   public static final int WAIT          = DISPLAY_NECTAR_DISTANCE + Parameters.BEE_NUM_DISTANCE_VALUES;  
    public static final int NUM_RESPONSES = WAIT + 1;
    int response;
 
@@ -62,20 +66,27 @@ public class HoneyBee
    // Maximum distance between equivalent morphognostics.
    public static float EQUIVALENT_MORPHOGNOSTIC_DISTANCE = 0.0f;
 
-   // Current morphognostic.
+   // Current morphognostic.   
    public Morphognostic morphognostic;
 
-   // Metamorphs.
-   public ArrayList<Metamorph> metamorphs;
-
-   // Navigation.
+   // Morphognostic events.
+   /*
+	   Event values:
+	   {	    
+		   <hive presence>, 
+		   <adjacent flower nectar quantity>, 
+		   <adjacent bee orientation>, 
+		   <adjacent bee nectar distance>,
+		   <nectar carry status>		   	    
+	   }
+	   <orientation>: [<compass point true/false> x8]	
+	   <nectar distance>: [<distance type true/false> x<BEE_NUM_DISTANCE_VALUES>]	   
+    */ 
    public boolean[][] landmarkMap;
    public int         maxEventAge;
+   public int numEventTypes;
    public class Event
    {
-	   // Values: 
-	   // { <hive presence>, <adjacent flower nectar quantity>, <adjacent bee orientation>, <adjacent bee nectar distance> }
-	   // <adjacent bee orientation>: [<compass point true/false> x8]	   
       public int[] values;
       public int   x;
       public int   y;
@@ -96,12 +107,15 @@ public class HoneyBee
    }
    public Vector<Event> events;
    public int           eventTime;
+   
+   // Metamorphs.
+   public ArrayList<Metamorph> metamorphs;
 
    // Driver type.
    public enum DRIVER_TYPE
    {
       AUTOPILOT(0),
-      METAMORPH_RULES(1),
+      METAMORPHS(1),
       MANUAL(2);
 
       private int value;
@@ -117,61 +131,16 @@ public class HoneyBee
       }
    }
 
-   // Constructors.
-   public HoneyBee(World world, int randomSeed)
+   // Constructor.
+   public HoneyBee(int id, World world, int randomSeed)
    {
+	   this.id = id;
       this.world       = world;
       this.randomSeed = randomSeed;
       random          = new SecureRandom();
       random.setSeed(randomSeed);
-      init();
-      int [] numEventTypes = new int[NUM_SENSORS];
-      numEventTypes[HIVE_PRESENCE_INDEX] = 2;
-      numEventTypes[ADJACENT_FLOWER_NECTAR_QUANTITY_INDEX] = Parameters.FLOWER_NECTAR_CAPACITY + 1;
-      numEventTypes[ADJACENT_BEE_ORIENTATION_INDEX] = Compass.NUM_POINTS;
-      numEventTypes[ADJACENT_BEE_NECTAR_DISTANCE_INDEX] = Math.max(Parameters.WORLD_WIDTH, Parameters.WORLD_HEIGHT) / 2;
-      morphognostic = new Morphognostic(Compass.NORTH, numEventTypes);
-      Morphognostic.Neighborhood n = morphognostic.neighborhoods.get(morphognostic.NUM_NEIGHBORHOODS - 1);
-      maxEventAge = n.epoch + n.duration - 1;
-      metamorphs  = new ArrayList<Metamorph>();
-   }
-
-
-   public HoneyBee(World world, int randomSeed,
-                     int NUM_NEIGHBORHOODS,
-                     int NEIGHBORHOOD_INITIAL_DIMENSION,
-                     int NEIGHBORHOOD_DIMENSION_STRIDE,
-                     int NEIGHBORHOOD_DIMENSION_MULTIPLIER,
-                     int EPOCH_INTERVAL_STRIDE,
-                     int EPOCH_INTERVAL_MULTIPLIER)
-   {
-      this.world       = world;
-      this.randomSeed = randomSeed;
-      random          = new SecureRandom();
-      random.setSeed(randomSeed);
-      init();
-      int [] numEventTypes = new int[NUM_SENSORS];
-      numEventTypes[HIVE_PRESENCE_INDEX] = 2;
-      numEventTypes[ADJACENT_FLOWER_NECTAR_QUANTITY_INDEX] = Parameters.FLOWER_NECTAR_CAPACITY + 1;
-      numEventTypes[ADJACENT_BEE_ORIENTATION_INDEX] = Compass.NUM_POINTS;
-      numEventTypes[ADJACENT_BEE_NECTAR_DISTANCE_INDEX] = Math.max(Parameters.WORLD_WIDTH, Parameters.WORLD_HEIGHT) / 2;
-      morphognostic = new Morphognostic(Orientation.NORTH, numEventTypes,
-                                        NUM_NEIGHBORHOODS,
-                                        NEIGHBORHOOD_INITIAL_DIMENSION,
-                                        NEIGHBORHOOD_DIMENSION_STRIDE,
-                                        NEIGHBORHOOD_DIMENSION_MULTIPLIER,
-                                        EPOCH_INTERVAL_STRIDE,
-                                        EPOCH_INTERVAL_MULTIPLIER);
-      Morphognostic.Neighborhood n = morphognostic.neighborhoods.get(morphognostic.NUM_NEIGHBORHOODS - 1);
-      maxEventAge = n.epoch + n.duration - 1;
-      metamorphs  = new ArrayList<Metamorph>();
-   }
-
-
-   // Initialize.
-   void init()
-   {
-	   // Start in hive.
+      
+	   // Initialize bee.
 	  for (int i = 0; i < 10; i++)
 	  {
 		  int dx = random.nextInt(Parameters.HIVE_RADIUS);
@@ -190,32 +159,62 @@ public class HoneyBee
 	    	  System.err.println("Cannot place bee in world");
 	    	  System.exit(1);
 	      }
-   	  }
-      orientation = orientation2 = random.nextInt(Compass.NUM_POINTS);
-      nectarCarry = false;
-      foraging = false;
-      danceCount = 0;
-      sensors     = new float[NUM_SENSORS];
-      for (int n = 0; n < NUM_SENSORS; n++)
-      {
-         sensors[n] = 0.0f;
-      }
-      response       = WAIT;
-      driver         = DRIVER_TYPE.AUTOPILOT.getValue();
-      driverResponse = WAIT;
-      landmarkMap    = new boolean[Parameters.WORLD_WIDTH][Parameters.WORLD_HEIGHT];
-      for (int i = 0; i < Parameters.WORLD_WIDTH; i++)
-      {
-         for (int j = 0; j < Parameters.WORLD_HEIGHT; j++)
-         {
-            landmarkMap[i][j] = false;
-         }
-      }
-      events    = new Vector<Event>();
-      eventTime = 0;
-      initAutopilot();
-   }
+  	  }
+     orientation = orientation2 = random.nextInt(Compass.NUM_POINTS);
+     nectarCarry = false;
+     nectarDistance = -1;
+     nectarX = nectarY = -1;
+     danceCount = 0;
+     foraging = false;
+     sensors     = new float[NUM_SENSORS];
+     for (int n = 0; n < NUM_SENSORS; n++)
+     {
+        sensors[n] = 0.0f;
+     }
+     response       = WAIT;
 
+     // Initialize Morphognosis.
+     landmarkMap    = new boolean[Parameters.WORLD_WIDTH][Parameters.WORLD_HEIGHT];
+     for (int i = 0; i < Parameters.WORLD_WIDTH; i++)
+     {
+        for (int j = 0; j < Parameters.WORLD_HEIGHT; j++)
+        {
+           landmarkMap[i][j] = false;
+        }
+     }
+     events    = new Vector<Event>();
+     eventTime = 0;
+      numEventTypes = 
+    		  1 + // <hive presence>
+    		  1 + //  <adjacent flower nectar quantity>
+    		  Compass.NUM_POINTS + // <adjacent bee orientation>
+    		  Parameters.BEE_NUM_DISTANCE_VALUES + // <adjacent bee nectar distance>
+    		  1;  // <nectar carry status> 
+      int [] eventTypes = new int[numEventTypes];
+      int i = 0;
+      eventTypes[i] = 2; i++;
+      eventTypes[i] = Parameters.FLOWER_NECTAR_CAPACITY; i++;
+      for (int j = 0; j < Compass.NUM_POINTS; i++, j++)
+      {
+          eventTypes[i] = 2;
+      }
+      eventTypes[i] = Parameters.BEE_NUM_DISTANCE_VALUES + 1; i++;
+      eventTypes[i] = 2;
+      morphognostic = new Morphognostic(Orientation.NORTH, eventTypes,
+                                        Parameters.NUM_NEIGHBORHOODS,
+                                        Parameters.NEIGHBORHOOD_INITIAL_DIMENSION,
+                                        Parameters.NEIGHBORHOOD_DIMENSION_STRIDE,
+                                        Parameters.NEIGHBORHOOD_DIMENSION_MULTIPLIER,
+                                        Parameters.EPOCH_INTERVAL_STRIDE,
+                                        Parameters.EPOCH_INTERVAL_MULTIPLIER);
+      Morphognostic.Neighborhood n = morphognostic.neighborhoods.get(morphognostic.NUM_NEIGHBORHOODS - 1);
+      maxEventAge = n.epoch + n.duration - 1;
+      metamorphs  = new ArrayList<Metamorph>();
+        
+      // Initialize driver.
+      driver         = DRIVER_TYPE.AUTOPILOT.getValue();
+      driverResponse = WAIT;      
+   }
 
    // Reset.
    void reset()
@@ -225,15 +224,16 @@ public class HoneyBee
       y           = y2;
       orientation = orientation2;
       nectarCarry = false;
-      foraging = false;
-      danceCount = 0;      
+      nectarDistance = -1;
+      nectarX = nectarY = -1;
+      danceCount = 0;       
+      foraging = false;     
 	  world.cells[x][y].bee = this;
       for (int i = 0; i < NUM_SENSORS; i++)
       {
          sensors[i] = 0.0f;
       }
       response       = WAIT;
-      driverResponse = WAIT;
       for (int i = 0; i < Parameters.WORLD_WIDTH; i++)
       {
          for (int j = 0; j < Parameters.WORLD_HEIGHT; j++)
@@ -243,7 +243,8 @@ public class HoneyBee
       }
       events.clear();
       morphognostic.clear();
-      initAutopilot();
+      driver         = DRIVER_TYPE.AUTOPILOT.getValue();
+      driverResponse = WAIT;
    }
 
 
@@ -268,6 +269,7 @@ public class HoneyBee
    // Save bee.
    public void save(DataOutputStream writer) throws IOException
    {
+	   Utility.saveInt(writer, id);
       Utility.saveInt(writer, x);
       Utility.saveInt(writer, y);
       Utility.saveInt(writer, orientation);
@@ -280,13 +282,16 @@ public class HoneyBee
       } else {
     	  Utility.saveInt(writer, 0);    	  
       }
+      Utility.saveInt(writer, nectarDistance);      
+      Utility.saveInt(writer, nectarX);
+      Utility.saveInt(writer, nectarY);
+      Utility.saveInt(writer, danceCount);      
       if (foraging)
       {
     	  Utility.saveInt(writer, 1);
       } else {
     	  Utility.saveInt(writer, 0);    	  
       } 
-      Utility.saveInt(writer, danceCount);
       morphognostic.save(writer);
       Utility.saveInt(writer, maxEventAge);
       Utility.saveInt(writer, metamorphs.size());
@@ -295,6 +300,8 @@ public class HoneyBee
          m.save(writer);
       }
       Utility.saveFloat(writer, EQUIVALENT_MORPHOGNOSTIC_DISTANCE);
+      Utility.saveInt(writer, driver);
+      Utility.saveInt(writer, driverResponse);
       writer.flush();
    }
 
@@ -320,7 +327,7 @@ public class HoneyBee
    // Load bee.
    public void load(DataInputStream reader) throws IOException
    {
-      // Load the properties.
+	   id = Utility.loadInt(reader);
       x             = Utility.loadInt(reader);
       y             = Utility.loadInt(reader);
       orientation   = Utility.loadInt(reader);
@@ -333,13 +340,16 @@ public class HoneyBee
       } else {
     	  nectarCarry = false;
       }
+      nectarDistance = Utility.loadInt(reader);
+      nectarX = Utility.loadInt(reader);
+      nectarY = Utility.loadInt(reader);
+      danceCount = Utility.loadInt(reader);
       if (Utility.loadInt(reader) == 1)
       {
     	  foraging = true;
       } else {
     	  foraging = false;
       }
-      danceCount = Utility.loadInt(reader);
       morphognostic = Morphognostic.load(reader);
       maxEventAge   = Utility.loadInt(reader);
       metamorphs.clear();
@@ -349,20 +359,35 @@ public class HoneyBee
          metamorphs.add(Metamorph.load(reader));
       }
       EQUIVALENT_MORPHOGNOSTIC_DISTANCE = Utility.loadFloat(reader);
-      initAutopilot();
+      driver = Utility.loadInt(reader);
+      driverResponse = Utility.loadInt(reader);    
    }
 
 
-   // Sensor/response cycle.
+   // Sense/response cycle.
    public int cycle(float[] sensors)
    {
-      // Update morphognostic.
-      int[] values = new int[NUM_SENSORS];
       for (int i = 0; i < NUM_SENSORS; i++)
       {
          this.sensors[i] = sensors[i];
-         values[i]       = (int)sensors[i];
       }
+      
+      // Update morphognostic.
+      int[] values = new int[numEventTypes];
+      values[0] = (int)sensors[HIVE_PRESENCE_INDEX];
+      values[1] = (int)sensors[ADJACENT_FLOWER_NECTAR_QUANTITY_INDEX];
+      if (sensors[ADJACENT_BEE_ORIENTATION_INDEX] != -1)
+      {
+    	  values[2 + (int)sensors[ADJACENT_BEE_ORIENTATION_INDEX]] = 1;
+      }
+      if (sensors[ADJACENT_BEE_NECTAR_DISTANCE_INDEX] != -1)
+      {     
+      values[2 + Compass.NUM_POINTS + (int)sensors[ADJACENT_BEE_NECTAR_DISTANCE_INDEX]] = 1;
+      }
+      if (nectarCarry)
+      {
+          values[2 + Compass.NUM_POINTS + Parameters.BEE_NUM_DISTANCE_VALUES] = 1;     	  
+      } 
       events.add(new Event(values, x, y, eventTime));
       if ((eventTime - events.get(0).time) > maxEventAge)
       {
@@ -371,12 +396,12 @@ public class HoneyBee
       int w = Parameters.WORLD_WIDTH;
       int h = Parameters.WORLD_HEIGHT;
       int a = maxEventAge + 1;
-      int morphEvents[][][][] = new int[w][h][NUM_SENSORS][a];
+      int morphEvents[][][][] = new int[w][h][numEventTypes][a];
       for (int x2 = 0; x2 < w; x2++)
       {
          for (int y2 = 0; y2 < h; y2++)
          {
-            for (int n = 0; n < NUM_SENSORS; n++)
+            for (int n = 0; n < numEventTypes; n++)
             {
                for (int t = 0; t < a; t++)
                {
@@ -387,7 +412,7 @@ public class HoneyBee
       }
       for (Event e : events)
       {
-         for (int n = 0; n < NUM_SENSORS; n++)
+         for (int n = 0; n < numEventTypes; n++)
          {
             morphEvents[e.x][e.y][n][eventTime - e.time] = e.values[n];
          }
@@ -395,9 +420,9 @@ public class HoneyBee
       morphognostic.update(morphEvents, x, y);
 
       // Respond.
-      if (driver == DRIVER_TYPE.METAMORPH_RULES.getValue())
+      if (driver == DRIVER_TYPE.METAMORPHS.getValue())
       {
-         metamorphRulesResponse();
+         metamorphResponse();
       }
       else if (driver == DRIVER_TYPE.AUTOPILOT.getValue())
       {
@@ -437,8 +462,8 @@ public class HoneyBee
    }
 
 
-   // Get metamorph rules response.
-   void metamorphRulesResponse()
+   // Get metamorph response.
+   void metamorphResponse()
    {
       response = WAIT;
       Metamorph metamorph = null;
@@ -475,364 +500,30 @@ public class HoneyBee
       }
    }
 
-
-   // Initialize autopilot.
-   public void initAutopilot()
-   {
-      int w = nest.size.width;
-      int h = nest.size.height;
-
-      state  = 0;
-      radius = Nest.CENTER_RADIUS - 1;
-      int r = Math.abs(w - x - 1);
-      if (r < radius)
-      {
-         radius = r;
-      }
-      if (y < radius)
-      {
-         radius = y;
-      }
-      r = Math.abs(h - y - 1);
-      if (r < radius)
-      {
-         radius = r;
-      }
-      ring        = 0;
-      step        = 0;
-      smoothStep  = true;
-      orientation = Orientation.WEST;
-      spoke       = 0;
-      spokeIndex  = 0;
-      spokeDir    = 0;
-      spokePath   = null;
-   }
-
-
    // Autopilot response.
    void autoPilotResponse()
    {
       response = WAIT;
-      if (state == 0)
-      {
-         int steps = ring * 2;
-         if (smoothStep)
-         {
-            smoothStep = false;
-            response   = SMOOTH;
-         }
-         else
-         {
-            smoothStep = true;
-            if (radius == 0)
-            {
-               switch (orientation)
-               {
-               case Orientation.WEST:
-                  response = TURN_LEFT;
-                  break;
-
-               case Orientation.SOUTH:
-                  response = TURN_LEFT;
-                  break;
-
-               case Orientation.EAST:
-                  response = TURN_LEFT;
-                  break;
-
-               case Orientation.NORTH:
-                  state = 1;
-                  genSpokePath();
-                  response = TURN_LEFT;
-                  break;
-               }
-            }
-            else
-            {
-               switch (orientation)
-               {
-               case Orientation.WEST:
-                  if (step == (steps + 1))
-                  {
-                     if (ring < radius)
-                     {
-                        response = TURN_LEFT;
-                        ring++;
-                        step = 1;
-                     }
-                  }
-                  else
-                  {
-                     response = FORWARD;
-                     step++;
-                     if ((ring == radius) && (step > steps))
-                     {
-                        state = 1;
-                        genSpokePath();
-                     }
-                  }
-                  break;
-
-               case Orientation.SOUTH:
-                  if (step == steps)
-                  {
-                     response = TURN_LEFT;
-                     step     = 0;
-                  }
-                  else
-                  {
-                     response = FORWARD;
-                     step++;
-                  }
-                  break;
-
-               case Orientation.EAST:
-                  if (step == steps)
-                  {
-                     response = TURN_LEFT;
-                     step     = 0;
-                  }
-                  else
-                  {
-                     response = FORWARD;
-                     step++;
-                  }
-                  break;
-
-               case Orientation.NORTH:
-                  if (step == steps)
-                  {
-                     response = TURN_LEFT;
-                     step     = 0;
-                  }
-                  else
-                  {
-                     response = FORWARD;
-                     step++;
-                  }
-                  break;
-               }
-            }
-         }
-      }
-      else
-      {
-         if (spoke == Nest.NUM_SPOKES) { return; }
-         SpokePoint p = spokePath.get(spokeIndex);
-         if ((x == p.x) && (y == p.y))
-         {
-            if (p.raise)
-            {
-               response = RAISE;
-               p.raise  = false;
-               return;
-            }
-            else if (p.lower)
-            {
-               response = LOWER;
-               p.lower  = false;
-               return;
-            }
-            else
-            {
-               if (spokeDir == 0)
-               {
-                  if (spokeIndex == (spokePath.size() - 1))
-                  {
-                     spokeIndex--;
-                     spokeDir = 1;
-                  }
-                  else
-                  {
-                     spokeIndex++;
-                  }
-               }
-               else
-               {
-                  if (spokeIndex > 0)
-                  {
-                     spokeIndex--;
-                  }
-                  else
-                  {
-                     spoke++;
-                     if (spoke == Nest.NUM_SPOKES) { return; }
-                     spokeDir   = 0;
-                     spokeIndex = 1;
-                     genSpokePath();
-                  }
-               }
-            }
-         }
-         p = spokePath.get(spokeIndex);
-         switch (orientation)
-         {
-         case Orientation.WEST:
-            if (p.x < x)
-            {
-               response = FORWARD;
-            }
-            else if (p.x > x)
-            {
-               response = TURN_LEFT;
-            }
-            else if (p.y > y)
-            {
-               response = TURN_RIGHT;
-            }
-            else if (p.y < y)
-            {
-               response = TURN_LEFT;
-            }
-            break;
-
-         case Orientation.SOUTH:
-            if (p.y < y)
-            {
-               response = FORWARD;
-            }
-            else if (p.y > y)
-            {
-               response = TURN_LEFT;
-            }
-            else if (p.x > x)
-            {
-               response = TURN_LEFT;
-            }
-            else if (p.x < x)
-            {
-               response = TURN_RIGHT;
-            }
-            break;
-
-         case Orientation.EAST:
-            if (p.x > x)
-            {
-               response = FORWARD;
-            }
-            else if (p.x < x)
-            {
-               response = TURN_LEFT;
-            }
-            else if (p.y > y)
-            {
-               response = TURN_LEFT;
-            }
-            else if (p.y < y)
-            {
-               response = TURN_RIGHT;
-            }
-            break;
-
-         case Orientation.NORTH:
-            if (p.y > y)
-            {
-               response = FORWARD;
-            }
-            else if (p.y < y)
-            {
-               response = TURN_LEFT;
-            }
-            else if (p.x > x)
-            {
-               response = TURN_RIGHT;
-            }
-            else if (p.x < x)
-            {
-               response = TURN_LEFT;
-            }
-            break;
-         }
-      }
    }
-
-
-   // Generate spoke path.
-   void genSpokePath()
-   {
-      spokePath = new ArrayList<SpokePoint>();
-      float  angle = (360.0f / (float)Nest.NUM_SPOKES) * (float)spoke;
-      float  vx    = (float)Math.cos(Math.toRadians(angle + 90.0f));
-      float  vy    = (float)Math.sin(Math.toRadians(angle + 90.0f));
-      int    cx    = nest.size.width / 2;
-      int    cy    = nest.size.height / 2;
-      double d     = (double)(Nest.CENTER_RADIUS + Nest.SPOKE_LENGTH);
-      for (int i = 0; ; i++)
-      {
-         int        px = (int)(vx * (float)i) + cx;
-         int        py = (int)(vy * (float)i) + cy;
-         SpokePoint p  = new SpokePoint(px, py);
-         if (spokePath.size() > 0)
-         {
-            SpokePoint p2 = spokePath.get(spokePath.size() - 1);
-            if ((p2.x == p.x) && (p2.y == p.y)) { continue; }
-         }
-         spokePath.add(p);
-         double dx = p.x - cx;
-         double dy = p.y - cy;
-         if (Math.sqrt((dx * dx) + (dy * dy)) >= d) { break; }
-      }
-      int a = Nest.SPOKE_RIPPLE_LENGTH / 2;
-      int b = spokePath.size() - 1;
-      for (int i = 0; i < 4 && a > 0 && b >= 0; i++)
-      {
-         for (int j = 0; j < a && b >= 0; j++)
-         {
-            SpokePoint p = spokePath.get(b);
-            b--;
-            if ((i % 2) == 0)
-            {
-               p.raise = true;
-            }
-            else
-            {
-               p.lower = true;
-            }
-         }
-      }
-      spokeIndex = 0;
-      spokeDir   = 0;
-   }
-
-
-   // Random movement.
-   void randomMovement()
-   {
-      switch (random.nextInt(3))
-      {
-      case 0:
-         response = FORWARD;
-         return;
-
-      case 1:
-         response = TURN_LEFT;
-         return;
-
-      case 2:
-         response = TURN_RIGHT;
-         return;
-      }
-   }
-
 
    // Write metamporph dataset.
-   public void writeMetamorphDataset() throws Exception
+   public void writeMetamorphDataset(boolean append) throws Exception
    {
       FileOutputStream output;
 
       try
       {
-         output = new FileOutputStream(new File(DATASET_FILE_NAME));
+         output = new FileOutputStream(new File(METAMORPH_DATASET_FILE_NAME), append);
       }
       catch (Exception e)
       {
-         throw new IOException("Cannot open output file " + DATASET_FILE_NAME + ":" + e.getMessage());
+         throw new IOException("Cannot open output file " + METAMORPH_DATASET_FILE_NAME + ":" + e.getMessage());
       }
       PrintWriter writer = new PrintWriter(new BufferedWriter(new OutputStreamWriter(output)));
       for (Metamorph m : metamorphs)
       {
          writer.println(morphognostic2csv(m.morphognostic) + "," +
-                        Pufferfish.getResponseName(m.response));
+                        HoneyBee.getResponseName(m.response));
       }
       writer.flush();
       output.close();
@@ -846,10 +537,6 @@ public class HoneyBee
       boolean skipComma = true;
       int     dx        = 0;
 
-      if (Pufferfish.IGNORE_ELEVATION_SENSOR_VALUES)
-      {
-         dx = 3;
-      }
       for (int i = 0; i < morphognostic.NUM_NEIGHBORHOODS; i++)
       {
          Neighborhood neighborhood = morphognostic.neighborhoods.get(i);
@@ -876,38 +563,61 @@ public class HoneyBee
       }
       return(output);
    }
-
-
+ 
    // Response value from name.
    public static int getResponseValue(String name)
    {
-      if (name.equals("wait"))
+      if (name.equals("turn north"))
       {
-         return(WAIT);
+         return(Compass.NORTH);
       }
-      if (name.equals("forward"))
+      if (name.equals("turn northeast"))
+      {
+         return(Compass.NORTHEAST);
+      }
+      if (name.equals("turn east"))
+      {
+         return(Compass.EAST);
+      }
+      if (name.equals("turn southeast"))
+      {
+         return(Compass.SOUTHEAST);
+      }     
+      if (name.equals("turn south"))
+      {
+         return(Compass.SOUTH);
+      }
+      if (name.equals("turn southwest"))
+      {
+         return(Compass.SOUTHWEST);
+      }     
+      if (name.equals("turn west"))
+      {
+         return(Compass.WEST);
+      }
+      if (name.equals("turn northwest"))
+      {
+         return(Compass.NORTHWEST);
+      }           
+      if (name.equals("move forward"))
       {
          return(FORWARD);
       }
-      if (name.equals("turn left"))
+      if (name.equals("extract nectar"))
       {
-         return(TURN_LEFT);
+         return(EXTRACT_NECTAR);
       }
-      if (name.equals("turn right"))
+      if (name.equals("deposit nectar"))
       {
-         return(TURN_RIGHT);
+         return(DEPOSIT_NECTAR);
       }
-      if (name.equals("smooth surface"))
+      if (name.equals("display nectar distance"))
       {
-         return(SMOOTH);
+         return(DISPLAY_NECTAR_DISTANCE);
       }
-      if (name.equals("raise surface"))
+      if (name.equals("wait"))
       {
-         return(RAISE);
-      }
-      if (name.equals("lower surface"))
-      {
-         return(LOWER);
+         return(WAIT);
       }
       return(-1);
    }
@@ -918,27 +628,32 @@ public class HoneyBee
    {
       switch (response)
       {
-      case Pufferfish.WAIT:
-         return("wait");
-
-      case Pufferfish.FORWARD:
-         return("forward");
-
-      case Pufferfish.TURN_LEFT:
-         return("turn left");
-
-      case Pufferfish.TURN_RIGHT:
-         return("turn right");
-
-      case Pufferfish.SMOOTH:
-         return("smooth surface");
-
-      case Pufferfish.RAISE:
-         return("raise surface");
-
-      case Pufferfish.LOWER:
-         return("lower surface");
-      }
+      case Compass.NORTH:
+    	  return "turn north";
+      case Compass.NORTHEAST:
+    	  return "turn northeast";
+      case Compass.EAST:
+    	  return "turn east";
+      case Compass.SOUTHEAST:
+    	  return "turn southeast";
+      case Compass.SOUTH:
+    	  return "turn south";
+      case Compass.SOUTHWEST:
+    	  return "turn southwest";
+      case Compass.WEST:
+    	  return "turn west";
+      case Compass.NORTHWEST:
+    	  return "turn northwest";
+      case FORWARD:
+    	  return "move forward";
+      case EXTRACT_NECTAR:
+    	  return "extract nectar";
+      case DEPOSIT_NECTAR:
+    	  return "deposit nectar";
+      case DISPLAY_NECTAR_DISTANCE:
+    	  return "display nectar distance";   	  
+      } 
+      if (response == WAIT) return "wait";
       return("unknown");
    }
 }

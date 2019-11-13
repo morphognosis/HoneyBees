@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Tom Portegys (portegys@gmail.com). All rights reserved.
+ * Copyright (c) 2019-2020 Tom Portegys (portegys@gmail.com). All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification, are
  * permitted provided that the following conditions are met:
@@ -38,8 +38,6 @@ import java.security.SecureRandom;
 import javax.swing.UIManager;
 
 import morphognosis.Morphognosis;
-import morphognosis.Morphognostic;
-import morphognosis.Orientation;
 
 public class Main
 {
@@ -55,15 +53,15 @@ public class Main
       "  New run:\n" +
       "    java morphognosis.honey_bees.Main\n" +
       "      [-steps <steps> | -display (default)]\n" +
-      "      World properties:\n" +
+      "      World parameters:\n" +
       "        [-worldDimensions <width> <height> (default=" + Parameters.WORLD_WIDTH + " " + Parameters.WORLD_HEIGHT + ")]\n" +
       "        [-hiveRadius <radius> (default=" + Parameters.HIVE_RADIUS + ")]\n" +
-      "      Flower properties:\n" +      
+      "      Flower parameters:\n" +      
       "        [-flowerSproutProbability <probability> (default=" + Parameters.FLOWER_SPROUT_PROBABILITY + ")]\n" +
       "        [-flowerDeathProbability <probability> (default=" + Parameters.FLOWER_DEATH_PROBABILITY + ")]\n" +
       "        [-flowerNectarCapacity <quantity> (default=" + Parameters.FLOWER_NECTAR_CAPACITY + ")]\n" +
       "        [-flowerNectarProductionProbability <probability> (default=" + Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY + ")]\n" +      
-      "      Honey bee properties:\n" +
+      "      Honey bee parameters:\n" +
       "        [-numBees <quantity> (default=" + Parameters.NUM_BEES + ")]\n" +
       "        [-beeForageTurnProbability <probability> (default=" + Parameters.BEE_FORAGE_TURN_PROBABILITY + ")]\n" +
       "        [-beeHiveTurnProbability <probability> (default=" + Parameters.BEE_HIVE_TURN_PROBABILITY + ")]\n" +
@@ -71,27 +69,29 @@ public class Main
       "        [-beeReturnToHiveProbability <probability> (default=" + Parameters.BEE_RETURN_TO_HIVE_PROBABILITY + ")]\n" +
       "        [-beeDanceDuration <quantity> (default=" + Parameters.BEE_DANCE_DURATION + ")]\n" +      
       "      Morphognosis parameters:\n" +
-      "        [-numNeighborhoods <quantity> (default=" + Morphognostic.DEFAULT_NUM_NEIGHBORHOODS + ")]\n" +
-      "        [-neighborhoodInitialDimension <quantity> (default=" + Morphognostic.DEFAULT_NEIGHBORHOOD_INITIAL_DIMENSION + ")]\n" +
-      "        [-neighborhoodDimensionStride <quantity> (default=" + Morphognostic.DEFAULT_NEIGHBORHOOD_DIMENSION_STRIDE + ")]\n" +
-      "        [-neighborhoodDimensionMultiplier <quantity> (default=" + Morphognostic.DEFAULT_NEIGHBORHOOD_DIMENSION_MULTIPLIER + ")]\n" +
-      "        [-epochIntervalStride <quantity> (default=" + Morphognostic.DEFAULT_EPOCH_INTERVAL_STRIDE + ")]\n" +
-      "        [-epochIntervalMultiplier <quantity> (default=" + Morphognostic.DEFAULT_EPOCH_INTERVAL_MULTIPLIER + ")]\n" +
+      "        [-numNeighborhoods <quantity> (default=" + Parameters.NUM_NEIGHBORHOODS + ")]\n" +
+      "        [-neighborhoodInitialDimension <quantity> (default=" + Parameters.NEIGHBORHOOD_INITIAL_DIMENSION + ")]\n" +
+      "        [-neighborhoodDimensionStride <quantity> (default=" + Parameters.NEIGHBORHOOD_DIMENSION_STRIDE + ")]\n" +
+      "        [-neighborhoodDimensionMultiplier <quantity> (default=" + Parameters.NEIGHBORHOOD_DIMENSION_MULTIPLIER + ")]\n" +
+      "        [-epochIntervalStride <quantity> (default=" + Parameters.EPOCH_INTERVAL_STRIDE + ")]\n" +
+      "        [-epochIntervalMultiplier <quantity> (default=" + Parameters.EPOCH_INTERVAL_MULTIPLIER + ")]\n" +
       "        [-equivalentMorphognosticDistance <distance> (default=" + HoneyBee.EQUIVALENT_MORPHOGNOSTIC_DISTANCE + ")]\n" +
-      "     [-driver <metamorphRules | autopilot> (honey bees driver: default=autopilot)]\n" +
+      "     [-driver <metamorphs | autopilot> (honey bees driver: default=autopilot)]\n" +
       "     [-randomSeed <random number seed> (default=" + DEFAULT_RANDOM_SEED + ")]\n" +
       "     [-save <file name>]\n" +
       "     [-print (print parameters and properties)]\n" +
-      "     [-writeMetamorphDataset <file name> (write metamorph dataset file, default=" + HoneyBee.DATASET_FILE_NAME + ")]\n" +
+      "     [-writeMetamorphDataset <file name> (write metamorph dataset file, default=" + HoneyBee.METAMORPH_DATASET_FILE_NAME + ")]\n" +
       "  Resume run:\n" +
       "    java morphognosis.honey_bees.Main\n" +
       "      -load <file name>\n" +
       "     [-steps <steps> | -display (default)]\n" +
-      "     [-driver <metamorphRules | autopilot> (default=autopilot)]\n" +
+      "     [-driver <metamorphs | autopilot> (default=autopilot)]\n" +
       "     [-randomSeed <random number seed>]\n" +
       "     [-save <file name>]\n" +
       "     [-print (print parameters and properties)]\n" +
-      "     [-writeMetamorphDataset <file name> (write metamorph dataset file, default=" + HoneyBee.DATASET_FILE_NAME + ")]\n" +
+      "     [-writeMetamorphDataset <file name> (write metamorph dataset file, default=" + HoneyBee.METAMORPH_DATASET_FILE_NAME + ")]\n" +
+      "  Print parameters:\n" +
+      "    java morphognosis.honey_bees.Main -printParameters\n" +
       "  Version:\n" +
       "    java morphognosis.honey_bees.Main -version\n" +
       "Exit codes:\n" +
@@ -100,9 +100,6 @@ public class Main
 
    // World.
    public World world;
-
-   // Honey bees.
-   public HoneyBee[] bees;
 
    // Display.
    public WorldDisplay display;
@@ -121,28 +118,9 @@ public class Main
 
 
    // Initialize.
-   public void init(int NUM_NEIGHBORHOODS,
-                    int NEIGHBORHOOD_INITIAL_DIMENSION,
-                    int NEIGHBORHOOD_DIMENSION_STRIDE,
-                    int NEIGHBORHOOD_DIMENSION_MULTIPLIER,
-                    int EPOCH_INTERVAL_STRIDE,
-                    int EPOCH_INTERVAL_MULTIPLIER)
+   public void init()
    {
-      // Create world.
-      world = new World(randomSeed);
-
-      // Create bees.
-      bees = new HoneyBee[Parameters.NUM_BEES];
-      for (int i = 0; i < Parameters.NUM_BEES; i++)
-      {
-      bees[i] = new HoneyBee(world, randomSeed,
-                                  NUM_NEIGHBORHOODS,
-                                  NEIGHBORHOOD_INITIAL_DIMENSION,
-                                  NEIGHBORHOOD_DIMENSION_STRIDE,
-                                  NEIGHBORHOOD_DIMENSION_MULTIPLIER,
-                                  EPOCH_INTERVAL_STRIDE,
-                                  EPOCH_INTERVAL_MULTIPLIER);
-      }
+      world = new World(randomSeed); 
    }
    
    // Reset.
@@ -151,15 +129,8 @@ public class Main
       random.setSeed(randomSeed);
       if (world != null)
       {
-         world.clear();
+         world.reset();
       }
-      if (bees != null)
-      {
-	      for (int i = 0; i < Parameters.NUM_BEES; i++)
-	      {
-	      bees[i].reset();
-	      }
-   }
       if (display != null)
       {
          display.close();
@@ -175,7 +146,6 @@ public class Main
          display.close();
          display = null;
       }
-      bees = null;
       world       = null;
    }
    
@@ -205,12 +175,6 @@ public class Main
 	   
       // Save world.
       world.save(writer);
-
-      // Save bees.
-      for (int i = 0; i < Parameters.NUM_BEES; i++)
-      {
-    	  bees[i].save(writer);
-      }
    }
 
 
@@ -240,12 +204,6 @@ public class Main
 	   
       // Load world.
       world.load(reader);
-
-      // Load bees.
-      for (int i = 0; i < Parameters.NUM_BEES; i++)
-      {
-    	  bees[i].load(reader);
-      }
    }
 
 
@@ -257,184 +215,24 @@ public class Main
       {
          for ( ; steps > 0; steps--)
          {
-            stepBees();
+            world.step();
          }
       }
       else
       {
          for (int i = 0; updateDisplay(i); i++)
          {
-            stepBees();
+            world.step();
          }
       }
    }
-
-
-   // Step bees.
-   public void stepBees()
-   {
-      int x, y, toX, toY, width, height;
-
-      float[] sensors = new float[HoneyBee.NUM_SENSORS];
-
-      width  = Parameters.WORLD_WIDTH;
-      height = Parameters.WORLD_HEIGHT;
-      
-      // Run bees in random starting order.
-      int n = random.nextInt(Parameters.NUM_BEES);
-      for (int i = 0; i < Parameters.NUM_BEES; i++, n = (n + 1) % Parameters.NUM_BEES)
-      {
-
-      // Update landmarks.
-      HoneyBee bee = bees[n];
-      bee.landmarkMap[bee.x][bee.y] = true;
-
-      // Initialize sensors.
-      toX = toY = 0;
-      for (int j = 0, k = HoneyBee.NUM_SENSORS - 1; j < k; j++)
-      {
-         x = bee.x;
-         y = bee.y;
-         switch (j)
-         {
-         case 0:
-            switch (bee.orientation)
-            {
-            case Orientation.NORTH:
-               x--;
-               if (x < 0) { x += width; }
-               y = ((y + 1) % height);
-               break;
-
-            case Orientation.EAST:
-               x = ((x + 1) % width);
-               y = ((y + 1) % height);
-               break;
-
-            case Orientation.SOUTH:
-               x = ((x + 1) % width);
-               y--;
-               if (y < 0) { y += height; }
-               break;
-
-            case Orientation.WEST:
-               x--;
-               if (x < 0) { x += width; }
-               y--;
-               if (y < 0) { y += height; }
-               break;
-            }
-            break;
-
-         case 1:
-            switch (bee.orientation)
-            {
-            case Orientation.NORTH:
-               y = ((y + 1) % height);
-               break;
-
-            case Orientation.EAST:
-               x = ((x + 1) % width);
-               break;
-
-            case Orientation.SOUTH:
-               y--;
-               if (y < 0) { y += height; }
-               break;
-
-            case Orientation.WEST:
-               x--;
-               if (x < 0) { x += width; }
-               break;
-            }
-            toX = x;
-            toY = y;
-            break;
-
-         case 2:
-            switch (bee.orientation)
-            {
-            case Orientation.NORTH:
-               x = ((x + 1) % width);
-               y = ((y + 1) % height);
-               break;
-
-            case Orientation.EAST:
-               x = ((x + 1) % width);
-               y--;
-               if (y < 0) { y += height; }
-               break;
-
-            case Orientation.SOUTH:
-               x--;
-               if (x < 0) { x += width; }
-               y--;
-               if (y < 0) { y += height; }
-               break;
-
-            case Orientation.WEST:
-               x--;
-               if (x < 0) { x += width; }
-               y = ((y + 1) % height);
-               break;
-            }
-            break;
-         }
-      }
-
-      // Cycle bee.
-      int response = bee.cycle(sensors);
-
-      // Process response.
-      switch (response)
-      {
-      case Compass.NORTH:
-    	  break;
-      case HoneyBee.FORWARD:
-          bee.x = toX;
-          bee.y = toY;
-          break;
-   	  
-    	   public static final int EXTRACT_NECTAR        = FORWARD + 1;
-    	   public static final int DEPOSIT_NECTAR         = EXTRACT_NECTAR + 1;
-    	   public static final int DISPLAY_NECTAR_DISTANCE         = DEPOSIT_NECTAR + 1;
-    	   public static final int WAIT          = DISPLAY_NECTAR_DISTANCE + 1;    	  
-
-      case Pufferfish.TURN_LEFT:
-         bee.orientation--;
-         if (pufferfish.orientation < 0)
-         {
-            pufferfish.orientation += Compass.NUM_POINTS;
-         }
-         break;
-
-      case Pufferfish.TURN_RIGHT:
-         pufferfish.orientation = (pufferfish.orientation + 1) %
-                                  Orientation.NUM_ORIENTATIONS;
-         break;
-
-      case Pufferfish.SMOOTH:
-         nest.smooth(pufferfish.x, pufferfish.y, toX, toY);
-         break;
-
-      case Pufferfish.RAISE:
-         nest.cells[pufferfish.x][pufferfish.y][Nest.ELEVATION_CELL_INDEX] = Nest.MAX_ELEVATION;
-         break;
-
-      case Pufferfish.LOWER:
-         nest.cells[pufferfish.x][pufferfish.y][Nest.ELEVATION_CELL_INDEX] = 2;
-         break;
-      }
-      }
-   }
-
 
    // Create display.
    public void createDisplay()
    {
       if (display == null)
       {
-         display = new WorldDisplay(world, bees, randomSeed);
+         display = new WorldDisplay(world, randomSeed);
       }
    }
 
@@ -489,14 +287,8 @@ public class Main
       String  savefile          = null;
       boolean display           = false;
       boolean gotParm           = false;
-      boolean printParm         = false;
+      boolean printParms         = false;
       boolean gotDatasetParm    = false;
-      int     NUM_NEIGHBORHOODS = Morphognostic.DEFAULT_NUM_NEIGHBORHOODS;
-      int     NEIGHBORHOOD_INITIAL_DIMENSION    = Morphognostic.DEFAULT_NEIGHBORHOOD_INITIAL_DIMENSION;
-      int     NEIGHBORHOOD_DIMENSION_STRIDE     = Morphognostic.DEFAULT_NEIGHBORHOOD_DIMENSION_STRIDE;
-      int     NEIGHBORHOOD_DIMENSION_MULTIPLIER = Morphognostic.DEFAULT_NEIGHBORHOOD_DIMENSION_MULTIPLIER;
-      int     EPOCH_INTERVAL_STRIDE             = Morphognostic.DEFAULT_EPOCH_INTERVAL_STRIDE;
-      int     EPOCH_INTERVAL_MULTIPLIER         = Morphognostic.DEFAULT_EPOCH_INTERVAL_MULTIPLIER;
 
       for (int i = 0; i < args.length; i++)
       {
@@ -531,55 +323,82 @@ public class Main
             display = true;
             continue;
          }
-         if (args[i].equals("-nestDimensions"))
+         if (args[i].equals("-worldDimensions"))
          {
             i++;
             if (i >= args.length)
             {
-               System.err.println("Invalid nestDmensions option");
+               System.err.println("Invalid worldDmensions option");
                System.err.println(Usage);
                System.exit(1);
             }
             try
             {
-               Nest.WIDTH = Integer.parseInt(args[i]);
+               Parameters.WORLD_WIDTH = Integer.parseInt(args[i]);
             }
             catch (NumberFormatException e) {
-               System.err.println("Invalid nest width");
+               System.err.println("Invalid world width");
                System.err.println(Usage);
                System.exit(1);
             }
-            if (Nest.WIDTH < 2)
+            if (Parameters.WORLD_WIDTH < 2)
             {
-               System.err.println("Invalid nest width");
+               System.err.println("Invalid world width");
                System.err.println(Usage);
                System.exit(1);
             }
             i++;
             if (i >= args.length)
             {
-               System.err.println("Invalid nestDimensions option");
+               System.err.println("Invalid worldDimensions option");
                System.err.println(Usage);
                System.exit(1);
             }
             try
             {
-               Nest.HEIGHT = Integer.parseInt(args[i]);
+            	Parameters.WORLD_HEIGHT = Integer.parseInt(args[i]);
             }
             catch (NumberFormatException e) {
-               System.err.println("Invalid nest height");
+               System.err.println("Invalid world height");
                System.err.println(Usage);
                System.exit(1);
             }
-            if (Nest.HEIGHT < 2)
+            if (Parameters.WORLD_HEIGHT < 2)
             {
-               System.err.println("Invalid nest height");
+               System.err.println("Invalid world height");
                System.err.println(Usage);
                System.exit(1);
             }
             gotParm = true;
             continue;
          }
+         if (args[i].equals("-hiveRadius"))
+         {
+            i++;
+            if (i >= args.length)
+            {
+               System.err.println("Invalid hiveRadius option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            try
+            {
+               Parameters.HIVE_RADIUS = Integer.parseInt(args[i]);
+            }
+            catch (NumberFormatException e) {
+               System.err.println("Invalid hive radius");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            if (Parameters.HIVE_RADIUS < 1)
+            {
+               System.err.println("Invalid hive radius");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            gotParm = true;
+            continue;
+         }        
          if (args[i].equals("-driver"))
          {
             i++;
@@ -589,13 +408,13 @@ public class Main
                System.err.println(Usage);
                System.exit(1);
             }
-            if (args[i].equals("metamorphRules"))
+            if (args[i].equals("metamorphs"))
             {
-               driver = Pufferfish.DRIVER_TYPE.METAMORPH_RULES.getValue();
+               driver = HoneyBee.DRIVER_TYPE.METAMORPHS.getValue();
             }
             else if (args[i].equals("autopilot"))
             {
-               driver = Pufferfish.DRIVER_TYPE.AUTOPILOT.getValue();
+               driver = HoneyBee.DRIVER_TYPE.AUTOPILOT.getValue();
             }
             else
             {
@@ -605,147 +424,283 @@ public class Main
             }
             continue;
          }
-         if (args[i].equals("-maxElevation"))
+         if (args[i].equals("-flowerSproutProbability"))
          {
             i++;
             if (i >= args.length)
             {
-               System.err.println("Invalid maxElevation option");
+               System.err.println("Invalid flowerSproutProbability option");
                System.err.println(Usage);
                System.exit(1);
             }
             try
             {
-               Nest.MAX_ELEVATION = Integer.parseInt(args[i]);
+            	Parameters.FLOWER_SPROUT_PROBABILITY = Float.parseFloat(args[i]);
             }
             catch (NumberFormatException e) {
-               System.err.println("Invalid maxElevation option");
+               System.err.println("Invalid flowerSproutProbability option");
                System.err.println(Usage);
                System.exit(1);
             }
-            if (Nest.MAX_ELEVATION < 0)
+            if (Parameters.FLOWER_SPROUT_PROBABILITY < 0.0f || 
+            		Parameters.FLOWER_SPROUT_PROBABILITY > 1.0f)
             {
-               System.err.println("Invalid maxElevation option");
+               System.err.println("Invalid flowerSproutProbability option");
                System.err.println(Usage);
                System.exit(1);
             }
             gotParm = true;
             continue;
          }
-         if (args[i].equals("-centerRadius"))
+         if (args[i].equals("-flowerDeathProbability"))
          {
             i++;
             if (i >= args.length)
             {
-               System.err.println("Invalid centerRadius option");
+               System.err.println("Invalid flowerDeathProbability option");
                System.err.println(Usage);
                System.exit(1);
             }
             try
             {
-               Nest.CENTER_RADIUS = Integer.parseInt(args[i]);
+            	Parameters.FLOWER_DEATH_PROBABILITY = Float.parseFloat(args[i]);
             }
             catch (NumberFormatException e) {
-               System.err.println("Invalid centerRadius option");
+               System.err.println("Invalid flowerDeathProbability option");
                System.err.println(Usage);
                System.exit(1);
             }
-            if (Nest.CENTER_RADIUS <= 0)
+            if (Parameters.FLOWER_DEATH_PROBABILITY < 0.0f || 
+            		Parameters.FLOWER_DEATH_PROBABILITY > 1.0f)
             {
-               System.err.println("Invalid centerRadius option");
+               System.err.println("Invalid flowerDeathProbability option");
                System.err.println(Usage);
                System.exit(1);
             }
             gotParm = true;
             continue;
          }
-         if (args[i].equals("-numSpokes"))
+         if (args[i].equals("-flowerNectarCapacity"))
          {
             i++;
             if (i >= args.length)
             {
-               System.err.println("Invalid numSpokes option");
+               System.err.println("Invalid flowerNectarCapacity option");
                System.err.println(Usage);
                System.exit(1);
             }
             try
             {
-               Nest.NUM_SPOKES = Integer.parseInt(args[i]);
+            	Parameters.FLOWER_NECTAR_CAPACITY = Integer.parseInt(args[i]);
             }
             catch (NumberFormatException e) {
-               System.err.println("Invalid numSpokes option");
+               System.err.println("Invalid flowerNectarCapacity option");
                System.err.println(Usage);
                System.exit(1);
             }
-            if (Nest.NUM_SPOKES < 0)
+            if (Parameters.FLOWER_NECTAR_CAPACITY < 0) 
             {
-               System.err.println("Invalid numSpokes option");
+               System.err.println("Invalid flowerNectarCapacity option");
                System.err.println(Usage);
                System.exit(1);
             }
             gotParm = true;
             continue;
          }
-         if (args[i].equals("-spokeLength"))
+         if (args[i].equals("-flowerNectarProductionProbability"))
          {
             i++;
             if (i >= args.length)
             {
-               System.err.println("Invalid spokeLength option");
+               System.err.println("Invalid flowerNectarProductionProbability option");
                System.err.println(Usage);
                System.exit(1);
             }
             try
             {
-               Nest.SPOKE_LENGTH = Integer.parseInt(args[i]);
+            	Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY = Float.parseFloat(args[i]);
             }
             catch (NumberFormatException e) {
-               System.err.println("Invalid spokeLength option");
+               System.err.println("Invalid flowerNectarProductionProbability option");
                System.err.println(Usage);
                System.exit(1);
             }
-            if (Nest.SPOKE_LENGTH < 0)
+            if (Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY < 0.0f || 
+            		Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY > 1.0f)
             {
-               System.err.println("Invalid spokeLength option");
+               System.err.println("Invalid flowerNectarProductionProbability option");
                System.err.println(Usage);
                System.exit(1);
             }
             gotParm = true;
             continue;
          }
-         if (args[i].equals("-spokeRippleLength"))
+         if (args[i].equals("-numBees"))
          {
             i++;
             if (i >= args.length)
             {
-               System.err.println("Invalid spokeRippleLength option");
+               System.err.println("Invalid numBees option");
                System.err.println(Usage);
                System.exit(1);
             }
             try
             {
-               Nest.SPOKE_RIPPLE_LENGTH = Integer.parseInt(args[i]);
+            	Parameters.NUM_BEES = Integer.parseInt(args[i]);
             }
             catch (NumberFormatException e) {
-               System.err.println("Invalid spokeRippleLength option");
+               System.err.println("Invalid numBees option");
                System.err.println(Usage);
                System.exit(1);
             }
-            if (Nest.SPOKE_RIPPLE_LENGTH < 0)
+            if (Parameters.NUM_BEES < 0) 
             {
-               System.err.println("Invalid spokeRippleLength option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            if ((Nest.SPOKE_RIPPLE_LENGTH % 2) == 1)
-            {
-               System.err.println("Invalid spokeRippleLength option: must be even");
+               System.err.println("Invalid numBees option");
                System.err.println(Usage);
                System.exit(1);
             }
             gotParm = true;
             continue;
          }
+         if (args[i].equals("-beeForageTurnProbability"))
+         {
+            i++;
+            if (i >= args.length)
+            {
+               System.err.println("Invalid beeForageTurnProbability option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            try
+            {
+            	Parameters.BEE_FORAGE_TURN_PROBABILITY = Float.parseFloat(args[i]);
+            }
+            catch (NumberFormatException e) {
+               System.err.println("Invalid beeForageTurnProbability option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            if (Parameters.BEE_FORAGE_TURN_PROBABILITY < 0.0f || 
+            		Parameters.BEE_FORAGE_TURN_PROBABILITY > 1.0f)
+            {
+               System.err.println("Invalid beeForageTurnProbability option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            gotParm = true;
+            continue;
+         }         
+         if (args[i].equals("-beeHiveTurnProbability"))
+         {
+            i++;
+            if (i >= args.length)
+            {
+               System.err.println("Invalid beeHiveTurnProbability option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            try
+            {
+            	Parameters.BEE_HIVE_TURN_PROBABILITY = Float.parseFloat(args[i]);
+            }
+            catch (NumberFormatException e) {
+               System.err.println("Invalid beeHiveTurnProbability option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            if (Parameters.BEE_HIVE_TURN_PROBABILITY < 0.0f || 
+            		Parameters.BEE_HIVE_TURN_PROBABILITY > 1.0f)
+            {
+               System.err.println("Invalid beeHiveTurnProbability option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            gotParm = true;
+            continue;
+         }         
+         if (args[i].equals("-beeLeaveHiveToForageProbability"))
+         {
+            i++;
+            if (i >= args.length)
+            {
+               System.err.println("Invalid beeLeaveHiveToForageProbability option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            try
+            {
+            	Parameters.BEE_LEAVE_HIVE_TO_FORAGE_PROBABILITY = Float.parseFloat(args[i]);
+            }
+            catch (NumberFormatException e) {
+               System.err.println("Invalid beeLeaveHiveToForageProbability option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            if (Parameters.BEE_LEAVE_HIVE_TO_FORAGE_PROBABILITY < 0.0f || 
+            		Parameters.BEE_LEAVE_HIVE_TO_FORAGE_PROBABILITY > 1.0f)
+            {
+               System.err.println("Invalid beeLeaveHiveToForageProbability option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            gotParm = true;
+            continue;
+         }  
+         if (args[i].equals("-beeReturnToHiveProbability"))
+         {
+            i++;
+            if (i >= args.length)
+            {
+               System.err.println("Invalid flowerNectarProductionProbability option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            try
+            {
+            	Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY = Float.parseFloat(args[i]);
+            }
+            catch (NumberFormatException e) {
+               System.err.println("Invalid flowerNectarProductionProbability option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            if (Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY < 0.0f || 
+            		Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY > 1.0f)
+            {
+               System.err.println("Invalid flowerNectarProductionProbability option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            gotParm = true;
+            continue;
+         }
+         if (args[i].equals("-beeDanceDuration"))
+         {
+            i++;
+            if (i >= args.length)
+            {
+               System.err.println("Invalid beeDanceDuration option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            try
+            {
+            	Parameters.BEE_DANCE_DURATION = Integer.parseInt(args[i]);
+            }
+            catch (NumberFormatException e) {
+               System.err.println("Invalid beeDanceDuration option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            if (Parameters.BEE_DANCE_DURATION < 0) 
+            {
+               System.err.println("Invalid beeDanceDuration option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            gotParm = true;
+            continue;
+         }                  
          if (args[i].equals("-numNeighborhoods"))
          {
             i++;
@@ -757,14 +712,14 @@ public class Main
             }
             try
             {
-               NUM_NEIGHBORHOODS = Integer.parseInt(args[i]);
+               Parameters.NUM_NEIGHBORHOODS = Integer.parseInt(args[i]);
             }
             catch (NumberFormatException e) {
                System.err.println("Invalid numNeighborhoods option");
                System.err.println(Usage);
                System.exit(1);
             }
-            if (NUM_NEIGHBORHOODS < 0)
+            if (Parameters.NUM_NEIGHBORHOODS < 0)
             {
                System.err.println("Invalid numNeighborhoods option");
                System.err.println(Usage);
@@ -784,15 +739,15 @@ public class Main
             }
             try
             {
-               NEIGHBORHOOD_INITIAL_DIMENSION = Integer.parseInt(args[i]);
+            	Parameters.NEIGHBORHOOD_INITIAL_DIMENSION = Integer.parseInt(args[i]);
             }
             catch (NumberFormatException e) {
                System.err.println("Invalid neighborhoodInitialDimension option");
                System.err.println(Usage);
                System.exit(1);
             }
-            if ((NEIGHBORHOOD_INITIAL_DIMENSION < 3) ||
-                ((NEIGHBORHOOD_INITIAL_DIMENSION % 2) == 0))
+            if ((Parameters.NEIGHBORHOOD_INITIAL_DIMENSION < 3) ||
+                ((Parameters.NEIGHBORHOOD_INITIAL_DIMENSION % 2) == 0))
             {
                System.err.println("Invalid neighborhoodInitialDimension option");
                System.err.println(Usage);
@@ -812,14 +767,14 @@ public class Main
             }
             try
             {
-               NEIGHBORHOOD_DIMENSION_STRIDE = Integer.parseInt(args[i]);
+            	Parameters.NEIGHBORHOOD_DIMENSION_STRIDE = Integer.parseInt(args[i]);
             }
             catch (NumberFormatException e) {
                System.err.println("Invalid neighborhoodDimensionStride option");
                System.err.println(Usage);
                System.exit(1);
             }
-            if (NEIGHBORHOOD_DIMENSION_STRIDE < 0)
+            if (Parameters.NEIGHBORHOOD_DIMENSION_STRIDE < 0)
             {
                System.err.println("Invalid neighborhoodDimensionStride option");
                System.err.println(Usage);
@@ -839,14 +794,14 @@ public class Main
             }
             try
             {
-               NEIGHBORHOOD_DIMENSION_MULTIPLIER = Integer.parseInt(args[i]);
+            	Parameters.NEIGHBORHOOD_DIMENSION_MULTIPLIER = Integer.parseInt(args[i]);
             }
             catch (NumberFormatException e) {
                System.err.println("Invalid neighborhoodDimensionMultiplier option");
                System.err.println(Usage);
                System.exit(1);
             }
-            if (NEIGHBORHOOD_DIMENSION_MULTIPLIER < 0)
+            if (Parameters.NEIGHBORHOOD_DIMENSION_MULTIPLIER < 0)
             {
                System.err.println("Invalid neighborhoodDimensionMultiplier option");
                System.err.println(Usage);
@@ -866,14 +821,14 @@ public class Main
             }
             try
             {
-               EPOCH_INTERVAL_STRIDE = Integer.parseInt(args[i]);
+            	Parameters.EPOCH_INTERVAL_STRIDE = Integer.parseInt(args[i]);
             }
             catch (NumberFormatException e) {
                System.err.println("Invalid epochIntervalStride option");
                System.err.println(Usage);
                System.exit(1);
             }
-            if (EPOCH_INTERVAL_STRIDE < 0)
+            if (Parameters.EPOCH_INTERVAL_STRIDE < 0)
             {
                System.err.println("Invalid epochIntervalStride option");
                System.err.println(Usage);
@@ -893,14 +848,14 @@ public class Main
             }
             try
             {
-               EPOCH_INTERVAL_MULTIPLIER = Integer.parseInt(args[i]);
+            	Parameters.EPOCH_INTERVAL_MULTIPLIER = Integer.parseInt(args[i]);
             }
             catch (NumberFormatException e) {
                System.err.println("Invalid epochIntervalMultiplier option");
                System.err.println(Usage);
                System.exit(1);
             }
-            if (EPOCH_INTERVAL_MULTIPLIER < 0)
+            if (Parameters.EPOCH_INTERVAL_MULTIPLIER < 0)
             {
                System.err.println("Invalid epochIntervalMultiplier option");
                System.err.println(Usage);
@@ -920,14 +875,14 @@ public class Main
             }
             try
             {
-               Pufferfish.EQUIVALENT_MORPHOGNOSTIC_DISTANCE = Float.parseFloat(args[i]);
+               HoneyBee.EQUIVALENT_MORPHOGNOSTIC_DISTANCE = Float.parseFloat(args[i]);
             }
             catch (NumberFormatException e) {
                System.err.println("Invalid equivalentMorphognosticDistance option");
                System.err.println(Usage);
                System.exit(1);
             }
-            if (Pufferfish.EQUIVALENT_MORPHOGNOSTIC_DISTANCE < 0.0f)
+            if (HoneyBee.EQUIVALENT_MORPHOGNOSTIC_DISTANCE < 0.0f)
             {
                System.err.println("Invalid equivalentMorphognosticDistance option");
                System.err.println(Usage);
@@ -997,9 +952,9 @@ public class Main
             }
             continue;
          }
-         if (args[i].equals("-print"))
+         if (args[i].equals("-printParameters"))
          {
-            printParm = true;
+            printParms = true;
             continue;
          }
          if (args[i].equals("-writeMetamorphDataset"))
@@ -1011,7 +966,7 @@ public class Main
                System.err.println(Usage);
                System.exit(1);
             }
-            Pufferfish.DATASET_FILE_NAME = args[i];
+            HoneyBee.METAMORPH_DATASET_FILE_NAME = args[i];
             gotDatasetParm = true;
             continue;
          }
@@ -1022,7 +977,7 @@ public class Main
          }
          if (args[i].equals("-version"))
          {
-            System.out.println("Pufferfish version = " + VERSION);
+            System.out.println("HoneyBees version = " + VERSION);
             System.out.println("Morphognosis version = " + Morphognosis.VERSION);
             System.exit(0);
          }
@@ -1043,7 +998,7 @@ public class Main
       }
       if (!display)
       {
-         if (driver == Pufferfish.DRIVER_TYPE.MANUAL.getValue())
+         if (driver == HoneyBee.DRIVER_TYPE.MANUAL.getValue())
          {
             System.err.println("Cannot run manually without display");
             System.err.println(Usage);
@@ -1083,12 +1038,7 @@ public class Main
       {
          try
          {
-            main.init(NUM_NEIGHBORHOODS,
-                      NEIGHBORHOOD_INITIAL_DIMENSION,
-                      NEIGHBORHOOD_DIMENSION_STRIDE,
-                      NEIGHBORHOOD_DIMENSION_MULTIPLIER,
-                      EPOCH_INTERVAL_STRIDE,
-                      EPOCH_INTERVAL_MULTIPLIER);
+            main.init();
          }
          catch (Exception e)
          {
@@ -1097,12 +1047,11 @@ public class Main
          }
       }
 
-      // Print parameters and properties?
-      if (printParm)
+      // Print parameters?
+      if (printParms)
       {
-         System.out.println("Morphognosis parameters:");
-         main.pufferfish.morphognostic.printParameters();
-         main.nest.printProperties();
+         System.out.println("Parameters:");
+         Parameters.print();
       }
 
       // Create display?
@@ -1115,8 +1064,8 @@ public class Main
          main.reset();
       }
 
-      // Set pufferfish driver.
-      main.pufferfish.driver = driver;
+      // Set bee driver.
+      main.world.setDriver(driver);
 
       // Run.
       main.run(steps);
@@ -1140,11 +1089,11 @@ public class Main
       {
          try
          {
-            main.pufferfish.writeMetamorphDataset();
+            main.world.writeMetamorphDataset();
          }
          catch (Exception e)
          {
-            System.err.println("Cannot write metamorph dataset to file " + Pufferfish.DATASET_FILE_NAME + ": " + e.getMessage());
+            System.err.println("Cannot write metamorph dataset to file " + HoneyBee.METAMORPH_DATASET_FILE_NAME + ": " + e.getMessage());
             System.exit(1);
          }
       }

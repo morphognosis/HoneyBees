@@ -50,15 +50,6 @@ public class Cell
 	   } else {
 		   Utility.saveInt(writer, v);
 	   }
-	   v = 0;
-	   if (bee != null)
-	   {
-		   v = 1;
-		   Utility.saveInt(writer, v);
-		   bee.save(writer);
-	   } else {
-		   Utility.saveInt(writer, v);
-	   }
 	      writer.flush();
    }
    
@@ -73,10 +64,6 @@ public class Cell
 	   if (Utility.loadInt(reader) == 1)
 	   {
 		   flower.load(reader);
-	   }
-	   if (Utility.loadInt(reader) == 1)
-	   {
-		   bee.load(reader);
-	   }	   
+	   } 
    } 
 }

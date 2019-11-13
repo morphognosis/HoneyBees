@@ -37,9 +37,6 @@ public class WorldDisplay extends JFrame
 
    // World.
    World world;
-   
-   // Honey bees.
-   HoneyBee[] bees;
 
    // Dashboard.
    Dashboard dashboard;
@@ -66,10 +63,9 @@ public class WorldDisplay extends JFrame
    int          randomSeed;
 
    // Constructor.
-   public WorldDisplay(World world, HoneyBee[] bees, int randomSeed)
+   public WorldDisplay(World world, int randomSeed)
    {
       this.world       = world;
-      this.bees = bees;
 
       // Random numbers.
       randomSeed      = pufferfish.randomSeed;

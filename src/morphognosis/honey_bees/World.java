@@ -5,7 +5,9 @@
 package morphognosis.honey_bees;
 
 import java.security.SecureRandom;
-import java.awt.Point;
+
+import morphognosis.Utility;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
@@ -20,6 +22,12 @@ public class World
    // Cells.
    public Cell[][]        cells;
 
+   // Honey bees.
+   public HoneyBee[] bees;
+   
+   // Collected nectar.
+   public int collectedNectar;
+
    // Random numbers.
    public SecureRandom random;
    public int          randomSeed;
@@ -31,7 +39,7 @@ public class World
       random          = new SecureRandom();
       this.randomSeed = randomSeed;
       random.setSeed(randomSeed);
-
+      
       // Create cells.
       double cx = Parameters.WORLD_WIDTH / 2.0;
       double cy = Parameters.WORLD_HEIGHT / 2.0;
@@ -48,10 +56,18 @@ public class World
                }
          }
       }
+      
+      // Create bees.    
+      bees = new HoneyBee[Parameters.NUM_BEES];
+      for (int i = 0; i < Parameters.NUM_BEES; i++)
+      {
+      bees[i] = new HoneyBee(i + 1, this, randomSeed);
+      }
+      collectedNectar = 0;       
    }
 
-   // Clear cells.
-   public void clear()
+   // Reset.
+   public void reset()
    {
       for (int x = 0; x < Parameters.WORLD_WIDTH; x++)
       {
@@ -60,9 +76,17 @@ public class World
                cells[x][y].clear();
          }
       }
+      if (bees != null)
+      {
+	      for (int i = 0; i < Parameters.NUM_BEES; i++)
+	      {
+	      bees[i].reset();
+	      }
+   } 
+	   collectedNectar = 0;
    }
 
-   // Save cells.
+   // Save to file.
    public void save(String filename) throws IOException
    {
       DataOutputStream writer;
@@ -79,9 +103,9 @@ public class World
    }
 
 
-   // Save cells.
+   // Save.
    public void save(DataOutputStream writer) throws IOException
-   {     
+   { 
       for (int x = 0; x < Parameters.WORLD_WIDTH; x++)
       {
          for (int y = 0; y < Parameters.WORLD_HEIGHT; y++)
@@ -89,11 +113,16 @@ public class World
                cells[x][y].save(writer);
          }
       }
+      for (int i = 0; i < Parameters.NUM_BEES; i++)
+      {
+    	  bees[i].save(writer);
+      } 
+	   Utility.saveInt(writer, collectedNectar);      
       writer.flush();
    }
 
 
-   // Load cells from file.
+   // Load from file..
    public void load(String filename) throws IOException
    {
       DataInputStream reader;
@@ -110,10 +139,9 @@ public class World
    }
 
 
-   // Load cells.
+   // Load.
    public void load(DataInputStream reader) throws IOException
    {
-      clear();
       for (int x = 0; x < Parameters.WORLD_WIDTH; x++)
       {
          for (int y = 0; y < Parameters.WORLD_HEIGHT; y++)
@@ -121,93 +149,210 @@ public class World
                cells[x][y].load(reader);
          }
       }
-   }
-
-   // Get forward cell coordinates.
-   public Point[] getForwardCoords(int fromX, int fromY, int toX, int toY)
-   {
-      int[] coordX = new int[3];
-      int[] coordY = new int[3];
-      if ((toX < fromX) || ((toX == (Parameters.WORLD_WIDTH - 1)) && (fromX == 0)))
+      for (int i = 0; i < Parameters.NUM_BEES; i++)
       {
-         coordX[0] = toX;
-         coordX[1] = toX - 1;
-         if (coordX[1] < 0)
-         {
-            coordX[1] += Parameters.WORLD_WIDTH;
-         }
-         coordX[2] = toX;
-         coordY[0] = (toY + 1) % Parameters.WORLD_HEIGHT;
-         coordY[1] = toY;
-         coordY[2] = toY - 1;
-         if (coordY[2] < 0)
-         {
-            coordY[2] += Parameters.WORLD_HEIGHT;
-         }
+    	  bees[i].load(reader);
       }
-      else if ((toX > fromX) || ((toX == 0) && (fromX == (Parameters.WORLD_WIDTH - 1))))
-      {
-         coordX[0] = toX;
-         coordX[1] = (toX + 1) % Parameters.WORLD_WIDTH;
-         coordX[2] = toX;
-         coordY[0] = (toY + 1) % Parameters.WORLD_HEIGHT;
-         coordY[1] = toY;
-         coordY[2] = toY - 1;
-         if (coordY[2] < 0)
-         {
-            coordY[2] += Parameters.WORLD_HEIGHT;
-         }
-      }
-      else if ((toY < fromY) || ((toY == (Parameters.WORLD_HEIGHT - 1)) && (fromY == 0)))
-      {
-         coordY[0] = toY;
-         coordY[1] = toY - 1;
-         if (coordY[1] < 0)
-         {
-            coordY[1] += Parameters.WORLD_HEIGHT;
-         }
-         coordY[2] = toY;
-         coordX[0] = (toX + 1) % Parameters.WORLD_WIDTH;
-         coordX[1] = toX;
-         coordX[2] = toX - 1;
-         if (coordX[2] < 0)
-         {
-            coordX[2] += Parameters.WORLD_WIDTH;
-         }
-      }
-      else if ((toY > fromY) || ((toY == 0) && (fromY == (Parameters.WORLD_HEIGHT - 1))))
-      {
-         coordY[0] = toY;
-         coordY[1] = (toY + 1) % Parameters.WORLD_HEIGHT;
-         coordY[2] = toY;
-         coordX[0] = (toX + 1) % Parameters.WORLD_WIDTH;
-         coordX[1] = toX;
-         coordX[2] = toX - 1;
-         if (coordX[2] < 0)
-         {
-            coordX[2] += Parameters.WORLD_WIDTH;
-         }
-      }
-      Point[] result = new Point[3];
-      for (int i = 0; i < 3; i++)
-      {
-         result[i] = new Point(coordX[i], coordY[i]);
-      }
-      return(result);
+      collectedNectar = Utility.loadInt(reader);      
    }
    
-   // Cell wrap-around city-block distance.
-   public int cellDist(int fromX, int fromY, int toX, int toY)
+   // Step world.
+   public void step()
    {
-      int w  = Parameters.WORLD_WIDTH;
-      int w2 = w / 2;
-      int h  = Parameters.WORLD_HEIGHT;
-      int h2 = h / 2;
-      int dx = Math.abs(toX - fromX);
+	   stepFlowers();
+	   stepBees();
+   }
+   
+   // Step flowers.
+   public void stepFlowers()
+   {
+	      for (int x = 0; x < Parameters.WORLD_WIDTH; x++)
+	      {
+	         for (int y = 0; y < Parameters.WORLD_HEIGHT; y++)
+	         {
+	               if (cells[x][y].flower != null)
+	               {
+	            	   if (random.nextFloat() < Parameters.FLOWER_DEATH_PROBABILITY)
+	            	   {
+	            		   cells[x][y].flower = null;
+	            	   } else {
+	    	               if (cells[x][y].flower.nectar < Parameters.FLOWER_NECTAR_CAPACITY &&
+	    	            		   random.nextFloat() < Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY)
+	    	               {
+	    	            	   cells[x][y].flower.nectar++;
+	    	               }
+	            	   }
+	               } else {
+	            	   if (random.nextFloat() < Parameters.FLOWER_SPROUT_PROBABILITY)
+	            	   {
+	            		   cells[x][y].flower = new Flower();
+	            	   }
+	               }
+	         }
+	      }
+   }
+   
+   // Step bees.
+   public void stepBees()
+   {
+      float[] sensors = new float[HoneyBee.NUM_SENSORS];
 
-      if (dx > w2) { dx = w - dx; }
-      int dy = Math.abs(toY - fromY);
-      if (dy > h2) { dy = h - dy; }
-      return(dx + dy);
-   }  
+      int width  = Parameters.WORLD_WIDTH;
+      int height = Parameters.WORLD_HEIGHT;
+      
+      // Run bees in random starting order.
+      int n = random.nextInt(Parameters.NUM_BEES);
+      for (int i = 0; i < Parameters.NUM_BEES; i++, n = (n + 1) % Parameters.NUM_BEES)
+      {
+
+      // Update landmarks.
+      HoneyBee bee = bees[n];
+      bee.landmarkMap[bee.x][bee.y] = true;
+
+      // Initialize sensors.
+      int toX = bee.x;
+      int toY = bee.y;
+      switch (bee.orientation)
+      {
+      case Compass.NORTH:
+         toY++;
+         break;
+         
+      case Compass.NORTHEAST:
+          toX++;  	  
+          toY++;
+          break;
+          
+      case Compass.EAST:
+         toX++;
+         break;
+         
+      case Compass.SOUTHEAST:
+          toX++;
+          toY--;        
+          break;
+          
+      case Compass.SOUTH:
+         toY--;
+         break;
+         
+      case Compass.SOUTHWEST:
+          toX--;  
+          toY--;
+          break;
+
+      case Compass.WEST:
+         toX--;
+         break;
+         
+      case Compass.NORTHWEST:
+          toX--;
+          toY++;          
+          break;        
+      }
+      if (toX >= 0 && toX < width && toY >= 0 && toY < height)
+      {
+    	  if (cells[toX][toY].hive)
+    	  {
+    		  sensors[HoneyBee.HIVE_PRESENCE_INDEX] = 1.0f;
+    	  } else {
+    		  sensors[HoneyBee.HIVE_PRESENCE_INDEX] = 0.0f;    		  
+    	  }
+    	  if (cells[toX][toY].flower != null)
+    	  {
+    		  sensors[HoneyBee.ADJACENT_FLOWER_NECTAR_QUANTITY_INDEX] = (float)cells[toX][toY].flower.nectar;
+    	  } else {
+    		  sensors[HoneyBee.ADJACENT_FLOWER_NECTAR_QUANTITY_INDEX] = 0.0f;    		  
+    	  }
+    	  if (cells[toX][toY].bee != null)
+    	  {
+    		  sensors[HoneyBee.ADJACENT_BEE_ORIENTATION_INDEX] = (float)cells[toX][toY].bee.orientation;
+    		  sensors[HoneyBee.ADJACENT_BEE_NECTAR_DISTANCE_INDEX] = (float)cells[toX][toY].bee.nectarDistance;
+    	  } else {
+    	  sensors[HoneyBee.ADJACENT_BEE_ORIENTATION_INDEX] = -1.0f;
+    	  sensors[HoneyBee.ADJACENT_BEE_NECTAR_DISTANCE_INDEX] = -1.0f;    	  
+    	  }        	  
+      } else {
+    	  sensors[HoneyBee.HIVE_PRESENCE_INDEX] = 0.0f;
+    	  sensors[HoneyBee.ADJACENT_FLOWER_NECTAR_QUANTITY_INDEX] = 0.0f; 
+    	  sensors[HoneyBee.ADJACENT_BEE_ORIENTATION_INDEX] = -1.0f;
+    	  sensors[HoneyBee.ADJACENT_BEE_NECTAR_DISTANCE_INDEX] = -1.0f;      	  
+      } 
+
+      // Cycle bee.
+      int response = bee.cycle(sensors);
+
+      // Process response.
+      bee.nectarDistance = -1;
+      if (response < Compass.NUM_POINTS) 
+      {
+    	  bee.orientation = response;
+      } else {
+      switch (response)
+      {
+      case HoneyBee.FORWARD:
+          if (toX >= 0 && toX < width && toY >= 0 && toY < height 
+          && cells[toX][toY].bee == null)
+          {
+	   		   cells[bee.x][bee.y].bee = null;
+	   		   bee.x = toX;
+	   		   bee.y = toY;
+	   		   cells[toX][toY].bee = bee;
+          }
+    	  break;
+      case HoneyBee.EXTRACT_NECTAR:
+          if (toX >= 0 && toX < width && toY >= 0 && toY < height 
+          && cells[toX][toY].flower.nectar > 0 && !bee.nectarCarry)
+          {
+        		   bee.nectarCarry = true;
+        		   cells[toX][toY].flower.nectar--;
+          }
+    	  break;
+      case HoneyBee.DEPOSIT_NECTAR:
+          if (cells[bee.x][bee.y].hive && bee.nectarCarry)
+          {
+        		  collectedNectar++;
+        		  bee.nectarCarry = false;
+          }
+    	  break;
+      default:
+    	  if (response >= HoneyBee.DISPLAY_NECTAR_DISTANCE && response < HoneyBee.WAIT)
+    	  {
+    		  bee.nectarDistance = response - HoneyBee.DISPLAY_NECTAR_DISTANCE;
+    	  }
+    	  break;
+      }
+      }
+   }
+   }
+   
+   // Set bee drivers.
+   public void setDriver(int driver)
+   {
+	  if (bees != null)
+	  {
+		  for (int i = 0; i < bees.length; i++)
+		  {
+			  if (bees[i] != null)
+			  {
+				  bees[i].driver = driver;
+			  }
+		  }
+	  }
+   }
+   
+   // Write metamporph dataset.
+   public void writeMetamorphDataset() throws Exception
+   {
+	  if (bees != null)
+	  {
+		  for (int i = 0; i < bees.length; i++)
+		  {
+			  if (bees[i] != null)
+			  {
+				  bees[i].writeMetamorphDataset(true);
+			  }
+		  }
+	  }
+   }   
 }

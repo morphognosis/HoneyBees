@@ -42,12 +42,12 @@ public class HoneyBeeDashboard extends JFrame
    WorldDisplay worldDisplay;
 
    // Constructor.
-   public Dashboard(HoneyBee bee, NestDisplay nestDisplay)
+   public HoneyBeeDashboard(HoneyBee bee, WorldDisplay worldDisplay)
    {
-      this.pufferfish  = pufferfish;
-      this.nestDisplay = nestDisplay;
+      this.bee  = bee;
+      this.worldDisplay = worldDisplay;
 
-      setTitle("Pufferfish");
+      setTitle("Honey bee");
       addWindowListener(new WindowAdapter()
                         {
                            public void windowClosing(WindowEvent e) { close(); }
@@ -59,7 +59,7 @@ public class HoneyBeeDashboard extends JFrame
       basePanel.add(sensorsResponse);
       driver = new DriverPanel();
       basePanel.add(driver);
-      morphognostic = new MorphognosticDisplay(0, pufferfish.morphognostic);
+      morphognostic = new MorphognosticDisplay(0, bee.morphognostic);
       basePanel.add(morphognostic);
       operations = new OperationsPanel();
       basePanel.add(operations);
@@ -98,14 +98,11 @@ public class HoneyBeeDashboard extends JFrame
       }
       setElevations(elevationsString);
 
-      // Update previous response.
-      setPreviousResponse(Pufferfish.getResponseName(Main.previousResponse));
-
       // Update response.
-      setResponse(Pufferfish.getResponseName(pufferfish.response));
+      setResponse(HoneyBee.getResponseName(bee.response));
 
       // Update driver choice.
-      setDriverChoice(pufferfish.driver);
+      setDriverChoice(bee.driver);
    }
 
 
@@ -241,14 +238,6 @@ public class HoneyBeeDashboard extends JFrame
       }
    }
 
-
-   // Set previous response display.
-   void setPreviousResponse(String previousResponseString)
-   {
-      sensorsResponse.previousResponseText.setText(previousResponseString);
-   }
-
-
    // Set response display.
    void setResponse(String responseString)
    {
@@ -262,8 +251,7 @@ public class HoneyBeeDashboard extends JFrame
       private static final long serialVersionUID = 0L;
 
       // Components.
-      JTextField elevationsText;
-      JTextField previousResponseText;
+      JTextField sensorsText;
       JTextField responseText;
 
       // Constructor.
@@ -276,19 +264,15 @@ public class HoneyBeeDashboard extends JFrame
          JPanel sensorsPanel = new JPanel();
          sensorsPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
          add(sensorsPanel, BorderLayout.NORTH);
-         sensorsPanel.add(new JLabel("Elevations:"));
-         elevationsText = new JTextField(20);
-         elevationsText.setEditable(false);
-         sensorsPanel.add(elevationsText);
-         sensorsPanel.add(new JLabel("Previous response:"));
-         previousResponseText = new JTextField(10);
-         previousResponseText.setEditable(false);
-         sensorsPanel.add(previousResponseText);
+         sensorsPanel.add(new JLabel("Sensors:"));
+         sensorsText = new JTextField(30);
+         sensorsText.setEditable(false);
+         sensorsPanel.add(sensorsText);
          JPanel responsePanel = new JPanel();
          responsePanel.setLayout(new FlowLayout(FlowLayout.LEFT));
          add(responsePanel, BorderLayout.SOUTH);
          responsePanel.add(new JLabel("Response:"));
-         responseText = new JTextField(10);
+         responseText = new JTextField(15);
          responseText.setEditable(false);
          responsePanel.add(responseText);
       }
@@ -372,9 +356,9 @@ public class HoneyBeeDashboard extends JFrame
 
          if (source instanceof Choice && ((Choice)source == driverChoice))
          {
-            pufferfish.driver = driverChoice.getSelectedIndex();
+            bee.driver = driverChoice.getSelectedIndex();
 
-            if (pufferfish.driver == Pufferfish.DRIVER_TYPE.MANUAL.getValue())
+            if (bee.driver == HoneyBee.DRIVER_TYPE.MANUAL.getValue())
             {
                setManualResponseButtons(true);
                return;
@@ -384,10 +368,10 @@ public class HoneyBeeDashboard extends JFrame
                setManualResponseButtons(false);
             }
 
-            if (pufferfish.driver == Pufferfish.DRIVER_TYPE.AUTOPILOT.getValue())
+            if (bee.driver == HoneyBee.DRIVER_TYPE.AUTOPILOT.getValue())
             {
                // Fresh start for autopilot.
-               pufferfish.reset();
+               bee.reset();
 
                // Update elevations.
                int[] elevations = getElevations();
@@ -401,13 +385,9 @@ public class HoneyBeeDashboard extends JFrame
                   }
                }
                setElevations(elevationsString);
-
-               // Update previous response.
-               Main.previousResponse = Pufferfish.WAIT;
-               setPreviousResponse(Pufferfish.getResponseName(Main.previousResponse));
-
+               
                // Update response.
-               setResponse(Pufferfish.getResponseName(pufferfish.response));
+               setResponse(HoneyBee.getResponseName(bee.response));
                return;
             }
          }
@@ -430,7 +410,7 @@ public class HoneyBeeDashboard extends JFrame
       {
          if ((JButton)evt.getSource() == forwardButton)
          {
-            pufferfish.driverResponse = Pufferfish.FORWARD;
+            bee.driverResponse = HoneyBee.FORWARD;
             return;
          }
 

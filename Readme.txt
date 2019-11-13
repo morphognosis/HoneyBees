@@ -12,17 +12,14 @@ World:
 Bee capabilities:
 
 Senses:
-1. Bee can sense its orientation: N, NE, E, SE, S, SW, W, NW.
-2. Bee can sense if it carries nectar.
-Relative to its orientation, bee can sense the contents of the cell immediately in front of it:
+Bee can sense if it carries nectar.
+Relative to its orientation, bee can sense the contents of the adjacent cell that is immediately in front of it:
 1. Adjacent bee:
    a. Orientation, or NA.
    b. Distance to nectar: distance or NA.
-2. Object: hive, outside, adjacent flower nectar quantity.
+2. Adjacent object: hive, outside, adjacent flower nectar quantity.
 
 Responses: wait, forward, turn N, NE, E, SE, S, SW, W, NW, extract nectar, deposit nectar, display nectar distance.
-
-Prerequesite: Java.
 
 Setup:
 
