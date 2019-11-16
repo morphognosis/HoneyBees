@@ -996,15 +996,6 @@ public class Main
       {
          display = true;
       }
-      if (!display)
-      {
-         if (driver == HoneyBee.DRIVER_TYPE.MANUAL.getValue())
-         {
-            System.err.println("Cannot run manually without display");
-            System.err.println(Usage);
-            System.exit(1);
-         }
-      }
       if ((loadfile != null) && gotParm)
       {
          System.err.println(Usage);

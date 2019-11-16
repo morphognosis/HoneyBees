@@ -115,8 +115,7 @@ public class HoneyBee
    public enum DRIVER_TYPE
    {
       AUTOPILOT(0),
-      METAMORPHS(1),
-      MANUAL(2);
+      METAMORPHS(1);
 
       private int value;
 
@@ -649,10 +648,12 @@ public class HoneyBee
       case EXTRACT_NECTAR:
     	  return "extract nectar";
       case DEPOSIT_NECTAR:
-    	  return "deposit nectar";
-      case DISPLAY_NECTAR_DISTANCE:
-    	  return "display nectar distance";   	  
-      } 
+    	  return "deposit nectar"; 	  
+      }
+	  if (response >= HoneyBee.DISPLAY_NECTAR_DISTANCE && response < HoneyBee.WAIT)
+	  {
+		  return "display nectar distance " + (response - HoneyBee.DISPLAY_NECTAR_DISTANCE);
+	  }       
       if (response == WAIT) return "wait";
       return("unknown");
    }

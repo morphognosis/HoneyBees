@@ -8,7 +8,9 @@ import java.awt.BorderLayout;
 import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Label;
 import java.awt.Toolkit;
@@ -19,7 +21,13 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.geom.AffineTransform;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.security.SecureRandom;
+
+import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -29,7 +37,6 @@ import javax.swing.JSlider;
 import javax.swing.JTextField;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import morphognosis.Orientation;
 
 public class WorldDisplay extends JFrame
 {
@@ -38,17 +45,17 @@ public class WorldDisplay extends JFrame
    // World.
    World world;
 
-   // Dashboard.
-   Dashboard dashboard;
-
    // Dimensions.
    public static final Dimension DISPLAY_SIZE = new Dimension(600, 700);
 
-   // Pufferfish display.
-   PufferfishDisplay display;
+   // Display.
+   Display display;
 
    // Controls.
-   PufferfishControls controls;
+   Controls controls;
+   
+   // Bee dashboard.
+   HoneyBeeDashboard beeDashboard;
 
    // Step frequency (ms).
    static final int MIN_STEP_DELAY = 0;
@@ -68,7 +75,7 @@ public class WorldDisplay extends JFrame
       this.world       = world;
 
       // Random numbers.
-      randomSeed      = pufferfish.randomSeed;
+      randomSeed      = world.randomSeed;
       random          = new SecureRandom();
       this.randomSeed = randomSeed;
       random.setSeed(randomSeed);
@@ -91,21 +98,17 @@ public class WorldDisplay extends JFrame
       // Create display.
       Dimension displaySize = new Dimension(DISPLAY_SIZE.width,
                                             (int)((double)DISPLAY_SIZE.height * .8));
-      display = new PufferfishDisplay(displaySize);
+      display = new Display(displaySize);
       basePanel.add(display, BorderLayout.NORTH);
 
       // Create controls.
-      controls = new PufferfishControls();
+      controls = new Controls();
       basePanel.add(controls, BorderLayout.SOUTH);
 
       // Make display visible.
       pack();
       setLocation();
       setVisible(true);
-
-      // Create pufferfish dashboard.
-      pufferfishDashboard = new PufferfishDashboard(pufferfish, this);
-      pufferfishDashboard.setVisible(true);
    }
 
 
@@ -124,8 +127,12 @@ public class WorldDisplay extends JFrame
    // Close.
    void close()
    {
-      pufferfishDashboard.close();
+	   if (beeDashboard != null)
+	   {
+      beeDashboard.close();
+      beeDashboard = null;     
       setVisible(false);
+	   }
    }
 
 
@@ -142,8 +149,11 @@ public class WorldDisplay extends JFrame
    {
       if (quit) { return; }
 
-      // Update pufferfish dashboard.
-      pufferfishDashboard.update();
+      // Update bee dashboard.
+      if (beeDashboard != null)
+      {
+      beeDashboard.update();
+      }
 
       // Update display.
       display.update();
@@ -199,25 +209,42 @@ public class WorldDisplay extends JFrame
    }
 
 
-   // Pufferfish display.
-   public class PufferfishDisplay extends Canvas
+   // Display.
+   public class Display extends Canvas
    {
       private static final long serialVersionUID = 0L;
 
-      final Color PUFFERFISH_COLOR = Color.RED;
-
-      // Buffered display.
-      Dimension canvasSize;
-      Graphics  graphics;
-      Image     image;
-      Graphics  imageGraphics;
-
+      // Image files.
+      public static final String BEE_IMAGE_FILENAME = "honeybee.png";
+      public static final String FLOWER_IMAGE_FILENAME = "blue_flower.png";
+      public static final String NECTAR_IMAGE_FILENAME = "nectar.jpg";
+      
+      // Colors.
+      public final Color HIVE_COLOR = Color.YELLOW;
+      public final Color FIELD_COLOR = Color.GREEN;
+      public final Color SELECTED_BEE_COLOR = Color.RED;
+      
+      // Images and graphics.      
+      Graphics graphics;
+      Image canvasImage;
+      Graphics canvasGraphics;
+      BufferedImage beeImage;
+      Graphics2D beeGraphics;
+	  BufferedImage flowerImage;
+      Graphics2D flowerGraphics;      
+      BufferedImage nectarImage;
+      Graphics2D nectarGraphics;
+      
+      // Font.
+      Font font;
+      
       // Sizes.
+      Dimension canvasSize;      
       int   width, height;
       float cellWidth, cellHeight;
-
+      
       // Constructor.
-      public PufferfishDisplay(Dimension canvasSize)
+      public Display(Dimension canvasSize)
       {
          // Configure canvas.
          this.canvasSize = canvasSize;
@@ -226,46 +253,42 @@ public class WorldDisplay extends JFrame
          addMouseMotionListener(new CanvasMouseMotionListener());
 
          // Compute sizes.
-         width      = nest.size.width;
-         height     = nest.size.height;
+         width      = Parameters.WORLD_WIDTH;
+         height     = Parameters.WORLD_HEIGHT;
          cellWidth  = (float)canvasSize.width / (float)width;
-         cellHeight = (float)canvasSize.height / (float)height;
+         cellHeight = (float)canvasSize.height / (float)height;        
       }
-
+     
 
       // Update display.
       void update()
       {
-         int x, y, x2, y2, cx, cy;
+         int x, y, x2, y2;
+         int beeWidth, beeHeight;
+         int nectarWidth, nectarHeight;
 
-         int[] sx, sy, px, py;
-
+         // Initialize graphics.
          if (graphics == null)
          {
-            graphics = getGraphics();
-            if (graphics == null)
-            {
-               return;
-            }
-            image         = createImage(canvasSize.width, canvasSize.height);
-            imageGraphics = image.getGraphics();
+        	 graphics = getGraphics();
+             if (graphics == null)
+             {
+                return;
+             }
+            canvasImage         = createImage(canvasSize.width, canvasSize.height);
+            canvasGraphics = canvasImage.getGraphics();
+            initGraphics();
          }
 
          // Clear display.
-         imageGraphics.setColor(Color.white);
-         imageGraphics.fillRect(0, 0, canvasSize.width, canvasSize.height);
+         canvasGraphics.setColor(Color.WHITE);
+         canvasGraphics.fillRect(0, 0, canvasSize.width, canvasSize.height);
 
          // Draw cells.
-         int n = Nest.MAX_ELEVATION + 1;
-         Color[] colors = new Color[n];
-         for (int i = 0; i < n; i++)
-         {
-            float s = (float)(n - (i + 1)) / (float)(n - 1);
-            int   r = 255 - (int)(255.0f * s);
-            int   g = 255 - (int)(255.0f * s);
-            int   b = 255 - (int)(255.0f * s);
-            colors[i] = new Color(r, g, b);
-         }
+         beeWidth = beeImage.getWidth();
+         beeHeight = beeImage.getHeight();
+         nectarWidth = nectarImage.getWidth();
+         nectarHeight = nectarImage.getHeight();
          for (x = x2 = 0; x < width;
               x++, x2 = (int)(cellWidth * (double)x))
          {
@@ -273,317 +296,142 @@ public class WorldDisplay extends JFrame
                  y < height;
                  y++, y2 = (int)(cellHeight * (double)(height - (y + 1))))
             {
-               imageGraphics.setColor(colors[nest.cells[x][y][Nest.ELEVATION_CELL_INDEX]]);
-               imageGraphics.fillRect(x2, y2, (int)cellWidth + 1, (int)cellHeight + 1);
+               if (world.cells[x][y].hive)
+               {
+                   canvasGraphics.setColor(HIVE_COLOR);
+               } else {
+                   canvasGraphics.setColor(FIELD_COLOR);
+               }
+               canvasGraphics.fillRect(x2, y2, (int)cellWidth + 1, (int)cellHeight + 1);
+               
+               // Draw flower and nectar?
+               Flower flower = world.cells[x][y].flower;
+               if (flower != null)
+               {
+       		    	flowerGraphics.drawImage(flowerImage, x2, y2, (int)cellWidth + 1, (int)cellHeight + 1, null);
+       		    	nectarGraphics.drawImage(nectarImage, x2, y2, (int)cellWidth + 1, (int)cellHeight + 1, null);
+                    nectarGraphics.drawString((flower.nectar + ""), x2, y2);
+               }
+               
+               // Draw bee?
+               HoneyBee bee = world.cells[x][y].bee;
+               if (bee != null)
+               {    	   
+            	   double angle = 0.0;
+                   switch (bee.orientation)
+                   {
+                   case Compass.NORTH:
+                      break;
+                   case Compass.NORTHEAST:
+                	   angle = Math.toRadians(45.0);
+                      break;
+                   case Compass.EAST:
+                	   angle = Math.toRadians(90.0);
+                      break;
+                   case Compass.SOUTHEAST:
+                	   angle = Math.toRadians(135.0);
+                       break;
+                   case Compass.SOUTH:
+                	   angle = Math.toRadians(180.0);
+                       break;
+                   case Compass.SOUTHWEST:
+                	   angle = Math.toRadians(225.0);
+                      break;
+                   case Compass.WEST:
+                	   angle = Math.toRadians(270.0);
+                       break;
+                   case Compass.NORTHWEST:
+                	   angle = Math.toRadians(315.0);
+                      break;
+                   }
+                   AffineTransform t = beeGraphics.getTransform();
+      		    beeGraphics.setTransform(AffineTransform.getRotateInstance(angle, 
+      		    		(double)beeWidth / 2.0, (double)beeHeight / 2.0));
+       		    beeGraphics.drawImage(beeImage, x2, y2, (int)cellWidth + 1, (int)cellHeight + 1, null); 
+       		    beeGraphics.setTransform(t);
+               }              
             }
          }
-
+         
          // Draw grid.
-         imageGraphics.setColor(Color.black);
+         canvasGraphics.setColor(Color.BLACK);
          y2 = canvasSize.height;
          for (x = 1, x2 = (int)cellWidth; x < width;
               x++, x2 = (int)(cellWidth * (double)x))
          {
-            imageGraphics.drawLine(x2, 0, x2, y2);
+            canvasGraphics.drawLine(x2, 0, x2, y2);
          }
          x2 = canvasSize.width;
          for (y = 1, y2 = (int)cellHeight; y < height;
               y++, y2 = (int)(cellHeight * (double)y))
          {
-            imageGraphics.drawLine(0, y2, x2, y2);
+            canvasGraphics.drawLine(0, y2, x2, y2);
          }
-         imageGraphics.setColor(Color.black);
-
-         // Draw pufferfish sensor locations.
-         imageGraphics.setColor(PUFFERFISH_COLOR);
-         sx = new int[4];
-         sy = new int[4];
-         cx = pufferfish.x;
-         cy = pufferfish.y;
-         switch (pufferfish.orientation)
-         {
-         case Orientation.NORTH:
-            for (int i = 0; i < 3; i++)
-            {
-               x = cx;
-               y = cy;
-               switch (i)
-               {
-               case 0:
-                  x--;
-                  if (x < 0) { x += width; }
-                  y = ((y + 1) % height);
-                  break;
-
-               case 1:
-                  y = ((y + 1) % height);
-                  break;
-
-               case 2:
-                  x = ((x + 1) % width);
-                  y = ((y + 1) % height);
-                  break;
-               }
-               x2    = (int)(cellWidth * (double)x);
-               y2    = (int)(cellHeight * (double)(height - (y + 1)));
-               sx[0] = x2;
-               sy[0] = y2;
-               sx[1] = x2 + (int)cellWidth;
-               sy[1] = y2;
-               sx[2] = x2 + (int)cellWidth;
-               sy[2] = y2 + (int)cellHeight;
-               sx[3] = x2;
-               sy[3] = y2 + (int)cellHeight;
-               imageGraphics.drawPolygon(sx, sy, 4);
-            }
-            break;
-
-         case Orientation.EAST:
-            for (int i = 0; i < 3; i++)
-            {
-               x = cx;
-               y = cy;
-               switch (i)
-               {
-               case 0:
-                  x = ((x + 1) % width);
-                  y = ((y + 1) % height);
-                  break;
-
-               case 1:
-                  x = ((x + 1) % width);
-                  break;
-
-               case 2:
-                  x = ((x + 1) % width);
-                  y--;
-                  if (y < 0) { y += height; }
-                  break;
-               }
-               x2    = (int)(cellWidth * (double)x);
-               y2    = (int)(cellHeight * (double)(height - (y + 1)));
-               sx[0] = x2;
-               sy[0] = y2;
-               sx[1] = x2 + (int)cellWidth;
-               sy[1] = y2;
-               sx[2] = x2 + (int)cellWidth;
-               sy[2] = y2 + (int)cellHeight;
-               sx[3] = x2;
-               sy[3] = y2 + (int)cellHeight;
-               imageGraphics.drawPolygon(sx, sy, 4);
-            }
-            break;
-
-         case Orientation.SOUTH:
-            for (int i = 0; i < 3; i++)
-            {
-               x = cx;
-               y = cy;
-               switch (i)
-               {
-               case 0:
-                  x = ((x + 1) % width);
-                  y--;
-                  if (y < 0) { y += height; }
-                  break;
-
-               case 1:
-                  y--;
-                  if (y < 0) { y += height; }
-                  break;
-
-               case 2:
-                  x--;
-                  if (x < 0) { x += width; }
-                  y--;
-                  if (y < 0) { y += height; }
-                  break;
-               }
-               x2    = (int)(cellWidth * (double)x);
-               y2    = (int)(cellHeight * (double)(height - (y + 1)));
-               sx[0] = x2;
-               sy[0] = y2;
-               sx[1] = x2 + (int)cellWidth;
-               sy[1] = y2;
-               sx[2] = x2 + (int)cellWidth;
-               sy[2] = y2 + (int)cellHeight;
-               sx[3] = x2;
-               sy[3] = y2 + (int)cellHeight;
-               imageGraphics.drawPolygon(sx, sy, 4);
-            }
-            break;
-
-         case Orientation.WEST:
-            for (int i = 0; i < 3; i++)
-            {
-               x = cx;
-               y = cy;
-               switch (i)
-               {
-               case 0:
-                  x--;
-                  if (x < 0) { x += width; }
-                  y--;
-                  if (y < 0) { y += height; }
-                  break;
-
-               case 1:
-                  x--;
-                  if (x < 0) { x += width; }
-                  break;
-
-               case 2:
-                  x--;
-                  if (x < 0) { x += width; }
-                  y = ((y + 1) % height);
-                  break;
-               }
-               x2    = (int)(cellWidth * (double)x);
-               y2    = (int)(cellHeight * (double)(height - (y + 1)));
-               sx[0] = x2;
-               sy[0] = y2;
-               sx[1] = x2 + (int)cellWidth;
-               sy[1] = y2;
-               sx[2] = x2 + (int)cellWidth;
-               sy[2] = y2 + (int)cellHeight;
-               sx[3] = x2;
-               sy[3] = y2 + (int)cellHeight;
-               imageGraphics.drawPolygon(sx, sy, 4);
-            }
-            break;
-         }
-
-         // Draw pufferfish.
-         px = new int[3];
-         py = new int[3];
-         x2 = (int)(cellWidth * (double)pufferfish.x);
-         y2 = (int)(cellHeight * (double)(height - (pufferfish.y + 1)));
-         switch (pufferfish.orientation)
-         {
-         case Orientation.NORTH:
-            px[0] = x2 + (int)(cellWidth * 0.5f);
-            py[0] = y2;
-            px[1] = x2;
-            py[1] = y2 + (int)cellHeight;
-            px[2] = x2 + (int)cellWidth;
-            py[2] = y2 + (int)cellHeight;
-            break;
-
-         case Orientation.EAST:
-            px[0] = x2 + (int)(cellWidth);
-            py[0] = y2 + (int)(cellHeight * 0.5f);
-            px[1] = x2;
-            py[1] = y2;
-            px[2] = x2;
-            py[2] = y2 + (int)cellHeight;
-            break;
-
-         case Orientation.SOUTH:
-            px[0] = x2 + (int)(cellWidth * 0.5f);
-            py[0] = y2 + (int)cellHeight;
-            px[1] = x2;
-            py[1] = y2;
-            px[2] = x2 + (int)cellWidth;
-            py[2] = y2;
-            break;
-
-         case Orientation.WEST:
-            px[0] = x2;
-            py[0] = y2 + (int)(cellHeight * 0.5f);
-            px[1] = x2 + (int)cellWidth;
-            py[1] = y2;
-            px[2] = x2 + (int)cellWidth;
-            py[2] = y2 + (int)cellHeight;
-            break;
-         }
-         imageGraphics.fillPolygon(px, py, 3);
 
          // Refresh display.
-         graphics.drawImage(image, 0, 0, this);
+         graphics.drawImage(canvasImage, 0, 0, this);
       }
 
-
+      // Initialize graphics.
+      void initGraphics()
+      {
+    			// Load source images.
+    	  try
+    	  {
+    			beeImage = ImageIO.read(new File(BEE_IMAGE_FILENAME));
+    			flowerImage = ImageIO.read(new File(FLOWER_IMAGE_FILENAME));
+       			nectarImage = ImageIO.read(new File(NECTAR_IMAGE_FILENAME));
+    	  } catch(IOException e)
+    	  {
+    		  System.err.println("Cannot load images");
+    		  System.exit(1);
+    	  }
+       			
+       			// Get graphics.
+       			beeGraphics = (Graphics2D)beeImage.getGraphics();       			
+       			flowerGraphics = (Graphics2D)flowerImage.getGraphics();
+       			nectarGraphics = (Graphics2D)nectarImage.getGraphics();
+       		
+       			// Get font.
+       		 font = new Font("Serif", Font.PLAIN, 12);
+             nectarGraphics.setFont(font);
+      }
+      
       // Canvas mouse listener.
       class CanvasMouseListener extends MouseAdapter
       {
          // Mouse pressed.
          public void mousePressed(MouseEvent evt)
          {
-            int x, y, x2, y2, cx, cy;
-
-            // Selecting pufferfish?
-            x = (int)((double)evt.getX() / cellWidth);
-            y = height - (int)((double)evt.getY() / cellHeight) - 1;
+            int x = (int)((double)evt.getX() / cellWidth);
+            int y = height - (int)((double)evt.getY() / cellHeight) - 1;
 
             if ((x >= 0) && (x < width) &&
                 (y >= 0) && (y < height))
             {
-               cx = pufferfish.x;
-               cy = pufferfish.y;
-               for (int i = 0; i < 9; i++)
-               {
-                  x2 = cx;
-                  y2 = cy;
-                  switch (i)
-                  {
-                  case 0:
-                     x2--;
-                     if (x2 < 0) { x2 += width; }
-                     y2 = ((y2 + 1) % height);
-                     break;
-
-                  case 1:
-                     y2 = ((y2 + 1) % height);
-                     break;
-
-                  case 2:
-                     x2 = ((x2 + 1) % width);
-                     y2 = ((y2 + 1) % height);
-                     break;
-
-                  case 3:
-                     x2--;
-                     if (x2 < 0) { x2 += width; }
-                     break;
-
-                  case 4:
-                     break;
-
-                  case 5:
-                     x2 = ((x2 + 1) % width);
-                     break;
-
-                  case 6:
-                     x2--;
-                     if (x2 < 0) { x2 += width; }
-                     y2--;
-                     if (y2 < 0) { y2 += height; }
-                     break;
-
-                  case 7:
-                     y2--;
-                     if (y2 < 0) { y2 += height; }
-                     break;
-
-                  case 8:
-                     x2 = ((x2 + 1) % width);
-                     y2--;
-                     if (y2 < 0) { y2 += height; }
-                     break;
-                  }
-                  if ((x2 == x) && (y2 == y))
-                  {
-                     if (pufferfishDashboard.isVisible())
-                     {
-                        pufferfishDashboard.close();
-                     }
-                     else
-                     {
-                        pufferfishDashboard.open();
-                     }
-                     break;
-                  }
-               }
+            	if (world.cells[x][y].bee != null)          		
+            	{
+            		if (beeDashboard == null)
+            		{
+                        beeDashboard = new HoneyBeeDashboard(world.cells[x][y].bee);
+                        beeDashboard.open();            			
+            		} else {
+		                   beeDashboard.close();
+            			if (beeDashboard.bee == world.cells[x][y].bee)
+            			{
+ 			                beeDashboard = null;            				
+            			} else {
+                            beeDashboard = new HoneyBeeDashboard(world.cells[x][y].bee);
+                            beeDashboard.open();               				
+            			}
+            		}
+            	} else {
+            		if (beeDashboard != null)
+            		{
+		                   beeDashboard.close(); 
+		                beeDashboard = null;
+            		}
+            	}
             }
 
             // Refresh display.
@@ -601,21 +449,20 @@ public class WorldDisplay extends JFrame
       }
    }
 
-// Control panel.
-   class PufferfishControls extends JPanel implements ActionListener, ChangeListener
+    // Control panel.
+   class Controls extends JPanel implements ActionListener, ChangeListener
    {
       private static final long serialVersionUID = 0L;
 
       // Components.
       JButton    resetButton;
-      JButton    scrambleButton;
       JLabel     stepCounter;
       JSlider    speedSlider;
       JButton    stepButton;
       JTextField messageText;
 
       // Constructor.
-      PufferfishControls()
+      Controls()
       {
          setLayout(new BorderLayout());
          setBorder(BorderFactory.createRaisedBevelBorder());
@@ -624,9 +471,6 @@ public class WorldDisplay extends JFrame
          resetButton = new JButton("Reset");
          resetButton.addActionListener(this);
          panel.add(resetButton);
-         scrambleButton = new JButton("Scramble");
-         scrambleButton.addActionListener(this);
-         panel.add(scrambleButton);
          panel.add(new JLabel("Speed:   Fast", Label.RIGHT));
          speedSlider = new JSlider(JSlider.HORIZONTAL, MIN_STEP_DELAY,
                                    MAX_STEP_DELAY, MAX_STEP_DELAY);
@@ -640,7 +484,7 @@ public class WorldDisplay extends JFrame
          panel.add(stepCounter);
          add(panel, BorderLayout.NORTH);
          panel       = new JPanel();
-         messageText = new JTextField("Click pufferfish to toggle dashboard", 40);
+         messageText = new JTextField("Click bee to toggle dashboard", 40);
          messageText.setEditable(false);
          panel.add(messageText);
          add(panel, BorderLayout.SOUTH);
@@ -672,32 +516,8 @@ public class WorldDisplay extends JFrame
          {
             random = new SecureRandom();
             random.setSeed(randomSeed);
-            nest.restore();
-            pufferfish.reset();
-            pufferfishDashboard.update();
-
-            return;
-         }
-
-         // Scramble surface?
-         if (evt.getSource() == (Object)scrambleButton)
-         {
-            nest.restore();
-            int w = nest.size.width;
-            int h = nest.size.height;
-            for (int i = 0, j = (w * h * 10); i < j; i++)
-            {
-               int x  = random.nextInt(w);
-               int x2 = random.nextInt(w);
-               int y  = random.nextInt(h);
-               int y2 = random.nextInt(h);
-               int c  = nest.cells[x][y][Nest.ELEVATION_CELL_INDEX];
-               nest.cells[x][y][Nest.ELEVATION_CELL_INDEX] =
-                  nest.cells[x2][y2][Nest.ELEVATION_CELL_INDEX];
-               nest.cells[x2][y2][Nest.ELEVATION_CELL_INDEX] = c;
-            }
-            pufferfish.reset();
-            pufferfishDashboard.update();
+            world.reset();
+            beeDashboard.update();
 
             return;
          }
