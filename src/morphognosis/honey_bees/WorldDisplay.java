@@ -11,7 +11,6 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Image;
 import java.awt.Label;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
@@ -21,9 +20,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
 import java.security.SecureRandom;
 
@@ -53,7 +50,7 @@ public class WorldDisplay extends JFrame
 
    // Controls.
    Controls controls;
-   
+
    // Bee dashboard.
    HoneyBeeDashboard beeDashboard;
 
@@ -72,7 +69,7 @@ public class WorldDisplay extends JFrame
    // Constructor.
    public WorldDisplay(World world, int randomSeed)
    {
-      this.world       = world;
+      this.world = world;
 
       // Random numbers.
       randomSeed      = world.randomSeed;
@@ -127,12 +124,12 @@ public class WorldDisplay extends JFrame
    // Close.
    void close()
    {
-	   if (beeDashboard != null)
-	   {
-      beeDashboard.close();
-      beeDashboard = null;     
-      setVisible(false);
-	   }
+      if (beeDashboard != null)
+      {
+         beeDashboard.close();
+         beeDashboard = null;
+         setVisible(false);
+      }
    }
 
 
@@ -152,7 +149,7 @@ public class WorldDisplay extends JFrame
       // Update bee dashboard.
       if (beeDashboard != null)
       {
-      beeDashboard.update();
+         beeDashboard.update();
       }
 
       // Update display.
@@ -215,34 +212,31 @@ public class WorldDisplay extends JFrame
       private static final long serialVersionUID = 0L;
 
       // Image files.
-      public static final String BEE_IMAGE_FILENAME = "honeybee.png";
-      public static final String FLOWER_IMAGE_FILENAME = "blue_flower.png";
-      public static final String NECTAR_IMAGE_FILENAME = "nectar.jpg";
-      
+      public static final String BEE_IMAGE_FILENAME    = "honeybee.png";
+      public static final String FLOWER_IMAGE_FILENAME = "flower.png";
+      public static final String NECTAR_IMAGE_FILENAME = "nectar.png";
+
       // Colors.
-      public final Color HIVE_COLOR = Color.YELLOW;
-      public final Color FIELD_COLOR = Color.GREEN;
+      public final Color HIVE_COLOR         = Color.YELLOW;
+      public final Color WORLD_COLOR        = Color.GREEN;
       public final Color SELECTED_BEE_COLOR = Color.RED;
-      
-      // Images and graphics.      
-      Graphics graphics;
-      Image canvasImage;
-      Graphics canvasGraphics;
-      BufferedImage beeImage;
-      Graphics2D beeGraphics;
-	  BufferedImage flowerImage;
-      Graphics2D flowerGraphics;      
+
+      // Images and graphics.
+      Graphics      graphics;
+      BufferedImage         canvasImage;
+      Graphics2D      canvasGraphics;
+      BufferedImage[] beeOrientedImages;
+      BufferedImage flowerImage;
       BufferedImage nectarImage;
-      Graphics2D nectarGraphics;
-      
+
       // Font.
       Font font;
-      
+
       // Sizes.
-      Dimension canvasSize;      
-      int   width, height;
-      float cellWidth, cellHeight;
-      
+      Dimension canvasSize;
+      int       width, height;
+      float     cellWidth, cellHeight;
+
       // Constructor.
       public Display(Dimension canvasSize)
       {
@@ -256,27 +250,25 @@ public class WorldDisplay extends JFrame
          width      = Parameters.WORLD_WIDTH;
          height     = Parameters.WORLD_HEIGHT;
          cellWidth  = (float)canvasSize.width / (float)width;
-         cellHeight = (float)canvasSize.height / (float)height;        
+         cellHeight = (float)canvasSize.height / (float)height;
       }
-     
+
 
       // Update display.
       void update()
       {
          int x, y, x2, y2;
-         int beeWidth, beeHeight;
-         int nectarWidth, nectarHeight;
 
          // Initialize graphics.
          if (graphics == null)
          {
-        	 graphics = getGraphics();
-             if (graphics == null)
-             {
-                return;
-             }
-            canvasImage         = createImage(canvasSize.width, canvasSize.height);
-            canvasGraphics = canvasImage.getGraphics();
+            graphics = getGraphics();
+            if (graphics == null)
+            {
+               return;
+            }
+            canvasImage = new BufferedImage(canvasSize.width, canvasSize.height, BufferedImage.TYPE_INT_ARGB); 
+            canvasGraphics = canvasImage.createGraphics();
             initGraphics();
          }
 
@@ -285,10 +277,6 @@ public class WorldDisplay extends JFrame
          canvasGraphics.fillRect(0, 0, canvasSize.width, canvasSize.height);
 
          // Draw cells.
-         beeWidth = beeImage.getWidth();
-         beeHeight = beeImage.getHeight();
-         nectarWidth = nectarImage.getWidth();
-         nectarHeight = nectarImage.getHeight();
          for (x = x2 = 0; x < width;
               x++, x2 = (int)(cellWidth * (double)x))
          {
@@ -298,61 +286,38 @@ public class WorldDisplay extends JFrame
             {
                if (world.cells[x][y].hive)
                {
-                   canvasGraphics.setColor(HIVE_COLOR);
-               } else {
-                   canvasGraphics.setColor(FIELD_COLOR);
+                  canvasGraphics.setColor(HIVE_COLOR);
+               }
+               else
+               {
+                  canvasGraphics.setColor(WORLD_COLOR);
                }
                canvasGraphics.fillRect(x2, y2, (int)cellWidth + 1, (int)cellHeight + 1);
-               
+
                // Draw flower and nectar?
                Flower flower = world.cells[x][y].flower;
                if (flower != null)
                {
-       		    	flowerGraphics.drawImage(flowerImage, x2, y2, (int)cellWidth + 1, (int)cellHeight + 1, null);
-       		    	nectarGraphics.drawImage(nectarImage, x2, y2, (int)cellWidth + 1, (int)cellHeight + 1, null);
-                    nectarGraphics.drawString((flower.nectar + ""), x2, y2);
+                  canvasGraphics.drawImage(flowerImage, x2, y2, (int)cellWidth + 1, (int)cellHeight + 1, null);
+                  if (flower.nectar >= 0)
+                  {
+                	  int xoff = (int)(cellWidth / 3.0f);
+                	  int yoff = (int)(cellHeight / 3.0f);
+                      canvasGraphics.drawImage(nectarImage, x2 + xoff, y2 + yoff, (int)cellWidth + 1, (int)cellHeight + 1, null);                	  
+                	  //canvasGraphics.drawString((flower.nectar + ""), x2, y2);
+                  }
                }
-               
+
                // Draw bee?
                HoneyBee bee = world.cells[x][y].bee;
                if (bee != null)
-               {    	   
-            	   double angle = 0.0;
-                   switch (bee.orientation)
-                   {
-                   case Compass.NORTH:
-                      break;
-                   case Compass.NORTHEAST:
-                	   angle = Math.toRadians(45.0);
-                      break;
-                   case Compass.EAST:
-                	   angle = Math.toRadians(90.0);
-                      break;
-                   case Compass.SOUTHEAST:
-                	   angle = Math.toRadians(135.0);
-                       break;
-                   case Compass.SOUTH:
-                	   angle = Math.toRadians(180.0);
-                       break;
-                   case Compass.SOUTHWEST:
-                	   angle = Math.toRadians(225.0);
-                      break;
-                   case Compass.WEST:
-                	   angle = Math.toRadians(270.0);
-                       break;
-                   case Compass.NORTHWEST:
-                	   angle = Math.toRadians(315.0);
-                      break;
-                   }
-                   AffineTransform t = beeGraphics.getTransform();
-      		    beeGraphics.setTransform(AffineTransform.getRotateInstance(angle, 
-      		    		(double)beeWidth / 2.0, (double)beeHeight / 2.0));
-       		    beeGraphics.drawImage(beeImage, x2, y2, (int)cellWidth + 1, (int)cellHeight + 1, null); 
-       		    beeGraphics.setTransform(t);
-               }              
+               {
+                  canvasGraphics.drawImage(beeOrientedImages[bee.orientation], x2, y2, 
+                		  (int)cellWidth + 1, (int)cellHeight + 1, null);
+               }
             }
          }
-         
+
          // Draw grid.
          canvasGraphics.setColor(Color.BLACK);
          y2 = canvasSize.height;
@@ -372,30 +337,81 @@ public class WorldDisplay extends JFrame
          graphics.drawImage(canvasImage, 0, 0, this);
       }
 
+
       // Initialize graphics.
       void initGraphics()
       {
-    			// Load source images.
-    	  try
-    	  {
-    			beeImage = ImageIO.read(new File(BEE_IMAGE_FILENAME));
-    			flowerImage = ImageIO.read(new File(FLOWER_IMAGE_FILENAME));
-       			nectarImage = ImageIO.read(new File(NECTAR_IMAGE_FILENAME));
-    	  } catch(IOException e)
-    	  {
-    		  System.err.println("Cannot load images");
-    		  System.exit(1);
-    	  }
-       			
-       			// Get graphics.
-       			beeGraphics = (Graphics2D)beeImage.getGraphics();       			
-       			flowerGraphics = (Graphics2D)flowerImage.getGraphics();
-       			nectarGraphics = (Graphics2D)nectarImage.getGraphics();
-       		
-       			// Get font.
-       		 font = new Font("Serif", Font.PLAIN, 12);
-             nectarGraphics.setFont(font);
+         // Load source images.
+    	 BufferedImage beeImage = null;
+         try
+         {
+        	beeImage = ImageIO.read(getClass().getResource(BEE_IMAGE_FILENAME)); 
+            flowerImage = ImageIO.read(getClass().getResource(FLOWER_IMAGE_FILENAME));
+            nectarImage = ImageIO.read(getClass().getResource(NECTAR_IMAGE_FILENAME));
+         }
+         catch (IOException e)
+         {
+            System.err.println("Cannot load images");
+            System.exit(1);
+         }
+
+         // Set font.
+         font = new Font("Serif", Font.PLAIN, 12);
+         canvasGraphics.setFont(font);
+         
+         // Create oriented bee images.
+         beeOrientedImages = new BufferedImage[Compass.NUM_POINTS];
+         beeOrientedImages[Compass.NORTH] = beeImage; 
+         for (int i = 1; i < Compass.NUM_POINTS; i++)
+         { 
+            double angle = 0.0;
+            switch (i)
+            {
+            case Compass.NORTHEAST:
+               angle = 45.0;
+               break;
+
+            case Compass.EAST:
+               angle = 90.0;
+               break;
+
+            case Compass.SOUTHEAST:
+               angle = 135.0;
+               break;
+
+            case Compass.SOUTH:
+               angle = 180.0;
+               break;
+
+            case Compass.SOUTHWEST:
+               angle = 225.0;
+               break;
+
+            case Compass.WEST:
+               angle = 270.0;
+               break;
+
+            case Compass.NORTHWEST:
+               angle = 315.0;
+               break;
+            }
+            beeOrientedImages[i] = createRotatedImage(beeImage, angle);
+         }
       }
+
+      // Create rotated image.
+      public BufferedImage createRotatedImage(BufferedImage bimg, double angle) 
+      {
+    	    int w = bimg.getWidth();    
+    	    int h = bimg.getHeight();
+
+    	    BufferedImage rotated = new BufferedImage(w, h, bimg.getType());  
+    	    Graphics2D graphic = rotated.createGraphics();
+    	    graphic.rotate(Math.toRadians(angle), w/2, h/2);
+    	    graphic.drawImage(bimg, null, 0, 0);
+    	    graphic.dispose();
+    	    return rotated;
+    	}
       
       // Canvas mouse listener.
       class CanvasMouseListener extends MouseAdapter
@@ -409,29 +425,35 @@ public class WorldDisplay extends JFrame
             if ((x >= 0) && (x < width) &&
                 (y >= 0) && (y < height))
             {
-            	if (world.cells[x][y].bee != null)          		
-            	{
-            		if (beeDashboard == null)
-            		{
+               if (world.cells[x][y].bee != null)
+               {
+                  if (beeDashboard == null)
+                  {
+                     beeDashboard = new HoneyBeeDashboard(world.cells[x][y].bee);
+                     beeDashboard.open();
+                  }
+                  else
+                  {
+                     beeDashboard.close();
+                     if (beeDashboard.bee == world.cells[x][y].bee)
+                     {
+                        beeDashboard = null;
+                     }
+                     else
+                     {
                         beeDashboard = new HoneyBeeDashboard(world.cells[x][y].bee);
-                        beeDashboard.open();            			
-            		} else {
-		                   beeDashboard.close();
-            			if (beeDashboard.bee == world.cells[x][y].bee)
-            			{
- 			                beeDashboard = null;            				
-            			} else {
-                            beeDashboard = new HoneyBeeDashboard(world.cells[x][y].bee);
-                            beeDashboard.open();               				
-            			}
-            		}
-            	} else {
-            		if (beeDashboard != null)
-            		{
-		                   beeDashboard.close(); 
-		                beeDashboard = null;
-            		}
-            	}
+                        beeDashboard.open();
+                     }
+                  }
+               }
+               else
+               {
+                  if (beeDashboard != null)
+                  {
+                     beeDashboard.close();
+                     beeDashboard = null;
+                  }
+               }
             }
 
             // Refresh display.
@@ -449,7 +471,7 @@ public class WorldDisplay extends JFrame
       }
    }
 
-    // Control panel.
+   // Control panel.
    class Controls extends JPanel implements ActionListener, ChangeListener
    {
       private static final long serialVersionUID = 0L;
@@ -517,7 +539,10 @@ public class WorldDisplay extends JFrame
             random = new SecureRandom();
             random.setSeed(randomSeed);
             world.reset();
+            if (beeDashboard != null)
+            {
             beeDashboard.update();
+            }
 
             return;
          }

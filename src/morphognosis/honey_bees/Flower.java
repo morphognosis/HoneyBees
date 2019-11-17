@@ -12,20 +12,22 @@ import morphognosis.Utility;
 
 public class Flower
 {
-   public int          nectar;
-   
+   public int nectar;
+
    // Constructor.
    public Flower()
    {
-	   nectar = 0;
+      nectar = 0;
    }
-   
+
+
    // Clear.
    public void clear()
    {
-	   nectar = 0;
+      nectar = 0;
    }
-   
+
+
    // Save flower.
    public void save(DataOutputStream writer) throws IOException
    {
@@ -33,9 +35,10 @@ public class Flower
       writer.flush();
    }
 
+
    // Load flower.
    public void load(DataInputStream reader) throws IOException
    {
-      nectar             = Utility.loadInt(reader);
-   }   
+      nectar = Utility.loadInt(reader);
+   }
 }

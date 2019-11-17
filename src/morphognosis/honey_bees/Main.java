@@ -56,18 +56,18 @@ public class Main
       "      World parameters:\n" +
       "        [-worldDimensions <width> <height> (default=" + Parameters.WORLD_WIDTH + " " + Parameters.WORLD_HEIGHT + ")]\n" +
       "        [-hiveRadius <radius> (default=" + Parameters.HIVE_RADIUS + ")]\n" +
-      "      Flower parameters:\n" +      
+      "      Flower parameters:\n" +
       "        [-flowerSproutProbability <probability> (default=" + Parameters.FLOWER_SPROUT_PROBABILITY + ")]\n" +
       "        [-flowerDeathProbability <probability> (default=" + Parameters.FLOWER_DEATH_PROBABILITY + ")]\n" +
       "        [-flowerNectarCapacity <quantity> (default=" + Parameters.FLOWER_NECTAR_CAPACITY + ")]\n" +
-      "        [-flowerNectarProductionProbability <probability> (default=" + Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY + ")]\n" +      
+      "        [-flowerNectarProductionProbability <probability> (default=" + Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY + ")]\n" +
       "      Honey bee parameters:\n" +
       "        [-numBees <quantity> (default=" + Parameters.NUM_BEES + ")]\n" +
       "        [-beeForageTurnProbability <probability> (default=" + Parameters.BEE_FORAGE_TURN_PROBABILITY + ")]\n" +
       "        [-beeHiveTurnProbability <probability> (default=" + Parameters.BEE_HIVE_TURN_PROBABILITY + ")]\n" +
       "        [-beeLeaveHiveToForageProbability <probability> (default=" + Parameters.BEE_LEAVE_HIVE_TO_FORAGE_PROBABILITY + ")]\n" +
       "        [-beeReturnToHiveProbability <probability> (default=" + Parameters.BEE_RETURN_TO_HIVE_PROBABILITY + ")]\n" +
-      "        [-beeDanceDuration <quantity> (default=" + Parameters.BEE_DANCE_DURATION + ")]\n" +      
+      "        [-beeDanceDuration <quantity> (default=" + Parameters.BEE_DANCE_DURATION + ")]\n" +
       "      Morphognosis parameters:\n" +
       "        [-numNeighborhoods <quantity> (default=" + Parameters.NUM_NEIGHBORHOODS + ")]\n" +
       "        [-neighborhoodInitialDimension <quantity> (default=" + Parameters.NEIGHBORHOOD_INITIAL_DIMENSION + ")]\n" +
@@ -120,9 +120,10 @@ public class Main
    // Initialize.
    public void init()
    {
-      world = new World(randomSeed); 
+      world = new World(randomSeed);
    }
-   
+
+
    // Reset.
    public void reset()
    {
@@ -146,9 +147,10 @@ public class Main
          display.close();
          display = null;
       }
-      world       = null;
+      world = null;
    }
-   
+
+
    // Save to file.
    public void save(String filename) throws IOException
    {
@@ -170,9 +172,9 @@ public class Main
    // Save.
    public void save(DataOutputStream writer) throws IOException
    {
-	   // Save parameters.
-	   Parameters.save(writer);
-	   
+      // Save parameters.
+      Parameters.save(writer);
+
       // Save world.
       world.save(writer);
    }
@@ -185,7 +187,7 @@ public class Main
 
       try
       {
-          reader = new DataInputStream(new BufferedInputStream(new FileInputStream(new File(filename))));
+         reader = new DataInputStream(new BufferedInputStream(new FileInputStream(new File(filename))));
       }
       catch (Exception e)
       {
@@ -199,9 +201,9 @@ public class Main
    // Load.
    public void load(DataInputStream reader) throws IOException
    {
-	   // Load parameters.
-	   Parameters.load(reader);
-	   
+      // Load parameters.
+      Parameters.load(reader);
+
       // Load world.
       world.load(reader);
    }
@@ -226,6 +228,7 @@ public class Main
          }
       }
    }
+
 
    // Create display.
    public void createDisplay()
@@ -280,15 +283,15 @@ public class Main
    public static void main(String[] args)
    {
       // Get options.
-      int     steps             = -1;
-      int     driver            = HoneyBee.DRIVER_TYPE.AUTOPILOT.getValue();
-      int     randomSeed        = DEFAULT_RANDOM_SEED;
-      String  loadfile          = null;
-      String  savefile          = null;
-      boolean display           = false;
-      boolean gotParm           = false;
-      boolean printParms         = false;
-      boolean gotDatasetParm    = false;
+      int     steps          = -1;
+      int     driver         = HoneyBee.DRIVER_TYPE.AUTOPILOT.getValue();
+      int     randomSeed     = DEFAULT_RANDOM_SEED;
+      String  loadfile       = null;
+      String  savefile       = null;
+      boolean display        = false;
+      boolean gotParm        = false;
+      boolean printParms     = false;
+      boolean gotDatasetParm = false;
 
       for (int i = 0; i < args.length; i++)
       {
@@ -356,7 +359,7 @@ public class Main
             }
             try
             {
-            	Parameters.WORLD_HEIGHT = Integer.parseInt(args[i]);
+               Parameters.WORLD_HEIGHT = Integer.parseInt(args[i]);
             }
             catch (NumberFormatException e) {
                System.err.println("Invalid world height");
@@ -398,7 +401,7 @@ public class Main
             }
             gotParm = true;
             continue;
-         }        
+         }
          if (args[i].equals("-driver"))
          {
             i++;
@@ -435,15 +438,15 @@ public class Main
             }
             try
             {
-            	Parameters.FLOWER_SPROUT_PROBABILITY = Float.parseFloat(args[i]);
+               Parameters.FLOWER_SPROUT_PROBABILITY = Float.parseFloat(args[i]);
             }
             catch (NumberFormatException e) {
                System.err.println("Invalid flowerSproutProbability option");
                System.err.println(Usage);
                System.exit(1);
             }
-            if (Parameters.FLOWER_SPROUT_PROBABILITY < 0.0f || 
-            		Parameters.FLOWER_SPROUT_PROBABILITY > 1.0f)
+            if ((Parameters.FLOWER_SPROUT_PROBABILITY < 0.0f) ||
+                (Parameters.FLOWER_SPROUT_PROBABILITY > 1.0f))
             {
                System.err.println("Invalid flowerSproutProbability option");
                System.err.println(Usage);
@@ -463,15 +466,15 @@ public class Main
             }
             try
             {
-            	Parameters.FLOWER_DEATH_PROBABILITY = Float.parseFloat(args[i]);
+               Parameters.FLOWER_DEATH_PROBABILITY = Float.parseFloat(args[i]);
             }
             catch (NumberFormatException e) {
                System.err.println("Invalid flowerDeathProbability option");
                System.err.println(Usage);
                System.exit(1);
             }
-            if (Parameters.FLOWER_DEATH_PROBABILITY < 0.0f || 
-            		Parameters.FLOWER_DEATH_PROBABILITY > 1.0f)
+            if ((Parameters.FLOWER_DEATH_PROBABILITY < 0.0f) ||
+                (Parameters.FLOWER_DEATH_PROBABILITY > 1.0f))
             {
                System.err.println("Invalid flowerDeathProbability option");
                System.err.println(Usage);
@@ -491,14 +494,14 @@ public class Main
             }
             try
             {
-            	Parameters.FLOWER_NECTAR_CAPACITY = Integer.parseInt(args[i]);
+               Parameters.FLOWER_NECTAR_CAPACITY = Integer.parseInt(args[i]);
             }
             catch (NumberFormatException e) {
                System.err.println("Invalid flowerNectarCapacity option");
                System.err.println(Usage);
                System.exit(1);
             }
-            if (Parameters.FLOWER_NECTAR_CAPACITY < 0) 
+            if (Parameters.FLOWER_NECTAR_CAPACITY < 0)
             {
                System.err.println("Invalid flowerNectarCapacity option");
                System.err.println(Usage);
@@ -518,15 +521,15 @@ public class Main
             }
             try
             {
-            	Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY = Float.parseFloat(args[i]);
+               Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY = Float.parseFloat(args[i]);
             }
             catch (NumberFormatException e) {
                System.err.println("Invalid flowerNectarProductionProbability option");
                System.err.println(Usage);
                System.exit(1);
             }
-            if (Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY < 0.0f || 
-            		Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY > 1.0f)
+            if ((Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY < 0.0f) ||
+                (Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY > 1.0f))
             {
                System.err.println("Invalid flowerNectarProductionProbability option");
                System.err.println(Usage);
@@ -546,14 +549,14 @@ public class Main
             }
             try
             {
-            	Parameters.NUM_BEES = Integer.parseInt(args[i]);
+               Parameters.NUM_BEES = Integer.parseInt(args[i]);
             }
             catch (NumberFormatException e) {
                System.err.println("Invalid numBees option");
                System.err.println(Usage);
                System.exit(1);
             }
-            if (Parameters.NUM_BEES < 0) 
+            if (Parameters.NUM_BEES < 0)
             {
                System.err.println("Invalid numBees option");
                System.err.println(Usage);
@@ -573,15 +576,15 @@ public class Main
             }
             try
             {
-            	Parameters.BEE_FORAGE_TURN_PROBABILITY = Float.parseFloat(args[i]);
+               Parameters.BEE_FORAGE_TURN_PROBABILITY = Float.parseFloat(args[i]);
             }
             catch (NumberFormatException e) {
                System.err.println("Invalid beeForageTurnProbability option");
                System.err.println(Usage);
                System.exit(1);
             }
-            if (Parameters.BEE_FORAGE_TURN_PROBABILITY < 0.0f || 
-            		Parameters.BEE_FORAGE_TURN_PROBABILITY > 1.0f)
+            if ((Parameters.BEE_FORAGE_TURN_PROBABILITY < 0.0f) ||
+                (Parameters.BEE_FORAGE_TURN_PROBABILITY > 1.0f))
             {
                System.err.println("Invalid beeForageTurnProbability option");
                System.err.println(Usage);
@@ -589,7 +592,7 @@ public class Main
             }
             gotParm = true;
             continue;
-         }         
+         }
          if (args[i].equals("-beeHiveTurnProbability"))
          {
             i++;
@@ -601,15 +604,15 @@ public class Main
             }
             try
             {
-            	Parameters.BEE_HIVE_TURN_PROBABILITY = Float.parseFloat(args[i]);
+               Parameters.BEE_HIVE_TURN_PROBABILITY = Float.parseFloat(args[i]);
             }
             catch (NumberFormatException e) {
                System.err.println("Invalid beeHiveTurnProbability option");
                System.err.println(Usage);
                System.exit(1);
             }
-            if (Parameters.BEE_HIVE_TURN_PROBABILITY < 0.0f || 
-            		Parameters.BEE_HIVE_TURN_PROBABILITY > 1.0f)
+            if ((Parameters.BEE_HIVE_TURN_PROBABILITY < 0.0f) ||
+                (Parameters.BEE_HIVE_TURN_PROBABILITY > 1.0f))
             {
                System.err.println("Invalid beeHiveTurnProbability option");
                System.err.println(Usage);
@@ -617,7 +620,7 @@ public class Main
             }
             gotParm = true;
             continue;
-         }         
+         }
          if (args[i].equals("-beeLeaveHiveToForageProbability"))
          {
             i++;
@@ -629,15 +632,15 @@ public class Main
             }
             try
             {
-            	Parameters.BEE_LEAVE_HIVE_TO_FORAGE_PROBABILITY = Float.parseFloat(args[i]);
+               Parameters.BEE_LEAVE_HIVE_TO_FORAGE_PROBABILITY = Float.parseFloat(args[i]);
             }
             catch (NumberFormatException e) {
                System.err.println("Invalid beeLeaveHiveToForageProbability option");
                System.err.println(Usage);
                System.exit(1);
             }
-            if (Parameters.BEE_LEAVE_HIVE_TO_FORAGE_PROBABILITY < 0.0f || 
-            		Parameters.BEE_LEAVE_HIVE_TO_FORAGE_PROBABILITY > 1.0f)
+            if ((Parameters.BEE_LEAVE_HIVE_TO_FORAGE_PROBABILITY < 0.0f) ||
+                (Parameters.BEE_LEAVE_HIVE_TO_FORAGE_PROBABILITY > 1.0f))
             {
                System.err.println("Invalid beeLeaveHiveToForageProbability option");
                System.err.println(Usage);
@@ -645,7 +648,7 @@ public class Main
             }
             gotParm = true;
             continue;
-         }  
+         }
          if (args[i].equals("-beeReturnToHiveProbability"))
          {
             i++;
@@ -657,15 +660,15 @@ public class Main
             }
             try
             {
-            	Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY = Float.parseFloat(args[i]);
+               Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY = Float.parseFloat(args[i]);
             }
             catch (NumberFormatException e) {
                System.err.println("Invalid flowerNectarProductionProbability option");
                System.err.println(Usage);
                System.exit(1);
             }
-            if (Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY < 0.0f || 
-            		Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY > 1.0f)
+            if ((Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY < 0.0f) ||
+                (Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY > 1.0f))
             {
                System.err.println("Invalid flowerNectarProductionProbability option");
                System.err.println(Usage);
@@ -685,14 +688,14 @@ public class Main
             }
             try
             {
-            	Parameters.BEE_DANCE_DURATION = Integer.parseInt(args[i]);
+               Parameters.BEE_DANCE_DURATION = Integer.parseInt(args[i]);
             }
             catch (NumberFormatException e) {
                System.err.println("Invalid beeDanceDuration option");
                System.err.println(Usage);
                System.exit(1);
             }
-            if (Parameters.BEE_DANCE_DURATION < 0) 
+            if (Parameters.BEE_DANCE_DURATION < 0)
             {
                System.err.println("Invalid beeDanceDuration option");
                System.err.println(Usage);
@@ -700,7 +703,7 @@ public class Main
             }
             gotParm = true;
             continue;
-         }                  
+         }
          if (args[i].equals("-numNeighborhoods"))
          {
             i++;
@@ -739,7 +742,7 @@ public class Main
             }
             try
             {
-            	Parameters.NEIGHBORHOOD_INITIAL_DIMENSION = Integer.parseInt(args[i]);
+               Parameters.NEIGHBORHOOD_INITIAL_DIMENSION = Integer.parseInt(args[i]);
             }
             catch (NumberFormatException e) {
                System.err.println("Invalid neighborhoodInitialDimension option");
@@ -767,7 +770,7 @@ public class Main
             }
             try
             {
-            	Parameters.NEIGHBORHOOD_DIMENSION_STRIDE = Integer.parseInt(args[i]);
+               Parameters.NEIGHBORHOOD_DIMENSION_STRIDE = Integer.parseInt(args[i]);
             }
             catch (NumberFormatException e) {
                System.err.println("Invalid neighborhoodDimensionStride option");
@@ -794,7 +797,7 @@ public class Main
             }
             try
             {
-            	Parameters.NEIGHBORHOOD_DIMENSION_MULTIPLIER = Integer.parseInt(args[i]);
+               Parameters.NEIGHBORHOOD_DIMENSION_MULTIPLIER = Integer.parseInt(args[i]);
             }
             catch (NumberFormatException e) {
                System.err.println("Invalid neighborhoodDimensionMultiplier option");
@@ -821,7 +824,7 @@ public class Main
             }
             try
             {
-            	Parameters.EPOCH_INTERVAL_STRIDE = Integer.parseInt(args[i]);
+               Parameters.EPOCH_INTERVAL_STRIDE = Integer.parseInt(args[i]);
             }
             catch (NumberFormatException e) {
                System.err.println("Invalid epochIntervalStride option");
@@ -848,7 +851,7 @@ public class Main
             }
             try
             {
-            	Parameters.EPOCH_INTERVAL_MULTIPLIER = Integer.parseInt(args[i]);
+               Parameters.EPOCH_INTERVAL_MULTIPLIER = Integer.parseInt(args[i]);
             }
             catch (NumberFormatException e) {
                System.err.println("Invalid epochIntervalMultiplier option");

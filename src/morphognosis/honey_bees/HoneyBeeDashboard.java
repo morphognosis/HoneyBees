@@ -37,12 +37,12 @@ public class HoneyBeeDashboard extends JFrame
    OperationsPanel      operations;
 
    // Target honey bee.
-   HoneyBee  bee;
+   HoneyBee bee;
 
    // Constructor.
    public HoneyBeeDashboard(HoneyBee bee)
    {
-	   this.bee = bee;
+      this.bee = bee;
 
       setTitle("Honey bee");
       addWindowListener(new WindowAdapter()
@@ -66,6 +66,7 @@ public class HoneyBeeDashboard extends JFrame
       update();
    }
 
+
    void setLocation()
    {
       Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
@@ -83,6 +84,7 @@ public class HoneyBeeDashboard extends JFrame
    {
       // Update sensors.
       String sensorsString = "hive=" + bee.sensors[HoneyBee.HIVE_PRESENCE_INDEX];
+
       sensorsString += " adjacent flower nectar=" + bee.sensors[HoneyBee.ADJACENT_FLOWER_NECTAR_QUANTITY_INDEX];
       sensorsString += " adjacent bee: orientation=" + bee.sensors[HoneyBee.ADJACENT_BEE_ORIENTATION_INDEX];
       sensorsString += ", nectar distance=" + bee.sensors[HoneyBee.ADJACENT_BEE_NECTAR_DISTANCE_INDEX];
@@ -95,6 +97,7 @@ public class HoneyBeeDashboard extends JFrame
       // Update driver choice.
       setDriverChoice(bee.driver);
    }
+
 
    // Open the dashboard.
    void open()
@@ -109,12 +112,14 @@ public class HoneyBeeDashboard extends JFrame
       morphognostic.close();
       setVisible(false);
    }
-   
+
+
    // Set sensors display.
    void setSensors(String sensorsString)
    {
       sensorsResponse.sensorsText.setText(sensorsString);
    }
+
 
    // Set response display.
    void setResponse(String responseString)
@@ -176,7 +181,7 @@ public class HoneyBeeDashboard extends JFrame
       private static final long serialVersionUID = 0L;
 
       // Components.
-      Choice  driverChoice;
+      Choice driverChoice;
 
       // Constructor.
       public DriverPanel()
@@ -218,7 +223,7 @@ public class HoneyBeeDashboard extends JFrame
                sensorsString += " adjacent bee: orientation=" + bee.sensors[HoneyBee.ADJACENT_BEE_ORIENTATION_INDEX];
                sensorsString += ", nectar distance=" + bee.sensors[HoneyBee.ADJACENT_BEE_NECTAR_DISTANCE_INDEX];
                setSensors(sensorsString);
-               
+
                // Update response.
                setResponse(HoneyBee.getResponseName(bee.response));
                return;
