@@ -4,6 +4,7 @@
 
 package morphognosis.honey_bees;
 
+import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Canvas;
 import java.awt.Color;
@@ -223,8 +224,8 @@ public class WorldDisplay extends JFrame
 
       // Images and graphics.
       Graphics      graphics;
-      BufferedImage         canvasImage;
-      Graphics2D      canvasGraphics;
+      BufferedImage canvasImage;
+      Graphics2D    canvasGraphics;
       BufferedImage[] beeOrientedImages;
       BufferedImage flowerImage;
       BufferedImage nectarImage;
@@ -267,7 +268,7 @@ public class WorldDisplay extends JFrame
             {
                return;
             }
-            canvasImage = new BufferedImage(canvasSize.width, canvasSize.height, BufferedImage.TYPE_INT_ARGB); 
+            canvasImage    = new BufferedImage(canvasSize.width, canvasSize.height, BufferedImage.TYPE_INT_ARGB);
             canvasGraphics = canvasImage.createGraphics();
             initGraphics();
          }
@@ -277,6 +278,9 @@ public class WorldDisplay extends JFrame
          canvasGraphics.fillRect(0, 0, canvasSize.width, canvasSize.height);
 
          // Draw cells.
+         BasicStroke thickLine  = new BasicStroke(3);
+         BasicStroke thinLine   = new BasicStroke(1);
+         int         nectarYoff = (int)(cellHeight / 2.0f);
          for (x = x2 = 0; x < width;
               x++, x2 = (int)(cellWidth * (double)x))
          {
@@ -293,18 +297,18 @@ public class WorldDisplay extends JFrame
                   canvasGraphics.setColor(WORLD_COLOR);
                }
                canvasGraphics.fillRect(x2, y2, (int)cellWidth + 1, (int)cellHeight + 1);
+               canvasGraphics.setColor(Color.WHITE);
 
                // Draw flower and nectar?
                Flower flower = world.cells[x][y].flower;
                if (flower != null)
                {
-                  canvasGraphics.drawImage(flowerImage, x2, y2, (int)cellWidth + 1, (int)cellHeight + 1, null);
-                  if (flower.nectar >= 0)
+                  canvasGraphics.drawImage(flowerImage, x2, y2,
+                                           (int)cellWidth + 1, (int)cellHeight + 1, null);
+                  if (flower.nectar > 0)
                   {
-                	  int xoff = (int)(cellWidth / 3.0f);
-                	  int yoff = (int)(cellHeight / 3.0f);
-                      canvasGraphics.drawImage(nectarImage, x2 + xoff, y2 + yoff, (int)cellWidth + 1, (int)cellHeight + 1, null);                	  
-                	  //canvasGraphics.drawString((flower.nectar + ""), x2, y2);
+                     canvasGraphics.drawImage(nectarImage, x2, y2 + nectarYoff,
+                                              (int)(cellWidth / 2.0f), (int)(cellHeight / 2.0f), null);
                   }
                }
 
@@ -312,8 +316,21 @@ public class WorldDisplay extends JFrame
                HoneyBee bee = world.cells[x][y].bee;
                if (bee != null)
                {
-                  canvasGraphics.drawImage(beeOrientedImages[bee.orientation], x2, y2, 
-                		  (int)cellWidth + 1, (int)cellHeight + 1, null);
+                  canvasGraphics.drawImage(beeOrientedImages[bee.orientation], x2, y2,
+                                           (int)cellWidth + 1, (int)cellHeight + 1, null);
+                  if (bee.nectarCarry)
+                  {
+                     canvasGraphics.drawImage(nectarImage, x2, y2,
+                                              (int)(cellWidth / 2.0f), (int)(cellHeight / 2.0f), null);
+                  }
+                  if ((beeDashboard != null) && (beeDashboard.bee == bee))
+                  {
+                     canvasGraphics.setColor(SELECTED_BEE_COLOR);
+                     canvasGraphics.setStroke(thickLine);
+                     canvasGraphics.drawRect(x2 + 1, y2 + 1, (int)cellWidth - 1, (int)cellHeight - 1);
+                     canvasGraphics.setColor(Color.WHITE);
+                     canvasGraphics.setStroke(thinLine);
+                  }
                }
             }
          }
@@ -342,10 +359,11 @@ public class WorldDisplay extends JFrame
       void initGraphics()
       {
          // Load source images.
-    	 BufferedImage beeImage = null;
+         BufferedImage beeImage = null;
+
          try
          {
-        	beeImage = ImageIO.read(getClass().getResource(BEE_IMAGE_FILENAME)); 
+            beeImage    = ImageIO.read(getClass().getResource(BEE_IMAGE_FILENAME));
             flowerImage = ImageIO.read(getClass().getResource(FLOWER_IMAGE_FILENAME));
             nectarImage = ImageIO.read(getClass().getResource(NECTAR_IMAGE_FILENAME));
          }
@@ -358,12 +376,12 @@ public class WorldDisplay extends JFrame
          // Set font.
          font = new Font("Serif", Font.PLAIN, 12);
          canvasGraphics.setFont(font);
-         
+
          // Create oriented bee images.
          beeOrientedImages = new BufferedImage[Compass.NUM_POINTS];
-         beeOrientedImages[Compass.NORTH] = beeImage; 
+         beeOrientedImages[Compass.NORTH] = beeImage;
          for (int i = 1; i < Compass.NUM_POINTS; i++)
-         { 
+         {
             double angle = 0.0;
             switch (i)
             {
@@ -399,20 +417,23 @@ public class WorldDisplay extends JFrame
          }
       }
 
-      // Create rotated image.
-      public BufferedImage createRotatedImage(BufferedImage bimg, double angle) 
-      {
-    	    int w = bimg.getWidth();    
-    	    int h = bimg.getHeight();
 
-    	    BufferedImage rotated = new BufferedImage(w, h, bimg.getType());  
-    	    Graphics2D graphic = rotated.createGraphics();
-    	    graphic.rotate(Math.toRadians(angle), w/2, h/2);
-    	    graphic.drawImage(bimg, null, 0, 0);
-    	    graphic.dispose();
-    	    return rotated;
-    	}
-      
+      // Create rotated image.
+      public BufferedImage createRotatedImage(BufferedImage bimg, double angle)
+      {
+         int w = bimg.getWidth();
+         int h = bimg.getHeight();
+
+         BufferedImage rotated = new BufferedImage(w, h, bimg.getType());
+         Graphics2D    graphic = rotated.createGraphics();
+
+         graphic.rotate(Math.toRadians(angle), w / 2, h / 2);
+         graphic.drawImage(bimg, null, 0, 0);
+         graphic.dispose();
+         return(rotated);
+      }
+
+
       // Canvas mouse listener.
       class CanvasMouseListener extends MouseAdapter
       {
@@ -455,9 +476,6 @@ public class WorldDisplay extends JFrame
                   }
                }
             }
-
-            // Refresh display.
-            update();
          }
       }
    }
@@ -482,6 +500,7 @@ public class WorldDisplay extends JFrame
       JSlider    speedSlider;
       JButton    stepButton;
       JTextField messageText;
+      JLabel     nectarCounter;
 
       // Constructor.
       Controls()
@@ -509,14 +528,23 @@ public class WorldDisplay extends JFrame
          messageText = new JTextField("Click bee to toggle dashboard", 40);
          messageText.setEditable(false);
          panel.add(messageText);
+         nectarCounter = new JLabel("Collected nectar: 0");
+         panel.add(nectarCounter);
          add(panel, BorderLayout.SOUTH);
       }
 
 
-      // Update step counter display
+      // Update step counter display.
       void updateStepCounter(int steps)
       {
          stepCounter.setText("Steps: " + steps);
+      }
+
+
+      // Update collected nectar counter display.
+      void updateNectarCounter(int count)
+      {
+         nectarCounter.setText("Collected nectar: " + count);
       }
 
 
@@ -541,7 +569,7 @@ public class WorldDisplay extends JFrame
             world.reset();
             if (beeDashboard != null)
             {
-            beeDashboard.update();
+               beeDashboard.update();
             }
 
             return;

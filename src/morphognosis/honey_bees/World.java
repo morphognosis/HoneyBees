@@ -56,29 +56,29 @@ public class World
             }
          }
       }
-      
+
       // Create flowers.
       for (int x = 0; x < Parameters.WORLD_WIDTH; x++)
       {
          for (int y = 0; y < Parameters.WORLD_HEIGHT; y++)
          {
-        	Cell cell = cells[x][y];
-        	if (!cell.hive && cell.bee == null) 
-        	{
-        		if (random.nextFloat() < Parameters.FLOWER_SPROUT_PROBABILITY)
-        		{
-        			Flower flower = new Flower();
-        			cell.flower = flower;
-               		if (Parameters.FLOWER_NECTAR_CAPACITY > 0 && 
-               				random.nextFloat() < Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY)
-            		{
-            			flower.nectar = 1;
-            		}		
-        		}
-        	}
+            Cell cell = cells[x][y];
+            if (!cell.hive && (cell.bee == null))
+            {
+               if (random.nextFloat() < Parameters.FLOWER_SPROUT_PROBABILITY)
+               {
+                  Flower flower = new Flower();
+                  cell.flower = flower;
+                  if ((Parameters.FLOWER_NECTAR_CAPACITY > 0) &&
+                      (random.nextFloat() < Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY))
+                  {
+                     flower.nectar = 1;
+                  }
+               }
+            }
          }
       }
-      
+
       // Create bees.
       bees = new HoneyBee[Parameters.NUM_BEES];
       for (int i = 0; i < Parameters.NUM_BEES; i++)
@@ -92,8 +92,8 @@ public class World
    // Reset.
    public void reset()
    {
-	      random          = new SecureRandom();
-	      random.setSeed(randomSeed);	   
+      random = new SecureRandom();
+      random.setSeed(randomSeed);
       for (int x = 0; x < Parameters.WORLD_WIDTH; x++)
       {
          for (int y = 0; y < Parameters.WORLD_HEIGHT; y++)
@@ -105,22 +105,22 @@ public class World
       {
          for (int y = 0; y < Parameters.WORLD_HEIGHT; y++)
          {
-        	Cell cell = cells[x][y];
-        	if (!cell.hive && cell.bee == null) 
-        	{
-        		if (random.nextFloat() < Parameters.FLOWER_SPROUT_PROBABILITY)
-        		{
-        			Flower flower = new Flower();
-        			cell.flower = flower;
-               		if (Parameters.FLOWER_NECTAR_CAPACITY > 0 && 
-               				random.nextFloat() < Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY)
-            		{
-            			flower.nectar = 1;
-            		}		
-        		}
-        	}
+            Cell cell = cells[x][y];
+            if (!cell.hive && (cell.bee == null))
+            {
+               if (random.nextFloat() < Parameters.FLOWER_SPROUT_PROBABILITY)
+               {
+                  Flower flower = new Flower();
+                  cell.flower = flower;
+                  if ((Parameters.FLOWER_NECTAR_CAPACITY > 0) &&
+                      (random.nextFloat() < Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY))
+                  {
+                     flower.nectar = 1;
+                  }
+               }
+            }
          }
-      }      
+      }
       if (bees != null)
       {
          for (int i = 0; i < Parameters.NUM_BEES; i++)
@@ -237,9 +237,12 @@ public class World
             }
             else
             {
-               if (random.nextFloat() < Parameters.FLOWER_SPROUT_PROBABILITY)
+               if (!cells[x][y].hive && (cells[x][y].bee == null))
                {
-                  cells[x][y].flower = new Flower();
+                  if (random.nextFloat() < Parameters.FLOWER_SPROUT_PROBABILITY)
+                  {
+                     cells[x][y].flower = new Flower();
+                  }
                }
             }
          }

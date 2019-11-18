@@ -133,8 +133,8 @@ public class HoneyBee
    // Constructor.
    public HoneyBee(int id, World world, SecureRandom random)
    {
-      this.id         = id;
-      this.world      = world;
+      this.id     = id;
+      this.world  = world;
       this.random = random;
 
       // Initialize bee.
@@ -425,7 +425,10 @@ public class HoneyBee
             morphEvents[e.x][e.y][n][eventTime - e.time] = e.values[n];
          }
       }
-      morphognostic.update(morphEvents, x, y);
+
+      /* flibber
+       * morphognostic.update(morphEvents, x, y);
+       */
 
       // Respond.
       if (driver == DRIVER_TYPE.METAMORPHS.getValue())

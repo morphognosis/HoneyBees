@@ -31,7 +31,7 @@ public class HoneyBeeDashboard extends JFrame
    private static final long serialVersionUID = 0L;
 
    // Components.
-   SensorsResponsePanel sensorsResponse;
+   InputOutputPanel     inputOutput;
    DriverPanel          driver;
    MorphognosticDisplay morphognostic;
    OperationsPanel      operations;
@@ -44,7 +44,7 @@ public class HoneyBeeDashboard extends JFrame
    {
       this.bee = bee;
 
-      setTitle("Honey bee");
+      setTitle("Honey bee " + bee.id);
       addWindowListener(new WindowAdapter()
                         {
                            public void windowClosing(WindowEvent e) { close(); }
@@ -52,8 +52,8 @@ public class HoneyBeeDashboard extends JFrame
                         );
       JPanel basePanel = (JPanel)getContentPane();
       basePanel.setLayout(new BoxLayout(basePanel, BoxLayout.Y_AXIS));
-      sensorsResponse = new SensorsResponsePanel();
-      basePanel.add(sensorsResponse);
+      inputOutput = new InputOutputPanel();
+      basePanel.add(inputOutput);
       driver = new DriverPanel();
       basePanel.add(driver);
       morphognostic = new MorphognosticDisplay(0, bee.morphognostic);
@@ -82,17 +82,8 @@ public class HoneyBeeDashboard extends JFrame
    // Update dashboard.
    void update()
    {
-      // Update sensors.
-      String sensorsString = "hive=" + bee.sensors[HoneyBee.HIVE_PRESENCE_INDEX];
-
-      sensorsString += " adjacent flower nectar=" + bee.sensors[HoneyBee.ADJACENT_FLOWER_NECTAR_QUANTITY_INDEX];
-      sensorsString += " adjacent bee: orientation=" + bee.sensors[HoneyBee.ADJACENT_BEE_ORIENTATION_INDEX];
-      sensorsString += ", nectar distance=" + bee.sensors[HoneyBee.ADJACENT_BEE_NECTAR_DISTANCE_INDEX];
-      //TODO Notes: add nectar carry and break out each sensor in its own box.
-      setSensors(sensorsString);
-
-      // Update response.
-      setResponse(HoneyBee.getResponseName(bee.response));
+      // Update input/output.
+      inputOutput.update();
 
       // Update driver choice.
       setDriverChoice(bee.driver);
@@ -114,43 +105,37 @@ public class HoneyBeeDashboard extends JFrame
    }
 
 
-   // Set sensors display.
-   void setSensors(String sensorsString)
-   {
-      sensorsResponse.sensorsText.setText(sensorsString);
-   }
-
-
-   // Set response display.
-   void setResponse(String responseString)
-   {
-      sensorsResponse.responseText.setText(responseString);
-   }
-
-
-   // Sensors/Response panel.
-   class SensorsResponsePanel extends JPanel
+   // Input/output panel.
+   class InputOutputPanel extends JPanel
    {
       private static final long serialVersionUID = 0L;
 
       // Components.
       JTextField sensorsText;
+      JTextField nectarText;
       JTextField responseText;
 
       // Constructor.
-      public SensorsResponsePanel()
+      public InputOutputPanel()
       {
          setLayout(new BorderLayout());
          setBorder(BorderFactory.createTitledBorder(
                       BorderFactory.createLineBorder(Color.black),
-                      "Sensors/Response"));
-         JPanel sensorsPanel = new JPanel();
-         sensorsPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
-         add(sensorsPanel, BorderLayout.NORTH);
-         sensorsPanel.add(new JLabel("Sensors:"));
+                      "Input/Output"));
+         JPanel inputPanel = new JPanel();
+         inputPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+         add(inputPanel, BorderLayout.NORTH);
+         inputPanel.add(new JLabel("Sensors:"));
          sensorsText = new JTextField(30);
          sensorsText.setEditable(false);
-         sensorsPanel.add(sensorsText);
+         inputPanel.add(sensorsText);
+         JPanel nectarPanel = new JPanel();
+         nectarPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+         add(nectarPanel, BorderLayout.CENTER);
+         nectarPanel.add(new JLabel("Nectar: "));
+         nectarText = new JTextField(10);
+         nectarText.setEditable(false);
+         nectarPanel.add(nectarText);
          JPanel responsePanel = new JPanel();
          responsePanel.setLayout(new FlowLayout(FlowLayout.LEFT));
          add(responsePanel, BorderLayout.SOUTH);
@@ -158,6 +143,24 @@ public class HoneyBeeDashboard extends JFrame
          responseText = new JTextField(15);
          responseText.setEditable(false);
          responsePanel.add(responseText);
+      }
+
+
+      // Update.
+      public void update()
+      {
+         String sensorsString = "hive=" + bee.sensors[HoneyBee.HIVE_PRESENCE_INDEX];
+
+         sensorsString += " adjacent flower nectar=" + bee.sensors[HoneyBee.ADJACENT_FLOWER_NECTAR_QUANTITY_INDEX];
+         sensorsString += " adjacent bee: orientation=" + bee.sensors[HoneyBee.ADJACENT_BEE_ORIENTATION_INDEX];
+         sensorsString += ", nectar distance=" + bee.sensors[HoneyBee.ADJACENT_BEE_NECTAR_DISTANCE_INDEX];
+         //TODO Notes: add nectar carry and break out each sensor in its own box.
+         sensorsText.setText(sensorsString);
+
+         nectarText.setText(bee.nectarCarry + "");
+
+         // Update response.
+         responseText.setText(HoneyBee.getResponseName(bee.response));
       }
    }
 
@@ -217,15 +220,9 @@ public class HoneyBeeDashboard extends JFrame
                // Fresh start for autopilot.
                bee.reset();
 
-               // Update sensors.
-               String sensorsString = "hive=" + bee.sensors[HoneyBee.HIVE_PRESENCE_INDEX];
-               sensorsString += " adjacent flower nectar=" + bee.sensors[HoneyBee.ADJACENT_FLOWER_NECTAR_QUANTITY_INDEX];
-               sensorsString += " adjacent bee: orientation=" + bee.sensors[HoneyBee.ADJACENT_BEE_ORIENTATION_INDEX];
-               sensorsString += ", nectar distance=" + bee.sensors[HoneyBee.ADJACENT_BEE_NECTAR_DISTANCE_INDEX];
-               setSensors(sensorsString);
+               // Update input/output.
+               inputOutput.update();
 
-               // Update response.
-               setResponse(HoneyBee.getResponseName(bee.response));
                return;
             }
          }
