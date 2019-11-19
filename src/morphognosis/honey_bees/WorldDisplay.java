@@ -138,6 +138,7 @@ public class WorldDisplay extends JFrame
    public void update(int steps)
    {
       controls.updateStepCounter(steps);
+      controls.updateNectarCounter(world.collectedNectar);      
       update();
    }
 
@@ -220,7 +221,7 @@ public class WorldDisplay extends JFrame
       // Colors.
       public final Color HIVE_COLOR         = Color.YELLOW;
       public final Color WORLD_COLOR        = Color.GREEN;
-      public final Color SELECTED_BEE_COLOR = Color.RED;
+      public final Color SELECTED_BEE_HIGHLIGHT_COLOR = Color.RED;
 
       // Images and graphics.
       Graphics      graphics;
@@ -278,9 +279,6 @@ public class WorldDisplay extends JFrame
          canvasGraphics.fillRect(0, 0, canvasSize.width, canvasSize.height);
 
          // Draw cells.
-         BasicStroke thickLine  = new BasicStroke(3);
-         BasicStroke thinLine   = new BasicStroke(1);
-         int         nectarYoff = (int)(cellHeight / 2.0f);
          for (x = x2 = 0; x < width;
               x++, x2 = (int)(cellWidth * (double)x))
          {
@@ -298,6 +296,21 @@ public class WorldDisplay extends JFrame
                }
                canvasGraphics.fillRect(x2, y2, (int)cellWidth + 1, (int)cellHeight + 1);
                canvasGraphics.setColor(Color.WHITE);
+            }
+         }
+         
+         // Draw objects.
+         BasicStroke thickLine  = new BasicStroke(3);
+         BasicStroke dashedLine = new BasicStroke(3, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[]{9}, 0);
+         BasicStroke thinLine   = new BasicStroke(1);
+         int         nectarYoff = (int)(cellHeight / 2.0f);
+         for (x = x2 = 0; x < width;
+              x++, x2 = (int)(cellWidth * (double)x))
+         {
+            for (y = 0, y2 = canvasSize.height - (int)cellHeight;
+                 y < height;
+                 y++, y2 = (int)(cellHeight * (double)(height - (y + 1))))
+            {                  
 
                // Draw flower and nectar?
                Flower flower = world.cells[x][y].flower;
@@ -311,21 +324,86 @@ public class WorldDisplay extends JFrame
                                               (int)(cellWidth / 2.0f), (int)(cellHeight / 2.0f), null);
                   }
                }
-
+         
                // Draw bee?
-               HoneyBee bee = world.cells[x][y].bee;
+               HoneyBee bee = world.cells[x][y].bee;            
                if (bee != null)
                {
                   canvasGraphics.drawImage(beeOrientedImages[bee.orientation], x2, y2,
                                            (int)cellWidth + 1, (int)cellHeight + 1, null);
+                  
+                  // Carrying nectar?
                   if (bee.nectarCarry)
                   {
                      canvasGraphics.drawImage(nectarImage, x2, y2,
                                               (int)(cellWidth / 2.0f), (int)(cellHeight / 2.0f), null);
                   }
+                  
+                  // Bee displaying distance to nectar?
+                  if (world.cells[x][y].hive && bee.nectarCarry)
+                  {
+                	  if (bee.response >= HoneyBee.DISPLAY_NECTAR_DISTANCE && 
+                			  bee.response < HoneyBee.WAIT)
+                	  {
+                		  int maxDist = Math.max(Parameters.WORLD_WIDTH, Parameters.WORLD_HEIGHT) / 2;
+                		  int unitDist = maxDist / Parameters.BEE_NUM_DISTANCE_VALUES;
+                		  int nectarDist = ((bee.response - HoneyBee.DISPLAY_NECTAR_DISTANCE + 1) * unitDist);
+                		  int toX = bee.x;
+                		  int toY = bee.y;
+                          switch (bee.orientation)
+                          {
+                          case Compass.NORTH:
+                             toY += nectarDist;
+                             break;
+                             
+                          case Compass.NORTHEAST:
+                        	  toX += nectarDist;
+                              toY += nectarDist;
+                              break;
+                              
+                          case Compass.EAST:
+                             toX += nectarDist;
+                             break;
+
+                          case Compass.SOUTHEAST:
+                             toX += nectarDist;
+                             toY -= nectarDist;
+                             break;
+
+                          case Compass.SOUTH:
+                             toY -= nectarDist;
+                             break;
+
+                          case Compass.SOUTHWEST:
+                             toX -= nectarDist;
+                             toY -= nectarDist;
+                             break;
+
+                          case Compass.WEST:
+                             toX -= nectarDist;
+                             break;
+
+                          case Compass.NORTHWEST:
+                             toX -= nectarDist;
+                             toY += nectarDist;
+                             break;
+                          }                         
+                          canvasGraphics.setColor(Color.BLACK);
+                          canvasGraphics.setStroke(dashedLine);
+                          int fromX = x2 + (int)(cellWidth / 2.0f);
+                          int fromY = y2 + (int)(cellHeight / 2.0f);
+                          toX = (int)((float)toX * cellWidth) + (int)(cellWidth / 2.0f);
+                          toY = (int)(cellHeight * (double)(height - (toY + 1))) + (int)(cellHeight / 2.0f);
+                          canvasGraphics.drawLine(fromX, fromY, toX, toY);                    
+                          canvasGraphics.setColor(Color.WHITE);
+                          canvasGraphics.setStroke(thinLine);                          
+                	  }
+                  }
+                  
+                  // Highlight selected bee?
                   if ((beeDashboard != null) && (beeDashboard.bee == bee))
                   {
-                     canvasGraphics.setColor(SELECTED_BEE_COLOR);
+                     canvasGraphics.setColor(SELECTED_BEE_HIGHLIGHT_COLOR);
                      canvasGraphics.setStroke(thickLine);
                      canvasGraphics.drawRect(x2 + 1, y2 + 1, (int)cellWidth - 1, (int)cellHeight - 1);
                      canvasGraphics.setColor(Color.WHITE);

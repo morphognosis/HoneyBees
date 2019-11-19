@@ -28,7 +28,7 @@ public class HoneyBee
 {
    // Properties.
    public int          id;
-   public int          x, y, x2, y2;
+   public int          x, y, x2, y2, toX, toY;
    public int          orientation, orientation2;
    public boolean      nectarCarry;
    public int          nectarDistance;
@@ -138,7 +138,7 @@ public class HoneyBee
       this.random = random;
 
       // Initialize bee.
-      for (int i = 0; i < 10; i++)
+      for (int i = 0; i < 20; i++)
       {
          int dx = random.nextInt(Parameters.HIVE_RADIUS);
          if (random.nextBoolean()) { dx = -dx; }
@@ -151,7 +151,7 @@ public class HoneyBee
             world.cells[x][y].bee = this;
             break;
          }
-         if (i == 9)
+         if (i == 19)
          {
             System.err.println("Cannot place bee in world");
             System.exit(1);
@@ -426,7 +426,7 @@ public class HoneyBee
          }
       }
 
-      /* flibber
+      /* TODO
        * morphognostic.update(morphEvents, x, y);
        */
 
