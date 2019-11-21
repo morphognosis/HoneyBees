@@ -29,8 +29,11 @@ import java.io.File;
 import java.security.SecureRandom;
 
 import javax.imageio.ImageIO;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -234,6 +237,10 @@ public class WorldDisplay extends JFrame
       BufferedImage flowerImage;
       BufferedImage nectarImage;
 
+      // Sound.
+      public static final String BEE_SOUND_FILENAME = "bees.wav";
+      Clip beeSound;
+
       // Font.
       Font font;
 
@@ -256,6 +263,9 @@ public class WorldDisplay extends JFrame
          height     = Parameters.WORLD_HEIGHT;
          cellWidth  = (float)canvasSize.width / (float)width;
          cellHeight = (float)canvasSize.height / (float)height;
+
+         // Initialize sounds.
+         initSounds();
       }
 
 
@@ -464,7 +474,7 @@ public class WorldDisplay extends JFrame
          }
          catch (Exception e)
          {
-            System.err.println("Cannot load images");
+            System.err.println("Cannot load images: " + e.getMessage());
             System.exit(1);
          }
 
@@ -526,6 +536,34 @@ public class WorldDisplay extends JFrame
          graphic.drawImage(bimg, null, 0, 0);
          graphic.dispose();
          return(rotated);
+      }
+
+
+      // Initialize sounds.
+      void initSounds()
+      {
+         boolean gotSound = false;
+
+         try
+         {
+            beeSound = AudioSystem.getClip();
+            beeSound.open(AudioSystem.getAudioInputStream(getClass().getResource(BEE_SOUND_FILENAME)));
+            gotSound = true;
+         }
+         catch (Exception e) {}
+         if (!gotSound)
+         {
+            try
+            {
+               beeSound = AudioSystem.getClip();
+               beeSound.open(AudioSystem.getAudioInputStream(new File("res/sounds/" + BEE_SOUND_FILENAME)));
+            }
+            catch (Exception e)
+            {
+               System.err.println("Cannot load sound file " + BEE_SOUND_FILENAME + ": " + e.getMessage());
+               System.exit(1);
+            }
+         }
       }
 
 
@@ -595,6 +633,7 @@ public class WorldDisplay extends JFrame
       JSlider    speedSlider;
       JButton    stepButton;
       Choice     driverChoice;
+      JCheckBox  muteCheck;
       JTextField messageText;
       JLabel     nectarCounter;
 
@@ -627,8 +666,12 @@ public class WorldDisplay extends JFrame
          driverChoice.add("autopilot");
          driverChoice.add("metamorphs");
          driverChoice.add("variable");
+         driverChoice.select(world.driver);
          driverChoice.addItemListener(this);
-         messageText = new JTextField("Click bee to toggle dashboard", 40);
+         muteCheck = new JCheckBox("Mute", true);
+         panel.add(muteCheck);
+         muteCheck.addItemListener(this);
+         messageText = new JTextField("Click bee to toggle dashboard", 30);
          messageText.setEditable(false);
          panel.add(messageText);
          nectarCounter = new JLabel("Collected nectar: 0");
@@ -703,6 +746,20 @@ public class WorldDisplay extends JFrame
                {
                   beeDashboard.setDriverChoice(driver);
                }
+            }
+            return;
+         }
+
+         if (source instanceof JCheckBox && ((JCheckBox)source == muteCheck))
+         {
+            if (evt.getStateChange() == 1)
+            {
+               display.beeSound.stop();
+            }
+            else
+            {
+               display.beeSound.start();
+               display.beeSound.loop(Clip.LOOP_CONTINUOUSLY);
             }
             return;
          }

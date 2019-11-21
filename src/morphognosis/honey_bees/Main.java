@@ -85,7 +85,7 @@ public class Main
       "    java morphognosis.honey_bees.Main\n" +
       "      -load <file name>\n" +
       "     [-steps <steps> | -display (default)]\n" +
-      "     [-driver <metamorphs | autopilot> (default=autopilot)]\n" +
+      "     [-driver autopilot | metamorphs | variable> (default=autopilot)]\n" +
       "     [-randomSeed <random number seed>]\n" +
       "     [-save <file name>]\n" +
       "     [-print (print parameters and properties)]\n" +
@@ -1052,6 +1052,9 @@ public class Main
          Parameters.print();
       }
 
+      // Set driver.
+      main.world.setDriver(driver);
+
       // Create display?
       if (display)
       {
@@ -1061,9 +1064,6 @@ public class Main
       {
          main.reset();
       }
-
-      // Set driver.
-      main.world.setDriver(driver);
 
       // Run.
       main.run(steps);
