@@ -13,35 +13,35 @@ public class Compass
    public static final int WEST       = 6;
    public static final int NORTHWEST  = 7;
    public static final int NUM_POINTS = 8;
-   
+
    public static String toName(int dir)
    {
-	      switch (dir)
-	      {
-	      case NORTH:
-	         return("north");
+      switch (dir)
+      {
+      case NORTH:
+         return("north");
 
-	      case NORTHEAST:
-	         return("northeast");
+      case NORTHEAST:
+         return("northeast");
 
-	      case EAST:
-	         return("east");
+      case EAST:
+         return("east");
 
-	      case SOUTHEAST:
-	         return("southeast");
+      case SOUTHEAST:
+         return("southeast");
 
-	      case SOUTH:
-	         return("south");
+      case SOUTH:
+         return("south");
 
-	      case SOUTHWEST:
-	         return("southwest");
+      case SOUTHWEST:
+         return("southwest");
 
-	      case WEST:
-	         return("west");
+      case WEST:
+         return("west");
 
-	      case NORTHWEST:
-	         return("northwest");
-	      }	
-	      return "unknown";
+      case NORTHWEST:
+         return("northwest");
+      }
+      return("unknown");
    }
 }

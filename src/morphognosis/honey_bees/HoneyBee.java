@@ -31,9 +31,10 @@ public class HoneyBee
    public int          x, y, x2, y2, toX, toY;
    public int          orientation, orientation2;
    public boolean      nectarCarry;
-   public int          nectarDistance;
+   public int          nectarDistanceDisplay;
    public int          nectarX, nectarY;
-   public int          danceCount;
+   public int          displayTimer;
+   public int          nectarDist;
    public boolean      foraging;
    public World        world;
    public int          driver;
@@ -50,12 +51,11 @@ public class HoneyBee
 
    // Response.
    // Initial responses are turns in compass directions.
-   // There are NUM_BEE_DISTANCE_VALUES responses, starting with DISPLAY_NECTAR_DISTANCE.
    public static final int FORWARD                 = Compass.NUM_POINTS;
    public static final int EXTRACT_NECTAR          = FORWARD + 1;
    public static final int DEPOSIT_NECTAR          = EXTRACT_NECTAR + 1;
    public static final int DISPLAY_NECTAR_DISTANCE = DEPOSIT_NECTAR + 1;
-   public static final int WAIT          = DISPLAY_NECTAR_DISTANCE + Parameters.BEE_NUM_DISTANCE_VALUES;
+   public static final int WAIT          = DISPLAY_NECTAR_DISTANCE + 1;
    public static final int NUM_RESPONSES = WAIT + 1;
    int response;
 
@@ -157,13 +157,14 @@ public class HoneyBee
             System.exit(1);
          }
       }
-      orientation    = orientation2 = random.nextInt(Compass.NUM_POINTS);
-      nectarCarry    = false;
-      nectarDistance = -1;
-      nectarX        = nectarY = -1;
-      danceCount     = 0;
-      foraging       = false;
-      sensors        = new float[NUM_SENSORS];
+      orientation           = orientation2 = random.nextInt(Compass.NUM_POINTS);
+      nectarCarry           = false;
+      nectarDistanceDisplay = -1;
+      nectarX      = nectarY = -1;
+      displayTimer = -1;
+      nectarDist   = -1;
+      foraging     = true;
+      sensors      = new float[NUM_SENSORS];
       for (int n = 0; n < NUM_SENSORS; n++)
       {
          sensors[n] = 0.0f;
@@ -224,10 +225,11 @@ public class HoneyBee
       y                     = y2;
       orientation           = orientation2;
       nectarCarry           = false;
-      nectarDistance        = -1;
+      nectarDistanceDisplay = -1;
       nectarX               = nectarY = -1;
-      danceCount            = 0;
-      foraging              = false;
+      displayTimer          = -1;
+      nectarDist            = -1;
+      foraging              = true;
       world.cells[x][y].bee = this;
       for (int i = 0; i < NUM_SENSORS; i++)
       {
@@ -284,10 +286,11 @@ public class HoneyBee
       {
          Utility.saveInt(writer, 0);
       }
-      Utility.saveInt(writer, nectarDistance);
+      Utility.saveInt(writer, nectarDistanceDisplay);
       Utility.saveInt(writer, nectarX);
       Utility.saveInt(writer, nectarY);
-      Utility.saveInt(writer, danceCount);
+      Utility.saveInt(writer, displayTimer);
+      Utility.saveInt(writer, nectarDist);
       if (foraging)
       {
          Utility.saveInt(writer, 1);
@@ -346,10 +349,11 @@ public class HoneyBee
       {
          nectarCarry = false;
       }
-      nectarDistance = Utility.loadInt(reader);
-      nectarX        = Utility.loadInt(reader);
-      nectarY        = Utility.loadInt(reader);
-      danceCount     = Utility.loadInt(reader);
+      nectarDistanceDisplay = Utility.loadInt(reader);
+      nectarX      = Utility.loadInt(reader);
+      nectarY      = Utility.loadInt(reader);
+      displayTimer = Utility.loadInt(reader);
+      nectarDist   = Utility.loadInt(reader);
       if (Utility.loadInt(reader) == 1)
       {
          foraging = true;
@@ -515,7 +519,515 @@ public class HoneyBee
    // Autopilot response.
    void autoPilotResponse()
    {
-      response = WAIT;
+      int width  = Parameters.WORLD_WIDTH;
+      int height = Parameters.WORLD_HEIGHT;
+
+      // Turn at edge of world.
+      if ((toX < 0) || (toX >= width) || (toY < 0) || (toY >= height))
+      {
+         nectarDist = -1;
+         response   = random.nextInt(Compass.NUM_POINTS);
+         return;
+      }
+
+      // Found nectar to extract?
+      if (!nectarCarry && (nectarDistanceDisplay == -1) &&
+          (world.cells[toX][toY].flower != null) && (world.cells[toX][toY].flower.nectar > 0))
+      {
+         // Extract nectar.
+         foraging    = false;
+         response    = EXTRACT_NECTAR;
+         nectarCarry = true;
+         nectarDist  = -1;
+         world.cells[toX][toY].flower.nectar--;
+
+         // More nectar in flower?
+         if (world.cells[toX][toY].flower.nectar > 0)
+         {
+            // Remember nectar location for later distance display.
+            nectarX = toX;
+            nectarY = toY;
+         }
+         else
+         {
+            nectarX = nectarY = -1;
+         }
+         return;
+      }
+
+      // Observe bee nectar display?
+      if (!nectarCarry && (nectarDistanceDisplay == -1) && (nectarDist == -1))
+      {
+         HoneyBee bee = world.cells[toX][toY].bee;
+         if ((bee != null) && (bee.nectarDistanceDisplay != -1))
+         {
+            foraging = true;
+            int maxDist  = Math.max(Parameters.WORLD_WIDTH, Parameters.WORLD_HEIGHT) / 2;
+            int unitDist = maxDist / Parameters.BEE_NUM_DISTANCE_VALUES;
+            nectarDist = (bee.nectarDistanceDisplay + 1) * unitDist;
+            if (orientation == bee.orientation)
+            {
+               response = WAIT;
+            }
+            else
+            {
+               response = bee.orientation;
+            }
+            return;
+         }
+      }
+
+      // Foraging?
+      if (foraging)
+      {
+         // Making a beeline to nectar?
+         if (nectarDist != -1)
+         {
+            if (world.cells[toX][toY].bee == null)
+            {
+               response = FORWARD;
+               nectarDist--;
+            }
+            else
+            {
+               if (random.nextFloat() < Parameters.BEE_ABANDON_NECTAR_DEADLOCK_PREVENTION_PROBABILITY)
+               {
+                  // Prevent deadlock.
+                  nectarDist = -1;
+                  response   = random.nextInt(Compass.NUM_POINTS);
+               }
+               else
+               {
+                  response = WAIT;
+               }
+            }
+            return;
+         }
+
+         // Return to hive?
+         if (random.nextFloat() < Parameters.BEE_RETURN_TO_HIVE_PROBABILITY)
+         {
+            foraging = false;
+            if (!world.cells[x][y].hive)
+            {
+               response = moveToFace(width / 2, height / 2);
+               return;
+            }
+            // In hive: fall through.
+         }
+         else
+         {
+            // Continue foraging.
+            if (random.nextFloat() < Parameters.BEE_FORAGE_TURN_PROBABILITY)
+            {
+               response = random.nextInt(Compass.NUM_POINTS);
+            }
+            else
+            {
+               if (world.cells[toX][toY].bee == null)
+               {
+                  // If outside of hive, do not enter it.
+                  if (!world.cells[x][y].hive && world.cells[toX][toY].hive)
+                  {
+                     response = random.nextInt(Compass.NUM_POINTS);
+                  }
+                  else
+                  {
+                     response = FORWARD;
+                  }
+               }
+               else
+               {
+                  response = random.nextInt(Compass.NUM_POINTS);
+               }
+            }
+            return;
+         }
+      }
+
+      // Not foraging.
+
+      // Returning to hive?
+      if (!world.cells[x][y].hive)
+      {
+         response = moveToFace(width / 2, height / 2);
+         if (response == WAIT)
+         {
+            if (random.nextFloat() < Parameters.BEE_ABANDON_NECTAR_DEADLOCK_PREVENTION_PROBABILITY)
+            {
+               // Prevent deadlock by resuming foraging.
+               foraging    = true;
+               nectarCarry = false;
+               nectarX     = nectarY = -1;
+               nectarDist  = -1;
+               response    = random.nextInt(Compass.NUM_POINTS);
+            }
+         }
+         return;
+      }
+
+      // In hive.
+
+      // Got nectar?
+      if (nectarCarry)
+      {
+         // Display nectar direction and distance to other bees?
+         if (nectarX != -1)
+         {
+            // Orient toward nectar?
+            int dir = orientToward(nectarX, nectarY);
+            if (dir != orientation)
+            {
+               response = dir;
+               return;
+            }
+
+            // Initialize nectar display?
+            if (displayTimer == -1)
+            {
+               int maxDist  = Math.max(Parameters.WORLD_WIDTH, Parameters.WORLD_HEIGHT) / 2;
+               int unitDist = maxDist / Parameters.BEE_NUM_DISTANCE_VALUES;
+               int d        = (int)Math.sqrt((double)((nectarX - x) * (nectarX - x)) + (double)((nectarY - y) * (nectarY - y)));
+               nectarDistanceDisplay = d / unitDist;
+               if (nectarDistanceDisplay >= Parameters.BEE_NUM_DISTANCE_VALUES)
+               {
+                  nectarDistanceDisplay = Parameters.BEE_NUM_DISTANCE_VALUES - 1;
+               }
+               displayTimer = Parameters.BEE_NECTAR_DISPLAY_DURATION;
+            }
+
+            // Display nectar distance?
+            if (displayTimer >= 0)
+            {
+               displayTimer--;
+               if (displayTimer >= 0)
+               {
+                  response = nectarDistanceDisplay;
+               }
+               else
+               {
+                  response = DEPOSIT_NECTAR;
+                  world.collectedNectar++;
+                  nectarCarry = false;
+                  foraging    = true;
+                  int maxDist  = Math.max(Parameters.WORLD_WIDTH, Parameters.WORLD_HEIGHT) / 2;
+                  int unitDist = maxDist / Parameters.BEE_NUM_DISTANCE_VALUES;
+                  nectarDist            = (unitDist * nectarDistanceDisplay) + (unitDist / 2);
+                  nectarDistanceDisplay = -1;
+                  nectarX = nectarY = -1;
+               }
+            }
+         }
+         else
+         {
+            response = DEPOSIT_NECTAR;
+            world.collectedNectar++;
+            nectarCarry = false;
+         }
+         return;
+      }
+
+      // Resume foraging?
+      if (!foraging && (random.nextFloat() < Parameters.BEE_LEAVE_HIVE_TO_FORAGE_PROBABILITY))
+      {
+         foraging = true;
+         if (random.nextFloat() < Parameters.BEE_FORAGE_TURN_PROBABILITY)
+         {
+            response = random.nextInt(Compass.NUM_POINTS);
+         }
+         else
+         {
+            if (world.cells[x][y].bee != null)
+            {
+               response = random.nextInt(Compass.NUM_POINTS);
+            }
+            else
+            {
+               response = FORWARD;
+            }
+         }
+      }
+   }
+
+
+   // Get response that moves to face destination cell.
+   // Return -1 if facing destination.
+   public int moveToFace(int dX, int dY)
+   {
+      // Facing destination?
+      if ((dX == toX) && (dY == toY))
+      {
+         return(-1);
+      }
+
+      if (dX < x)
+      {
+         if (dY < y)
+         {
+            if (orientation == Compass.SOUTHWEST)
+            {
+               if (world.cells[toX][toY].bee == null)
+               {
+                  return(FORWARD);
+               }
+               else
+               {
+                  return(WAIT);
+               }
+            }
+            else
+            {
+               return(Compass.SOUTHWEST);
+            }
+         }
+         else if (dY > y)
+         {
+            if (orientation == Compass.NORTHWEST)
+            {
+               if (world.cells[toX][toY].bee == null)
+               {
+                  return(FORWARD);
+               }
+               else
+               {
+                  return(WAIT);
+               }
+            }
+            else
+            {
+               return(Compass.NORTHWEST);
+            }
+         }
+         else
+         {
+            if (orientation == Compass.WEST)
+            {
+               if (world.cells[toX][toY].bee == null)
+               {
+                  return(FORWARD);
+               }
+               else
+               {
+                  return(WAIT);
+               }
+            }
+            else
+            {
+               return(Compass.WEST);
+            }
+         }
+      }
+      else if (dX > x)
+      {
+         if (dY < y)
+         {
+            if (orientation == Compass.SOUTHEAST)
+            {
+               if (world.cells[toX][toY].bee == null)
+               {
+                  return(FORWARD);
+               }
+               else
+               {
+                  return(WAIT);
+               }
+            }
+            else
+            {
+               return(Compass.SOUTHEAST);
+            }
+         }
+         else if (dY > y)
+         {
+            if (orientation == Compass.NORTHEAST)
+            {
+               if (world.cells[toX][toY].bee == null)
+               {
+                  return(FORWARD);
+               }
+               else
+               {
+                  return(WAIT);
+               }
+            }
+            else
+            {
+               return(Compass.NORTHEAST);
+            }
+         }
+         else
+         {
+            if (orientation == Compass.EAST)
+            {
+               if (world.cells[toX][toY].bee == null)
+               {
+                  return(FORWARD);
+               }
+               else
+               {
+                  return(WAIT);
+               }
+            }
+            else
+            {
+               return(Compass.EAST);
+            }
+         }
+      }
+      else
+      {
+         if (dY < y)
+         {
+            if (orientation == Compass.SOUTH)
+            {
+               if (world.cells[toX][toY].bee == null)
+               {
+                  return(FORWARD);
+               }
+               else
+               {
+                  return(WAIT);
+               }
+            }
+            else
+            {
+               return(Compass.SOUTH);
+            }
+         }
+         else if (dY > y)
+         {
+            if (orientation == Compass.NORTH)
+            {
+               if (world.cells[toX][toY].bee == null)
+               {
+                  return(FORWARD);
+               }
+               else
+               {
+                  return(WAIT);
+               }
+            }
+            else
+            {
+               return(Compass.NORTH);
+            }
+         }
+         else
+         {
+            if (world.cells[toX][toY].bee == null)
+            {
+               return(FORWARD);
+            }
+            else
+            {
+               return(WAIT);
+            }
+         }
+      }
+   }
+
+
+   // Get response that orients toward destination cell.
+   public int orientToward(int dX, int dY)
+   {
+      float mX = (float)Math.abs(dX - x);
+      float mY = (float)Math.abs(dY - y);
+      float r;
+
+      if (dX < x)
+      {
+         if (dY < y)
+         {
+            r = mY / mX;
+            if (r < 0.5f)
+            {
+               return(Compass.WEST);
+            }
+            else if (r > 2.0f)
+            {
+               return(Compass.SOUTH);
+            }
+            else
+            {
+               return(Compass.SOUTHWEST);
+            }
+         }
+         else if (dY > y)
+         {
+            r = mY / mX;
+            if (r < 0.5f)
+            {
+               return(Compass.WEST);
+            }
+            else if (r > 2.0f)
+            {
+               return(Compass.NORTH);
+            }
+            else
+            {
+               return(Compass.NORTHWEST);
+            }
+         }
+         else
+         {
+            return(Compass.WEST);
+         }
+      }
+      else if (dX > x)
+      {
+         if (dY < y)
+         {
+            r = mY / mX;
+            if (r < 0.5f)
+            {
+               return(Compass.EAST);
+            }
+            else if (r > 2.0f)
+            {
+               return(Compass.SOUTH);
+            }
+            else
+            {
+               return(Compass.NORTHEAST);
+            }
+         }
+         else if (dY > y)
+         {
+            r = mY / mX;
+            if (r < 0.5f)
+            {
+               return(Compass.EAST);
+            }
+            else if (r > 2.0f)
+            {
+               return(Compass.NORTH);
+            }
+            else
+            {
+               return(Compass.NORTHEAST);
+            }
+         }
+         else
+         {
+            return(Compass.EAST);
+         }
+      }
+      else
+      {
+         if (dY < y)
+         {
+            return(Compass.SOUTH);
+         }
+         else if (dY > y)
+         {
+            return(Compass.NORTH);
+         }
+         else
+         {
+            // Co-located.
+            return(WAIT);
+         }
+      }
    }
 
 
@@ -674,12 +1186,13 @@ public class HoneyBee
 
       case DEPOSIT_NECTAR:
          return("deposit nectar");
+
+      case DISPLAY_NECTAR_DISTANCE:
+         return("display nectar distance");
+
+      case WAIT:
+         return("wait");
       }
-      if ((response >= HoneyBee.DISPLAY_NECTAR_DISTANCE) && (response < HoneyBee.WAIT))
-      {
-         return("display nectar distance " + (response - HoneyBee.DISPLAY_NECTAR_DISTANCE));
-      }
-      if (response == WAIT) { return("wait"); }
       return("unknown");
    }
 }

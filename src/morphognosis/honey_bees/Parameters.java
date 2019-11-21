@@ -32,8 +32,9 @@ public class Parameters
    public static float BEE_HIVE_TURN_PROBABILITY            = .2f;
    public static float BEE_LEAVE_HIVE_TO_FORAGE_PROBABILITY = .05f;
    public static float BEE_RETURN_TO_HIVE_PROBABILITY       = .01f;
-   public static int   BEE_NUM_DISTANCE_VALUES = 3;
-   public static int   BEE_DANCE_DURATION      = 10;
+   public static float BEE_ABANDON_NECTAR_DEADLOCK_PREVENTION_PROBABILITY = .005f;
+   public static int   BEE_NUM_DISTANCE_VALUES     = 3;
+   public static int   BEE_NECTAR_DISPLAY_DURATION = 10;
 
    // Morphognosis parameters.
    public static int NUM_NEIGHBORHOODS = Morphognostic.DEFAULT_NUM_NEIGHBORHOODS;
@@ -58,8 +59,9 @@ public class Parameters
       Utility.saveFloat(writer, BEE_HIVE_TURN_PROBABILITY);
       Utility.saveFloat(writer, BEE_LEAVE_HIVE_TO_FORAGE_PROBABILITY);
       Utility.saveFloat(writer, BEE_RETURN_TO_HIVE_PROBABILITY);
+      Utility.saveFloat(writer, BEE_ABANDON_NECTAR_DEADLOCK_PREVENTION_PROBABILITY);
       Utility.saveInt(writer, BEE_NUM_DISTANCE_VALUES);
-      Utility.saveInt(writer, BEE_DANCE_DURATION);
+      Utility.saveInt(writer, BEE_NECTAR_DISPLAY_DURATION);
       Utility.saveInt(writer, NUM_NEIGHBORHOODS);
       Utility.saveInt(writer, NEIGHBORHOOD_INITIAL_DIMENSION);
       Utility.saveInt(writer, NEIGHBORHOOD_DIMENSION_STRIDE);
@@ -85,8 +87,9 @@ public class Parameters
       BEE_HIVE_TURN_PROBABILITY            = Utility.loadFloat(reader);
       BEE_LEAVE_HIVE_TO_FORAGE_PROBABILITY = Utility.loadFloat(reader);
       BEE_RETURN_TO_HIVE_PROBABILITY       = Utility.loadFloat(reader);
+      BEE_ABANDON_NECTAR_DEADLOCK_PREVENTION_PROBABILITY = Utility.loadFloat(reader);
       BEE_NUM_DISTANCE_VALUES           = Utility.loadInt(reader);
-      BEE_DANCE_DURATION                = Utility.loadInt(reader);
+      BEE_NECTAR_DISPLAY_DURATION       = Utility.loadInt(reader);
       NUM_NEIGHBORHOODS                 = Utility.loadInt(reader);
       NEIGHBORHOOD_INITIAL_DIMENSION    = Utility.loadInt(reader);
       NEIGHBORHOOD_DIMENSION_STRIDE     = Utility.loadInt(reader);
@@ -111,8 +114,9 @@ public class Parameters
       System.out.println("BEE_HIVE_TURN_PROBABILITY = " + BEE_HIVE_TURN_PROBABILITY);
       System.out.println("BEE_LEAVE_HIVE_TO_FORAGE_PROBABILITY = " + BEE_LEAVE_HIVE_TO_FORAGE_PROBABILITY);
       System.out.println("BEE_RETURN_TO_HIVE_PROBABILITY = " + BEE_RETURN_TO_HIVE_PROBABILITY);
+      System.out.println("BEE_ABANDON_NECTAR_DEADLOCK_PREVENTION_PROBABILITY = " + BEE_ABANDON_NECTAR_DEADLOCK_PREVENTION_PROBABILITY);
       System.out.println("BEE_NUM_DISTANCE_VALUES = " + BEE_NUM_DISTANCE_VALUES);
-      System.out.println("BEE_DANCE_DURATION = " + BEE_DANCE_DURATION);
+      System.out.println("BEE_DANCE_DURATION = " + BEE_NECTAR_DISPLAY_DURATION);
       System.out.println("NUM_NEIGHBORHOODS = " + NUM_NEIGHBORHOODS);
       System.out.println("NEIGHBORHOOD_INITIAL_DIMENSION = " + NEIGHBORHOOD_INITIAL_DIMENSION);
       System.out.println("NEIGHBORHOOD_DIMENSION_STRIDE = " + NEIGHBORHOOD_DIMENSION_STRIDE);

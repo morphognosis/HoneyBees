@@ -87,14 +87,14 @@ public class World
       }
       for (int i = 0; i < Parameters.NUM_BEES; i++)
       {
-    	  HoneyBee bee = bees[i];
-         float[] sensors = setSensors(bee);
+         HoneyBee bee = bees[i];
+         float[] sensors = getSensors(bee);
          for (int j = 0; j < HoneyBee.NUM_SENSORS; j++)
          {
-        	 bee.sensors[j] = sensors[j];
+            bee.sensors[j] = sensors[j];
          }
       }
-      
+
       // Nectar collector.
       collectedNectar = 0;
    }
@@ -269,6 +269,7 @@ public class World
 
       // Run bees in random starting order.
       int n = random.nextInt(Parameters.NUM_BEES);
+
       for (int i = 0; i < Parameters.NUM_BEES; i++, n = (n + 1) % Parameters.NUM_BEES)
       {
          // Update landmarks.
@@ -276,10 +277,9 @@ public class World
          bee.landmarkMap[bee.x][bee.y] = true;
 
          // Cycle bee.
-         int response = bee.cycle(setSensors(bee));
+         int response = bee.cycle(getSensors(bee));
 
          // Process response.
-         bee.nectarDistance = -1;
          if (response < Compass.NUM_POINTS)
          {
             bee.orientation = response;
@@ -303,7 +303,6 @@ public class World
                if ((bee.toX >= 0) && (bee.toX < width) && (bee.toY >= 0) && (bee.toY < height) &&
                    (cells[bee.toX][bee.toY].flower.nectar > 0) && !bee.nectarCarry)
                {
-                  bee.nectarCarry = true;
                   cells[bee.toX][bee.toY].flower.nectar--;
                }
                break;
@@ -312,14 +311,6 @@ public class World
                if (cells[bee.x][bee.y].hive && bee.nectarCarry)
                {
                   collectedNectar++;
-                  bee.nectarCarry = false;
-               }
-               break;
-
-            default:
-               if ((response >= HoneyBee.DISPLAY_NECTAR_DISTANCE) && (response < HoneyBee.WAIT))
-               {
-                  bee.nectarDistance = response - HoneyBee.DISPLAY_NECTAR_DISTANCE;
                }
                break;
             }
@@ -327,94 +318,96 @@ public class World
       }
    }
 
-   // Set bee sensors.
-   public float[] setSensors(HoneyBee bee)
+
+   // Get bee sensors.
+   public float[] getSensors(HoneyBee bee)
    {
-	   float[] sensors = new float[HoneyBee.NUM_SENSORS];
-	      int width  = Parameters.WORLD_WIDTH;
-	      int height = Parameters.WORLD_HEIGHT;
-	   
-       int toX = bee.x;
-       int toY = bee.y;
-       switch (bee.orientation)
-       {
-       case Compass.NORTH:
-          toY++;
-          break;
+      float[] sensors = new float[HoneyBee.NUM_SENSORS];
+      int width  = Parameters.WORLD_WIDTH;
+      int height = Parameters.WORLD_HEIGHT;
 
-       case Compass.NORTHEAST:
-          toX++;
-          toY++;
-          break;
+      int toX = bee.x;
+      int toY = bee.y;
+      switch (bee.orientation)
+      {
+      case Compass.NORTH:
+         toY++;
+         break;
 
-       case Compass.EAST:
-          toX++;
-          break;
+      case Compass.NORTHEAST:
+         toX++;
+         toY++;
+         break;
 
-       case Compass.SOUTHEAST:
-          toX++;
-          toY--;
-          break;
+      case Compass.EAST:
+         toX++;
+         break;
 
-       case Compass.SOUTH:
-          toY--;
-          break;
+      case Compass.SOUTHEAST:
+         toX++;
+         toY--;
+         break;
 
-       case Compass.SOUTHWEST:
-          toX--;
-          toY--;
-          break;
+      case Compass.SOUTH:
+         toY--;
+         break;
 
-       case Compass.WEST:
-          toX--;
-          break;
+      case Compass.SOUTHWEST:
+         toX--;
+         toY--;
+         break;
 
-       case Compass.NORTHWEST:
-          toX--;
-          toY++;
-          break;
-       }
-       bee.toX = toX;
-       bee.toY = toY;        
-       if ((toX >= 0) && (toX < width) && (toY >= 0) && (toY < height))
-       {
-          if (cells[toX][toY].hive)
-          {
-             sensors[HoneyBee.HIVE_PRESENCE_INDEX] = 1.0f;
-          }
-          else
-          {
-             sensors[HoneyBee.HIVE_PRESENCE_INDEX] = 0.0f;
-          }
-          if (cells[toX][toY].flower != null)
-          {
-             sensors[HoneyBee.ADJACENT_FLOWER_NECTAR_QUANTITY_INDEX] = (float)cells[toX][toY].flower.nectar;
-          }
-          else
-          {
-             sensors[HoneyBee.ADJACENT_FLOWER_NECTAR_QUANTITY_INDEX] = 0.0f;
-          }
-          if (cells[toX][toY].bee != null)
-          {
-             sensors[HoneyBee.ADJACENT_BEE_ORIENTATION_INDEX]     = (float)cells[toX][toY].bee.orientation;
-             sensors[HoneyBee.ADJACENT_BEE_NECTAR_DISTANCE_INDEX] = (float)cells[toX][toY].bee.nectarDistance;
-          }
-          else
-          {
-             sensors[HoneyBee.ADJACENT_BEE_ORIENTATION_INDEX]     = -1.0f;
-             sensors[HoneyBee.ADJACENT_BEE_NECTAR_DISTANCE_INDEX] = -1.0f;
-          }
-       }
-       else
-       {
-          sensors[HoneyBee.HIVE_PRESENCE_INDEX] = 0.0f;
-          sensors[HoneyBee.ADJACENT_FLOWER_NECTAR_QUANTITY_INDEX] = 0.0f;
-          sensors[HoneyBee.ADJACENT_BEE_ORIENTATION_INDEX]        = -1.0f;
-          sensors[HoneyBee.ADJACENT_BEE_NECTAR_DISTANCE_INDEX]    = -1.0f;
-       }
-       return sensors;
+      case Compass.WEST:
+         toX--;
+         break;
+
+      case Compass.NORTHWEST:
+         toX--;
+         toY++;
+         break;
+      }
+      bee.toX = toX;
+      bee.toY = toY;
+      if ((toX >= 0) && (toX < width) && (toY >= 0) && (toY < height))
+      {
+         if (cells[toX][toY].hive)
+         {
+            sensors[HoneyBee.HIVE_PRESENCE_INDEX] = 1.0f;
+         }
+         else
+         {
+            sensors[HoneyBee.HIVE_PRESENCE_INDEX] = 0.0f;
+         }
+         if (cells[toX][toY].flower != null)
+         {
+            sensors[HoneyBee.ADJACENT_FLOWER_NECTAR_QUANTITY_INDEX] = (float)cells[toX][toY].flower.nectar;
+         }
+         else
+         {
+            sensors[HoneyBee.ADJACENT_FLOWER_NECTAR_QUANTITY_INDEX] = 0.0f;
+         }
+         if (cells[toX][toY].bee != null)
+         {
+            sensors[HoneyBee.ADJACENT_BEE_ORIENTATION_INDEX]     = (float)cells[toX][toY].bee.orientation;
+            sensors[HoneyBee.ADJACENT_BEE_NECTAR_DISTANCE_INDEX] = (float)cells[toX][toY].bee.nectarDistanceDisplay;
+         }
+         else
+         {
+            sensors[HoneyBee.ADJACENT_BEE_ORIENTATION_INDEX]     = -1.0f;
+            sensors[HoneyBee.ADJACENT_BEE_NECTAR_DISTANCE_INDEX] = -1.0f;
+         }
+      }
+      else
+      {
+         sensors[HoneyBee.HIVE_PRESENCE_INDEX] = 0.0f;
+         sensors[HoneyBee.ADJACENT_FLOWER_NECTAR_QUANTITY_INDEX] = 0.0f;
+         sensors[HoneyBee.ADJACENT_BEE_ORIENTATION_INDEX]        = -1.0f;
+         sensors[HoneyBee.ADJACENT_BEE_NECTAR_DISTANCE_INDEX]    = -1.0f;
+      }
+      return(sensors);
    }
-   
+
+
    // Set bee drivers.
    public void setDriver(int driver)
    {

@@ -138,7 +138,7 @@ public class WorldDisplay extends JFrame
    public void update(int steps)
    {
       controls.updateStepCounter(steps);
-      controls.updateNectarCounter(world.collectedNectar);      
+      controls.updateNectarCounter(world.collectedNectar);
       update();
    }
 
@@ -219,8 +219,8 @@ public class WorldDisplay extends JFrame
       public static final String NECTAR_IMAGE_FILENAME = "nectar.png";
 
       // Colors.
-      public final Color HIVE_COLOR         = Color.YELLOW;
-      public final Color WORLD_COLOR        = Color.GREEN;
+      public final Color HIVE_COLOR  = Color.YELLOW;
+      public final Color WORLD_COLOR = Color.GREEN;
       public final Color SELECTED_BEE_HIGHLIGHT_COLOR = Color.RED;
 
       // Images and graphics.
@@ -298,10 +298,10 @@ public class WorldDisplay extends JFrame
                canvasGraphics.setColor(Color.WHITE);
             }
          }
-         
+
          // Draw objects.
          BasicStroke thickLine  = new BasicStroke(3);
-         BasicStroke dashedLine = new BasicStroke(3, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[]{9}, 0);
+         BasicStroke dashedLine = new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[] { 9 }, 0);
          BasicStroke thinLine   = new BasicStroke(1);
          int         nectarYoff = (int)(cellHeight / 2.0f);
          for (x = x2 = 0; x < width;
@@ -310,8 +310,7 @@ public class WorldDisplay extends JFrame
             for (y = 0, y2 = canvasSize.height - (int)cellHeight;
                  y < height;
                  y++, y2 = (int)(cellHeight * (double)(height - (y + 1))))
-            {                  
-
+            {
                // Draw flower and nectar?
                Flower flower = world.cells[x][y].flower;
                if (flower != null)
@@ -324,82 +323,81 @@ public class WorldDisplay extends JFrame
                                               (int)(cellWidth / 2.0f), (int)(cellHeight / 2.0f), null);
                   }
                }
-         
+
                // Draw bee?
-               HoneyBee bee = world.cells[x][y].bee;            
+               HoneyBee bee = world.cells[x][y].bee;
                if (bee != null)
                {
                   canvasGraphics.drawImage(beeOrientedImages[bee.orientation], x2, y2,
                                            (int)cellWidth + 1, (int)cellHeight + 1, null);
-                  
+
                   // Carrying nectar?
                   if (bee.nectarCarry)
                   {
                      canvasGraphics.drawImage(nectarImage, x2, y2,
                                               (int)(cellWidth / 2.0f), (int)(cellHeight / 2.0f), null);
                   }
-                  
+
                   // Bee displaying distance to nectar?
                   if (world.cells[x][y].hive && bee.nectarCarry)
                   {
-                	  if (bee.response >= HoneyBee.DISPLAY_NECTAR_DISTANCE && 
-                			  bee.response < HoneyBee.WAIT)
-                	  {
-                		  int maxDist = Math.max(Parameters.WORLD_WIDTH, Parameters.WORLD_HEIGHT) / 2;
-                		  int unitDist = maxDist / Parameters.BEE_NUM_DISTANCE_VALUES;
-                		  int nectarDist = ((bee.response - HoneyBee.DISPLAY_NECTAR_DISTANCE + 1) * unitDist);
-                		  int toX = bee.x;
-                		  int toY = bee.y;
-                          switch (bee.orientation)
-                          {
-                          case Compass.NORTH:
-                             toY += nectarDist;
-                             break;
-                             
-                          case Compass.NORTHEAST:
-                        	  toX += nectarDist;
-                              toY += nectarDist;
-                              break;
-                              
-                          case Compass.EAST:
-                             toX += nectarDist;
-                             break;
+                     if (bee.response == HoneyBee.DISPLAY_NECTAR_DISTANCE)
+                     {
+                        int maxDist    = Math.max(Parameters.WORLD_WIDTH, Parameters.WORLD_HEIGHT) / 2;
+                        int unitDist   = maxDist / Parameters.BEE_NUM_DISTANCE_VALUES;
+                        int nectarDist = (bee.nectarDistanceDisplay * unitDist) + (unitDist / 2);
+                        int toX        = bee.x;
+                        int toY        = bee.y;
+                        switch (bee.orientation)
+                        {
+                        case Compass.NORTH:
+                           toY += nectarDist;
+                           break;
 
-                          case Compass.SOUTHEAST:
-                             toX += nectarDist;
-                             toY -= nectarDist;
-                             break;
+                        case Compass.NORTHEAST:
+                           toX += nectarDist;
+                           toY += nectarDist;
+                           break;
 
-                          case Compass.SOUTH:
-                             toY -= nectarDist;
-                             break;
+                        case Compass.EAST:
+                           toX += nectarDist;
+                           break;
 
-                          case Compass.SOUTHWEST:
-                             toX -= nectarDist;
-                             toY -= nectarDist;
-                             break;
+                        case Compass.SOUTHEAST:
+                           toX += nectarDist;
+                           toY -= nectarDist;
+                           break;
 
-                          case Compass.WEST:
-                             toX -= nectarDist;
-                             break;
+                        case Compass.SOUTH:
+                           toY -= nectarDist;
+                           break;
 
-                          case Compass.NORTHWEST:
-                             toX -= nectarDist;
-                             toY += nectarDist;
-                             break;
-                          }                         
-                          canvasGraphics.setColor(Color.BLACK);
-                          canvasGraphics.setStroke(dashedLine);
-                          int fromX = x2 + (int)(cellWidth / 2.0f);
-                          int fromY = y2 + (int)(cellHeight / 2.0f);
-                          toX = (int)((float)toX * cellWidth) + (int)(cellWidth / 2.0f);
-                          toY = (int)(cellHeight * (double)(height - (toY + 1))) + (int)(cellHeight / 2.0f);
-                          canvasGraphics.drawLine(fromX, fromY, toX, toY);                    
-                          canvasGraphics.setColor(Color.WHITE);
-                          canvasGraphics.setStroke(thinLine);                          
-                	  }
+                        case Compass.SOUTHWEST:
+                           toX -= nectarDist;
+                           toY -= nectarDist;
+                           break;
+
+                        case Compass.WEST:
+                           toX -= nectarDist;
+                           break;
+
+                        case Compass.NORTHWEST:
+                           toX -= nectarDist;
+                           toY += nectarDist;
+                           break;
+                        }
+                        canvasGraphics.setColor(Color.BLACK);
+                        canvasGraphics.setStroke(dashedLine);
+                        int fromX = x2 + (int)(cellWidth / 2.0f);
+                        int fromY = y2 + (int)(cellHeight / 2.0f);
+                        toX = (int)((float)toX * cellWidth) + (int)(cellWidth / 2.0f);
+                        toY = (int)(cellHeight * (double)(height - (toY + 1))) + (int)(cellHeight / 2.0f);
+                        canvasGraphics.drawLine(fromX, fromY, toX, toY);
+                        canvasGraphics.setColor(Color.WHITE);
+                        canvasGraphics.setStroke(thinLine);
+                     }
                   }
-                  
+
                   // Highlight selected bee?
                   if ((beeDashboard != null) && (beeDashboard.bee == bee))
                   {
@@ -579,6 +577,7 @@ public class WorldDisplay extends JFrame
       JButton    stepButton;
       JTextField messageText;
       JLabel     nectarCounter;
+      // TODO: global driver, with autopilot, metamorphs, and mixed.
 
       // Constructor.
       Controls()
