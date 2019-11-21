@@ -7,6 +7,7 @@ package morphognosis.honey_bees;
 import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Canvas;
+import java.awt.Choice;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -16,13 +17,15 @@ import java.awt.Label;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
-import java.io.IOException;
+import java.io.File;
 import java.security.SecureRandom;
 
 import javax.imageio.ImageIO;
@@ -443,7 +446,23 @@ public class WorldDisplay extends JFrame
             flowerImage = ImageIO.read(getClass().getResource(FLOWER_IMAGE_FILENAME));
             nectarImage = ImageIO.read(getClass().getResource(NECTAR_IMAGE_FILENAME));
          }
-         catch (IOException e)
+         catch (Exception e) {}
+         try
+         {
+            if (beeImage == null)
+            {
+               beeImage = ImageIO.read(new File("res/images/" + BEE_IMAGE_FILENAME));
+            }
+            if (flowerImage == null)
+            {
+               flowerImage = ImageIO.read(new File("res/images/" + FLOWER_IMAGE_FILENAME));
+            }
+            if (nectarImage == null)
+            {
+               nectarImage = ImageIO.read(new File("res/images/" + NECTAR_IMAGE_FILENAME));
+            }
+         }
+         catch (Exception e)
          {
             System.err.println("Cannot load images");
             System.exit(1);
@@ -566,7 +585,7 @@ public class WorldDisplay extends JFrame
    }
 
    // Control panel.
-   class Controls extends JPanel implements ActionListener, ChangeListener
+   class Controls extends JPanel implements ActionListener, ChangeListener, ItemListener
    {
       private static final long serialVersionUID = 0L;
 
@@ -575,9 +594,9 @@ public class WorldDisplay extends JFrame
       JLabel     stepCounter;
       JSlider    speedSlider;
       JButton    stepButton;
+      Choice     driverChoice;
       JTextField messageText;
       JLabel     nectarCounter;
-      // TODO: global driver, with autopilot, metamorphs, and mixed.
 
       // Constructor.
       Controls()
@@ -601,7 +620,14 @@ public class WorldDisplay extends JFrame
          stepCounter = new JLabel("");
          panel.add(stepCounter);
          add(panel, BorderLayout.NORTH);
-         panel       = new JPanel();
+         panel = new JPanel();
+         panel.add(new JLabel("Driver:"));
+         driverChoice = new Choice();
+         panel.add(driverChoice);
+         driverChoice.add("autopilot");
+         driverChoice.add("metamorphs");
+         driverChoice.add("variable");
+         driverChoice.addItemListener(this);
          messageText = new JTextField("Click bee to toggle dashboard", 40);
          messageText.setEditable(false);
          panel.add(messageText);
@@ -657,6 +683,27 @@ public class WorldDisplay extends JFrame
          {
             step();
 
+            return;
+         }
+      }
+
+
+      // Choice listener.
+      public void itemStateChanged(ItemEvent evt)
+      {
+         Object source = evt.getSource();
+
+         if (source instanceof Choice && ((Choice)source == driverChoice))
+         {
+            int driver = driverChoice.getSelectedIndex();
+            world.setDriver(driver);
+            if (beeDashboard != null)
+            {
+               if (driver != World.DRIVER_TYPE.VARIABLE.getValue())
+               {
+                  beeDashboard.setDriverChoice(driver);
+               }
+            }
             return;
          }
       }

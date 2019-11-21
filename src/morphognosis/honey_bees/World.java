@@ -7,7 +7,6 @@ package morphognosis.honey_bees;
 import java.security.SecureRandom;
 
 import morphognosis.Utility;
-
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
@@ -31,6 +30,27 @@ public class World
    // Random numbers.
    public SecureRandom random;
    public int          randomSeed;
+
+   // Driver.
+   public enum DRIVER_TYPE
+   {
+      AUTOPILOT(0),
+      METAMORPHS(1),
+      VARIABLE(2);
+
+      private int value;
+
+      DRIVER_TYPE(int value)
+      {
+         this.value = value;
+      }
+
+      public int getValue()
+      {
+         return(value);
+      }
+   }
+   int driver;
 
    // Constructor.
    public World(int randomSeed)
@@ -97,6 +117,9 @@ public class World
 
       // Nectar collector.
       collectedNectar = 0;
+
+      // Initialize driver.
+      driver = DRIVER_TYPE.AUTOPILOT.getValue();
    }
 
 
@@ -411,13 +434,17 @@ public class World
    // Set bee drivers.
    public void setDriver(int driver)
    {
-      if (bees != null)
+      this.driver = driver;
+      if (driver != DRIVER_TYPE.VARIABLE.getValue())
       {
-         for (int i = 0; i < bees.length; i++)
+         if (bees != null)
          {
-            if (bees[i] != null)
+            for (int i = 0; i < bees.length; i++)
             {
-               bees[i].driver = driver;
+               if (bees[i] != null)
+               {
+                  bees[i].driver = driver;
+               }
             }
          }
       }

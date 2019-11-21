@@ -76,7 +76,7 @@ public class Main
       "        [-epochIntervalStride <quantity> (default=" + Parameters.EPOCH_INTERVAL_STRIDE + ")]\n" +
       "        [-epochIntervalMultiplier <quantity> (default=" + Parameters.EPOCH_INTERVAL_MULTIPLIER + ")]\n" +
       "        [-equivalentMorphognosticDistance <distance> (default=" + HoneyBee.EQUIVALENT_MORPHOGNOSTIC_DISTANCE + ")]\n" +
-      "     [-driver <metamorphs | autopilot> (honey bees driver: default=autopilot)]\n" +
+      "     [-driver <autopilot | metamorphs | variable> (honey bees driver: default=autopilot)]\n" +
       "     [-randomSeed <random number seed> (default=" + DEFAULT_RANDOM_SEED + ")]\n" +
       "     [-save <file name>]\n" +
       "     [-print (print parameters and properties)]\n" +
@@ -413,11 +413,15 @@ public class Main
             }
             if (args[i].equals("metamorphs"))
             {
-               driver = HoneyBee.DRIVER_TYPE.METAMORPHS.getValue();
+               driver = World.DRIVER_TYPE.METAMORPHS.getValue();
             }
             else if (args[i].equals("autopilot"))
             {
-               driver = HoneyBee.DRIVER_TYPE.AUTOPILOT.getValue();
+               driver = World.DRIVER_TYPE.AUTOPILOT.getValue();
+            }
+            else if (args[i].equals("variable"))
+            {
+               driver = World.DRIVER_TYPE.VARIABLE.getValue();
             }
             else
             {
@@ -1058,7 +1062,7 @@ public class Main
          main.reset();
       }
 
-      // Set bee driver.
+      // Set driver.
       main.world.setDriver(driver);
 
       // Run.

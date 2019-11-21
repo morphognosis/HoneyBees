@@ -294,18 +294,16 @@ public class HoneyBeeDashboard extends JFrame
 
          if (source instanceof Choice && ((Choice)source == driverChoice))
          {
-            bee.driver = driverChoice.getSelectedIndex();
-
-            if (bee.driver == HoneyBee.DRIVER_TYPE.AUTOPILOT.getValue())
+            if (bee.world.driver == World.DRIVER_TYPE.VARIABLE.getValue())
             {
-               // Fresh start for autopilot.
-               bee.reset();
-
-               // Update input/output.
-               status.update();
-
-               return;
+               bee.driver = driverChoice.getSelectedIndex();
             }
+            else
+            {
+               bee.driver = bee.world.driver;
+               driverChoice.select(bee.world.driver);
+            }
+            return;
          }
       }
    }
