@@ -565,14 +565,7 @@ public class HoneyBee
             int maxDist  = Math.max(Parameters.WORLD_WIDTH, Parameters.WORLD_HEIGHT) / 2;
             int unitDist = maxDist / Parameters.BEE_NUM_DISTANCE_VALUES;
             nectarDist = (bee.nectarDistanceDisplay + 1) * unitDist;
-            if (orientation == bee.orientation)
-            {
-               response = WAIT;
-            }
-            else
-            {
-               response = bee.orientation;
-            }
+            response   = bee.orientation;
             return;
          }
       }
@@ -590,16 +583,9 @@ public class HoneyBee
             }
             else
             {
-               if (random.nextFloat() < Parameters.BEE_ABANDON_NECTAR_DEADLOCK_PREVENTION_PROBABILITY)
-               {
-                  // Prevent deadlock.
-                  nectarDist = -1;
-                  response   = random.nextInt(Compass.NUM_POINTS);
-               }
-               else
-               {
-                  response = WAIT;
-               }
+               // Abandon nectar to avoid deadlock.
+               nectarDist = -1;
+               response   = random.nextInt(Compass.NUM_POINTS);
             }
             return;
          }
@@ -675,10 +661,10 @@ public class HoneyBee
          if (nectarX != -1)
          {
             // Orient toward nectar?
-            int dir = orientToward(nectarX, nectarY);
-            if (dir != orientation)
+            int o = orientToward(nectarX, nectarY);
+            if (o != orientation)
             {
-               response = dir;
+               response = o;
                return;
             }
 
@@ -702,7 +688,7 @@ public class HoneyBee
                displayTimer--;
                if (displayTimer >= 0)
                {
-                  response = nectarDistanceDisplay;
+                  response = DISPLAY_NECTAR_DISTANCE;
                }
                else
                {
@@ -737,13 +723,40 @@ public class HoneyBee
          }
          else
          {
-            if (world.cells[x][y].bee != null)
+            if (world.cells[toX][toY].bee != null)
             {
                response = random.nextInt(Compass.NUM_POINTS);
             }
             else
             {
                response = FORWARD;
+            }
+         }
+      }
+      else
+      {
+         // Move about in hive.
+         if (random.nextFloat() < Parameters.BEE_HIVE_TURN_PROBABILITY)
+         {
+            response = random.nextInt(Compass.NUM_POINTS);
+         }
+         else
+         {
+            if (world.cells[toX][toY].bee != null)
+            {
+               response = random.nextInt(Compass.NUM_POINTS);
+            }
+            else
+            {
+               // If inside of hive, do not leave it.
+               if (!world.cells[toX][toY].hive)
+               {
+                  response = random.nextInt(Compass.NUM_POINTS);
+               }
+               else
+               {
+                  response = FORWARD;
+               }
             }
          }
       }
@@ -988,7 +1001,7 @@ public class HoneyBee
             }
             else
             {
-               return(Compass.NORTHEAST);
+               return(Compass.SOUTHEAST);
             }
          }
          else if (dY > y)

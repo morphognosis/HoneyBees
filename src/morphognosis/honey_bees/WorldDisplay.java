@@ -314,7 +314,8 @@ public class WorldDisplay extends JFrame
 
          // Draw objects.
          BasicStroke thickLine  = new BasicStroke(3);
-         BasicStroke dashedLine = new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[] { 9 }, 0);
+         BasicStroke dashedLine = new BasicStroke(1, BasicStroke.CAP_BUTT,
+                                                  BasicStroke.JOIN_BEVEL, 0, new float[] { 9 }, 0);
          BasicStroke thinLine   = new BasicStroke(1);
          int         nectarYoff = (int)(cellHeight / 2.0f);
          for (x = x2 = 0; x < width;
@@ -404,7 +405,7 @@ public class WorldDisplay extends JFrame
                         int fromX = x2 + (int)(cellWidth / 2.0f);
                         int fromY = y2 + (int)(cellHeight / 2.0f);
                         toX = (int)((float)toX * cellWidth) + (int)(cellWidth / 2.0f);
-                        toY = (int)(cellHeight * (double)(height - (toY + 1))) + (int)(cellHeight / 2.0f);
+                        toY = (int)(cellHeight * (float)(height - (toY + 1))) + (int)(cellHeight / 2.0f);
                         canvasGraphics.drawLine(fromX, fromY, toX, toY);
                         canvasGraphics.setColor(Color.WHITE);
                         canvasGraphics.setStroke(thinLine);
@@ -742,7 +743,7 @@ public class WorldDisplay extends JFrame
             world.setDriver(driver);
             if (beeDashboard != null)
             {
-               if (driver != World.DRIVER_TYPE.VARIABLE.getValue())
+               if (driver != World.DRIVER_TYPE.LOCAL.getValue())
                {
                   beeDashboard.setDriverChoice(driver);
                }

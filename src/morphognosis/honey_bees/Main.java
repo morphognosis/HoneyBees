@@ -76,7 +76,7 @@ public class Main
       "        [-epochIntervalStride <quantity> (default=" + Parameters.EPOCH_INTERVAL_STRIDE + ")]\n" +
       "        [-epochIntervalMultiplier <quantity> (default=" + Parameters.EPOCH_INTERVAL_MULTIPLIER + ")]\n" +
       "        [-equivalentMorphognosticDistance <distance> (default=" + HoneyBee.EQUIVALENT_MORPHOGNOSTIC_DISTANCE + ")]\n" +
-      "     [-driver <autopilot | metamorphs | variable> (honey bees driver: default=autopilot)]\n" +
+      "     [-driver <autopilot | metamorphs | local> (honey bees driver: default=autopilot)]\n" +
       "     [-randomSeed <random number seed> (default=" + DEFAULT_RANDOM_SEED + ")]\n" +
       "     [-save <file name>]\n" +
       "     [-print (print parameters and properties)]\n" +
@@ -85,7 +85,7 @@ public class Main
       "    java morphognosis.honey_bees.Main\n" +
       "      -load <file name>\n" +
       "     [-steps <steps> | -display (default)]\n" +
-      "     [-driver autopilot | metamorphs | variable> (default=autopilot)]\n" +
+      "     [-driver autopilot | metamorphs | local> (default=autopilot)]\n" +
       "     [-randomSeed <random number seed>]\n" +
       "     [-save <file name>]\n" +
       "     [-print (print parameters and properties)]\n" +
@@ -421,7 +421,7 @@ public class Main
             }
             else if (args[i].equals("variable"))
             {
-               driver = World.DRIVER_TYPE.VARIABLE.getValue();
+               driver = World.DRIVER_TYPE.LOCAL.getValue();
             }
             else
             {

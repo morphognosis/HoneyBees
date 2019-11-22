@@ -36,7 +36,7 @@ public class World
    {
       AUTOPILOT(0),
       METAMORPHS(1),
-      VARIABLE(2);
+      LOCAL(2);
 
       private int value;
 
@@ -329,13 +329,6 @@ public class World
                   cells[bee.toX][bee.toY].flower.nectar--;
                }
                break;
-
-            case HoneyBee.DEPOSIT_NECTAR:
-               if (cells[bee.x][bee.y].hive && bee.nectarCarry)
-               {
-                  collectedNectar++;
-               }
-               break;
             }
          }
       }
@@ -435,7 +428,7 @@ public class World
    public void setDriver(int driver)
    {
       this.driver = driver;
-      if (driver != DRIVER_TYPE.VARIABLE.getValue())
+      if (driver != DRIVER_TYPE.LOCAL.getValue())
       {
          if (bees != null)
          {

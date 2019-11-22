@@ -294,7 +294,7 @@ public class HoneyBeeDashboard extends JFrame
 
          if (source instanceof Choice && ((Choice)source == driverChoice))
          {
-            if (bee.world.driver == World.DRIVER_TYPE.VARIABLE.getValue())
+            if (bee.world.driver == World.DRIVER_TYPE.LOCAL.getValue())
             {
                bee.driver = driverChoice.getSelectedIndex();
             }

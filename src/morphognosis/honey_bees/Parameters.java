@@ -21,7 +21,7 @@ public class Parameters
    // Note: probabilities are applied for each step.
 
    // Flower parameters.
-   public static float FLOWER_SPROUT_PROBABILITY            = .01f;
+   public static float FLOWER_SPROUT_PROBABILITY            = .001f;
    public static float FLOWER_DEATH_PROBABILITY             = .01f;
    public static int   FLOWER_NECTAR_CAPACITY               = 3;
    public static float FLOWER_NECTAR_PRODUCTION_PROBABILITY = .05f;
