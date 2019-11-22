@@ -371,8 +371,9 @@ public class HoneyBee
          metamorphs.add(Metamorph.load(reader));
       }
       EQUIVALENT_MORPHOGNOSTIC_DISTANCE = Utility.loadFloat(reader);
-      driver         = Utility.loadInt(reader);
-      driverResponse = Utility.loadInt(reader);
+      driver                = Utility.loadInt(reader);
+      driverResponse        = Utility.loadInt(reader);
+      world.cells[x][y].bee = this;
    }
 
 

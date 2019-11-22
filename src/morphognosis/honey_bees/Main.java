@@ -1020,6 +1020,15 @@ public class Main
 
       // Create world.
       Main main = new Main(randomSeed);
+      try
+      {
+         main.init();
+      }
+      catch (Exception e)
+      {
+         System.err.println("Cannot initialize: " + e.getMessage());
+         System.exit(1);
+      }
       if (loadfile != null)
       {
          try
@@ -1032,24 +1041,13 @@ public class Main
             System.exit(1);
          }
       }
-      else
-      {
-         try
-         {
-            main.init();
-         }
-         catch (Exception e)
-         {
-            System.err.println("Cannot initialize: " + e.getMessage());
-            System.exit(1);
-         }
-      }
 
       // Print parameters?
       if (printParms)
       {
          System.out.println("Parameters:");
          Parameters.print();
+         System.exit(0);
       }
 
       // Set driver.

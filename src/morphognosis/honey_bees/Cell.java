@@ -69,6 +69,7 @@ public class Cell
       }
       if (Utility.loadInt(reader) == 1)
       {
+         flower = new Flower();
          flower.load(reader);
       }
    }
