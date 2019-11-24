@@ -28,6 +28,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.security.SecureRandom;
+import java.util.Objects;
 
 import javax.imageio.ImageIO;
 import javax.sound.sampled.AudioInputStream;
@@ -455,33 +456,44 @@ public class WorldDisplay extends JFrame
       {
          // Load source images.
          BufferedImage beeImage = null;
+         String        protocol = this.getClass().getResource("").getProtocol();
 
-         try
+         if (Objects.equals(protocol, "jar"))
          {
-            beeImage    = ImageIO.read(getClass().getResource(BEE_IMAGE_FILENAME));
-            flowerImage = ImageIO.read(getClass().getResource(FLOWER_IMAGE_FILENAME));
-            nectarImage = ImageIO.read(getClass().getResource(NECTAR_IMAGE_FILENAME));
-         }
-         catch (Exception e) {}
-         try
-         {
-            if (beeImage == null)
+            try
             {
-               beeImage = ImageIO.read(new File("res/images/" + BEE_IMAGE_FILENAME));
+               beeImage    = ImageIO.read(getClass().getResource(BEE_IMAGE_FILENAME));
+               flowerImage = ImageIO.read(getClass().getResource(FLOWER_IMAGE_FILENAME));
+               nectarImage = ImageIO.read(getClass().getResource(NECTAR_IMAGE_FILENAME));
             }
-            if (flowerImage == null)
+            catch (Exception e)
             {
-               flowerImage = ImageIO.read(new File("res/images/" + FLOWER_IMAGE_FILENAME));
-            }
-            if (nectarImage == null)
-            {
-               nectarImage = ImageIO.read(new File("res/images/" + NECTAR_IMAGE_FILENAME));
+               System.err.println("Cannot load images: " + e.getMessage());
+               System.exit(1);
             }
          }
-         catch (Exception e)
+         else
          {
-            System.err.println("Cannot load images: " + e.getMessage());
-            System.exit(1);
+            try
+            {
+               if (beeImage == null)
+               {
+                  beeImage = ImageIO.read(new File("res/images/" + BEE_IMAGE_FILENAME));
+               }
+               if (flowerImage == null)
+               {
+                  flowerImage = ImageIO.read(new File("res/images/" + FLOWER_IMAGE_FILENAME));
+               }
+               if (nectarImage == null)
+               {
+                  nectarImage = ImageIO.read(new File("res/images/" + NECTAR_IMAGE_FILENAME));
+               }
+            }
+            catch (Exception e)
+            {
+               System.err.println("Cannot load images: " + e.getMessage());
+               System.exit(1);
+            }
          }
 
          // Set font.
@@ -548,18 +560,25 @@ public class WorldDisplay extends JFrame
       // Initialize sounds.
       void initSounds()
       {
-         boolean gotSound = false;
+         String protocol = this.getClass().getResource("").getProtocol();
 
-         try
+         if (Objects.equals(protocol, "jar"))
          {
-            AudioInputStream inputStream = AudioSystem.getAudioInputStream(getClass().getResource(BEE_SOUND_FILENAME));
-            DataLine.Info    info        = new DataLine.Info(Clip.class, inputStream.getFormat());
-            beeSound = (Clip)AudioSystem.getLine(info);
-            beeSound.open(inputStream);
-            gotSound = true;
+            // Running from jar.
+            try
+            {
+               AudioInputStream inputStream = AudioSystem.getAudioInputStream(getClass().getResource(BEE_SOUND_FILENAME));
+               DataLine.Info    info        = new DataLine.Info(Clip.class, inputStream.getFormat());
+               beeSound = (Clip)AudioSystem.getLine(info);
+               beeSound.open(inputStream);
+            }
+            catch (LineUnavailableException | IOException | UnsupportedAudioFileException e)
+            {
+               System.err.println("Cannot load sound file " + BEE_SOUND_FILENAME + ": " + e.getMessage());
+               System.exit(1);
+            }
          }
-         catch (Exception e) {}
-         if (!gotSound)
+         else
          {
             try
             {
