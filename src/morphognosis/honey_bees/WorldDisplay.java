@@ -681,7 +681,7 @@ public class WorldDisplay extends JFrame
          muteCheck = new JCheckBox("Mute", true);
          panel.add(muteCheck);
          muteCheck.addItemListener(this);
-         messageText = new JTextField("Click bee to toggle dashboard", 30);
+         messageText = new JTextField("Click bee for dashboard", 14);
          messageText.setEditable(false);
          panel.add(messageText);
          nectarCounter = new JLabel("Collected nectar: 0");
