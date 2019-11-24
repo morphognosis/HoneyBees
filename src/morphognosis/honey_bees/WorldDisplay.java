@@ -26,11 +26,16 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
 import java.security.SecureRandom;
 
 import javax.imageio.ImageIO;
+import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
+import javax.sound.sampled.DataLine;
+import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -547,8 +552,10 @@ public class WorldDisplay extends JFrame
 
          try
          {
-            beeSound = AudioSystem.getClip();
-            beeSound.open(AudioSystem.getAudioInputStream(getClass().getResource(BEE_SOUND_FILENAME)));
+            AudioInputStream inputStream = AudioSystem.getAudioInputStream(getClass().getResource(BEE_SOUND_FILENAME));
+            DataLine.Info    info        = new DataLine.Info(Clip.class, inputStream.getFormat());
+            beeSound = (Clip)AudioSystem.getLine(info);
+            beeSound.open(inputStream);
             gotSound = true;
          }
          catch (Exception e) {}
@@ -556,10 +563,12 @@ public class WorldDisplay extends JFrame
          {
             try
             {
-               beeSound = AudioSystem.getClip();
-               beeSound.open(AudioSystem.getAudioInputStream(new File("res/sounds/" + BEE_SOUND_FILENAME)));
+               AudioInputStream inputStream = AudioSystem.getAudioInputStream(new File("res/sounds/" + BEE_SOUND_FILENAME));
+               DataLine.Info    info        = new DataLine.Info(Clip.class, inputStream.getFormat());
+               beeSound = (Clip)AudioSystem.getLine(info);
+               beeSound.open(inputStream);
             }
-            catch (Exception e)
+            catch (LineUnavailableException | IOException | UnsupportedAudioFileException e)
             {
                System.err.println("Cannot load sound file " + BEE_SOUND_FILENAME + ": " + e.getMessage());
                System.exit(1);
