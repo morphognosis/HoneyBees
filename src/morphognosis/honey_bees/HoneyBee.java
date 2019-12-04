@@ -198,8 +198,10 @@ public class HoneyBee
       {
          eventTypes[i] = 2;
       }
-      eventTypes[i] = Parameters.BEE_NUM_DISTANCE_VALUES + 1;
-      i++;
+      for (int j = 0; j < Parameters.BEE_NUM_DISTANCE_VALUES; i++, j++)
+      {
+         eventTypes[i] = 2;
+      }
       eventTypes[i] = 2;
       morphognostic = new Morphognostic(Orientation.NORTH, eventTypes,
                                         Parameters.NUM_NEIGHBORHOODS,
@@ -430,10 +432,7 @@ public class HoneyBee
             morphEvents[e.x][e.y][n][eventTime - e.time] = e.values[n];
          }
       }
-
-      /* TODO
-       * morphognostic.update(morphEvents, x, y);
-       */
+      morphognostic.update(morphEvents, x, y);
 
       // Respond.
       if (driver == DRIVER_TYPE.METAMORPHS.getValue())

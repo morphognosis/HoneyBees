@@ -78,6 +78,7 @@ public class Main
       "        [-equivalentMorphognosticDistance <distance> (default=" + HoneyBee.EQUIVALENT_MORPHOGNOSTIC_DISTANCE + ")]\n" +
       "     [-driver <autopilot | metamorphs | local> (honey bees driver: default=autopilot)]\n" +
       "     [-randomSeed <random number seed> (default=" + DEFAULT_RANDOM_SEED + ")]\n" +
+      "     [-printCollectedNectar]\n" +
       "     [-save <file name>]\n" +
       "     [-writeMetamorphDataset <file name> (write metamorph dataset file, default=" + HoneyBee.METAMORPH_DATASET_FILE_NAME + ")]\n" +
       "  Resume run:\n" +
@@ -86,6 +87,7 @@ public class Main
       "     [-steps <steps> | -display (default)]\n" +
       "     [-driver autopilot | metamorphs | local> (default=autopilot)]\n" +
       "     [-randomSeed <random number seed>]\n" +
+      "     [-printCollectedNectar]\n" +
       "     [-save <file name>]\n" +
       "     [-writeMetamorphDataset <file name> (write metamorph dataset file, default=" + HoneyBee.METAMORPH_DATASET_FILE_NAME + ")]\n" +
       "  Print parameters:\n" +
@@ -97,33 +99,17 @@ public class Main
       "  1=error";
 
    // World.
-   public World world;
+   public static World world;
 
    // Display.
-   public WorldDisplay display;
+   public static WorldDisplay display;
 
    // Random numbers.
-   public int          randomSeed;
-   public SecureRandom random;
-
-   // Constructor.
-   public Main(int randomSeed)
-   {
-      this.randomSeed = randomSeed;
-      random          = new SecureRandom();
-      random.setSeed(randomSeed);
-   }
-
-
-   // Initialize.
-   public void init()
-   {
-      world = new World(randomSeed);
-   }
-
+   public static int          randomSeed = DEFAULT_RANDOM_SEED;
+   public static SecureRandom random;
 
    // Reset.
-   public void reset()
+   public static void reset()
    {
       random.setSeed(randomSeed);
       if (world != null)
@@ -138,7 +124,7 @@ public class Main
 
 
    // Clear.
-   public void clear()
+   public static void clear()
    {
       if (display != null)
       {
@@ -150,7 +136,7 @@ public class Main
 
 
    // Save to file.
-   public void save(String filename) throws IOException
+   public static void save(String filename) throws IOException
    {
       DataOutputStream writer;
 
@@ -168,7 +154,7 @@ public class Main
 
 
    // Save.
-   public void save(DataOutputStream writer) throws IOException
+   public static void save(DataOutputStream writer) throws IOException
    {
       // Save parameters.
       Parameters.save(writer);
@@ -179,7 +165,7 @@ public class Main
 
 
    // Load from file.
-   public void load(String filename) throws IOException
+   public static void load(String filename) throws IOException
    {
       DataInputStream reader;
 
@@ -197,7 +183,7 @@ public class Main
 
 
    // Load.
-   public void load(DataInputStream reader) throws IOException
+   public static void load(DataInputStream reader) throws IOException
    {
       // Load parameters.
       Parameters.load(reader);
@@ -208,7 +194,7 @@ public class Main
 
 
    // Run.
-   public void run(int steps)
+   public static void run(int steps)
    {
       random.setSeed(randomSeed);
       if (steps >= 0)
@@ -229,7 +215,7 @@ public class Main
 
 
    // Create display.
-   public void createDisplay()
+   public static void createDisplay()
    {
       if (display == null)
       {
@@ -239,7 +225,7 @@ public class Main
 
 
    // Destroy display.
-   public void destroyDisplay()
+   public static void destroyDisplay()
    {
       if (display != null)
       {
@@ -251,7 +237,7 @@ public class Main
 
    // Update display.
    // Return false for display quit.
-   public boolean updateDisplay(int steps)
+   public static boolean updateDisplay(int steps)
    {
       if (display != null)
       {
@@ -281,11 +267,11 @@ public class Main
    public static void main(String[] args)
    {
       // Get options.
-      int     steps          = -1;
-      int     driver         = HoneyBee.DRIVER_TYPE.AUTOPILOT.getValue();
-      int     randomSeed     = DEFAULT_RANDOM_SEED;
-      String  loadfile       = null;
-      String  savefile       = null;
+      int     steps  = -1;
+      int     driver = HoneyBee.DRIVER_TYPE.AUTOPILOT.getValue();
+      boolean printCollectedNectar = false;
+      String  loadfile             = null;
+      String  savefile             = null;
       boolean display        = false;
       boolean gotParm        = false;
       boolean printParms     = false;
@@ -915,6 +901,11 @@ public class Main
             }
             continue;
          }
+         if (args[i].equals("-printCollectedNectar"))
+         {
+            printCollectedNectar = true;
+            continue;
+         }
          if (args[i].equals("-load"))
          {
             i++;
@@ -1016,11 +1007,12 @@ public class Main
          System.err.println("Warning: cannot set look and feel");
       }
 
-      // Create world.
-      Main main = new Main(randomSeed);
+      // Initialize.
+      random = new SecureRandom();
+      random.setSeed(randomSeed);
       try
       {
-         main.init();
+         world = new World(randomSeed);
       }
       catch (Exception e)
       {
@@ -1031,7 +1023,7 @@ public class Main
       {
          try
          {
-            main.load(loadfile);
+            load(loadfile);
          }
          catch (Exception e)
          {
@@ -1049,27 +1041,31 @@ public class Main
       }
 
       // Set driver.
-      main.world.setDriver(driver);
+      world.setDriver(driver);
 
       // Create display?
       if (display)
       {
-         main.createDisplay();
+         createDisplay();
       }
       else
       {
-         main.reset();
+         reset();
       }
 
       // Run.
-      main.run(steps);
+      run(steps);
+      if (printCollectedNectar)
+      {
+         System.out.println("Collected nectar = " + world.collectedNectar);
+      }
 
       // Save?
       if (savefile != null)
       {
          try
          {
-            main.save(savefile);
+            save(savefile);
          }
          catch (Exception e)
          {
@@ -1083,7 +1079,7 @@ public class Main
       {
          try
          {
-            main.world.writeMetamorphDataset();
+            world.writeMetamorphDataset();
          }
          catch (Exception e)
          {
