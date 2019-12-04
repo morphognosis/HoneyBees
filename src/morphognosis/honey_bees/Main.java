@@ -79,7 +79,6 @@ public class Main
       "     [-driver <autopilot | metamorphs | local> (honey bees driver: default=autopilot)]\n" +
       "     [-randomSeed <random number seed> (default=" + DEFAULT_RANDOM_SEED + ")]\n" +
       "     [-save <file name>]\n" +
-      "     [-print (print parameters and properties)]\n" +
       "     [-writeMetamorphDataset <file name> (write metamorph dataset file, default=" + HoneyBee.METAMORPH_DATASET_FILE_NAME + ")]\n" +
       "  Resume run:\n" +
       "    java morphognosis.honey_bees.Main\n" +
@@ -88,7 +87,6 @@ public class Main
       "     [-driver autopilot | metamorphs | local> (default=autopilot)]\n" +
       "     [-randomSeed <random number seed>]\n" +
       "     [-save <file name>]\n" +
-      "     [-print (print parameters and properties)]\n" +
       "     [-writeMetamorphDataset <file name> (write metamorph dataset file, default=" + HoneyBee.METAMORPH_DATASET_FILE_NAME + ")]\n" +
       "  Print parameters:\n" +
       "    java morphognosis.honey_bees.Main -printParameters\n" +
