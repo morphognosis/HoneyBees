@@ -79,6 +79,7 @@ public class Main
       "     [-driver <autopilot | metamorphs | local> (honey bees driver: default=autopilot)]\n" +
       "     [-randomSeed <random number seed> (default=" + DEFAULT_RANDOM_SEED + ")]\n" +
       "     [-printCollectedNectar]\n" +
+      "     [-noLearning (do not learn new metamorphs)]\n" +
       "     [-save <file name>]\n" +
       "     [-writeMetamorphDataset <file name> (write metamorph dataset file, default=" + HoneyBee.METAMORPH_DATASET_FILE_NAME + ")]\n" +
       "  Resume run:\n" +
@@ -88,6 +89,7 @@ public class Main
       "     [-driver autopilot | metamorphs | local> (default=autopilot)]\n" +
       "     [-randomSeed <random number seed>]\n" +
       "     [-printCollectedNectar]\n" +
+      "     [-noLearning (do not learn new metamorphs)]\n" +
       "     [-save <file name>]\n" +
       "     [-writeMetamorphDataset <file name> (write metamorph dataset file, default=" + HoneyBee.METAMORPH_DATASET_FILE_NAME + ")]\n" +
       "  Print parameters:\n" +
@@ -270,6 +272,7 @@ public class Main
       int     steps  = -1;
       int     driver = HoneyBee.DRIVER_TYPE.AUTOPILOT.getValue();
       boolean printCollectedNectar = false;
+      boolean noLearning           = false;
       String  loadfile             = null;
       String  savefile             = null;
       boolean display        = false;
@@ -906,6 +909,11 @@ public class Main
             printCollectedNectar = true;
             continue;
          }
+         if (args[i].equals("-noLearning"))
+         {
+            noLearning = true;
+            continue;
+         }
          if (args[i].equals("-load"))
          {
             i++;
@@ -999,7 +1007,8 @@ public class Main
       }
 
       // Set look and feel.
-      try {
+      try
+      {
          UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
       }
       catch (Exception e)
@@ -1012,7 +1021,8 @@ public class Main
       random.setSeed(randomSeed);
       try
       {
-         world = new World(randomSeed);
+         world            = new World(randomSeed);
+         world.noLearning = noLearning;
       }
       catch (Exception e)
       {

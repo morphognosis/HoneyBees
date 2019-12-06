@@ -52,6 +52,9 @@ public class World
    }
    int driver;
 
+   // No metamorph learning?
+   public boolean noLearning;
+
    // Constructor.
    public World(int randomSeed)
    {

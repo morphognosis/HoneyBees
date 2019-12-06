@@ -184,7 +184,7 @@ public class HoneyBee
       eventTime     = 0;
       numEventTypes =
          1 +                                  // <hive presence>
-         1 +                                  //  <adjacent flower nectar quantity>
+         1 +                                  // <adjacent flower nectar quantity>
          Compass.NUM_POINTS +                 // <adjacent bee orientation>
          Parameters.BEE_NUM_DISTANCE_VALUES + // <adjacent bee nectar distance>
          1;                                   // <nectar carry status>
@@ -192,7 +192,7 @@ public class HoneyBee
       int i = 0;
       eventTypes[i] = 2;
       i++;
-      eventTypes[i] = Parameters.FLOWER_NECTAR_CAPACITY;
+      eventTypes[i] = Parameters.FLOWER_NECTAR_CAPACITY + 1;
       i++;
       for (int j = 0; j < Compass.NUM_POINTS; i++, j++)
       {
@@ -388,51 +388,54 @@ public class HoneyBee
       }
 
       // Update morphognostic.
-      int[] values = new int[numEventTypes];
-      values[0]    = (int)sensors[HIVE_PRESENCE_INDEX];
-      values[1]    = (int)sensors[ADJACENT_FLOWER_NECTAR_QUANTITY_INDEX];
-      if (sensors[ADJACENT_BEE_ORIENTATION_INDEX] != -1)
+      if (!world.noLearning)
       {
-         values[2 + (int)sensors[ADJACENT_BEE_ORIENTATION_INDEX]] = 1;
-      }
-      if (sensors[ADJACENT_BEE_NECTAR_DISTANCE_INDEX] != -1)
-      {
-         values[2 + Compass.NUM_POINTS + (int)sensors[ADJACENT_BEE_NECTAR_DISTANCE_INDEX]] = 1;
-      }
-      if (nectarCarry)
-      {
-         values[2 + Compass.NUM_POINTS + Parameters.BEE_NUM_DISTANCE_VALUES] = 1;
-      }
-      events.add(new Event(values, x, y, eventTime));
-      if ((eventTime - events.get(0).time) > maxEventAge)
-      {
-         events.remove(0);
-      }
-      int w = Parameters.WORLD_WIDTH;
-      int h = Parameters.WORLD_HEIGHT;
-      int a = maxEventAge + 1;
-      int morphEvents[][][][] = new int[w][h][numEventTypes][a];
-      for (int x2 = 0; x2 < w; x2++)
-      {
-         for (int y2 = 0; y2 < h; y2++)
+         int[] values = new int[numEventTypes];
+         values[0]    = (int)sensors[HIVE_PRESENCE_INDEX];
+         values[1]    = (int)sensors[ADJACENT_FLOWER_NECTAR_QUANTITY_INDEX];
+         if (sensors[ADJACENT_BEE_ORIENTATION_INDEX] != -1)
          {
-            for (int n = 0; n < numEventTypes; n++)
+            values[2 + (int)sensors[ADJACENT_BEE_ORIENTATION_INDEX]] = 1;
+         }
+         if (sensors[ADJACENT_BEE_NECTAR_DISTANCE_INDEX] != -1)
+         {
+            values[2 + Compass.NUM_POINTS + (int)sensors[ADJACENT_BEE_NECTAR_DISTANCE_INDEX]] = 1;
+         }
+         if (nectarCarry)
+         {
+            values[2 + Compass.NUM_POINTS + Parameters.BEE_NUM_DISTANCE_VALUES] = 1;
+         }
+         events.add(new Event(values, x, y, eventTime));
+         if ((eventTime - events.get(0).time) > maxEventAge)
+         {
+            events.remove(0);
+         }
+         int w = Parameters.WORLD_WIDTH;
+         int h = Parameters.WORLD_HEIGHT;
+         int a = maxEventAge + 1;
+         int morphEvents[][][][] = new int[w][h][numEventTypes][a];
+         for (int x2 = 0; x2 < w; x2++)
+         {
+            for (int y2 = 0; y2 < h; y2++)
             {
-               for (int t = 0; t < a; t++)
+               for (int n = 0; n < numEventTypes; n++)
                {
-                  morphEvents[x2][y2][n][t] = -1;
+                  for (int t = 0; t < a; t++)
+                  {
+                     morphEvents[x2][y2][n][t] = -1;
+                  }
                }
             }
          }
-      }
-      for (Event e : events)
-      {
-         for (int n = 0; n < numEventTypes; n++)
+         for (Event e : events)
          {
-            morphEvents[e.x][e.y][n][eventTime - e.time] = e.values[n];
+            for (int n = 0; n < numEventTypes; n++)
+            {
+               morphEvents[e.x][e.y][n][eventTime - e.time] = e.values[n];
+            }
          }
+         morphognostic.update(morphEvents, x, y);
       }
-      morphognostic.update(morphEvents, x, y);
 
       // Respond.
       if (driver == DRIVER_TYPE.METAMORPHS.getValue())
@@ -449,30 +452,33 @@ public class HoneyBee
       }
 
       // Update metamorphs.
-      Metamorph metamorph = new Metamorph(morphognostic.clone(), response);
-      boolean   found     = false;
-
-      for (Metamorph m : metamorphs)
+      if (!world.noLearning)
       {
-         for (int i = 0; i < Orientation.NUM_ORIENTATIONS; i++)
+         Metamorph metamorph = new Metamorph(morphognostic.clone(), response);
+         boolean   found     = false;
+
+         for (Metamorph m : metamorphs)
          {
-            metamorph.morphognostic.orientation = i;
-            if (m.morphognostic.compare(metamorph.morphognostic) <=
-                EQUIVALENT_MORPHOGNOSTIC_DISTANCE)
+            for (int i = 0; i < Orientation.NUM_ORIENTATIONS; i++)
             {
-               found = true;
-               break;
+               metamorph.morphognostic.orientation = i;
+               if (m.morphognostic.compare(metamorph.morphognostic) <=
+                   EQUIVALENT_MORPHOGNOSTIC_DISTANCE)
+               {
+                  found = true;
+                  break;
+               }
             }
+            if (found) { break; }
          }
-         if (found) { break; }
+         metamorph.morphognostic.orientation = Orientation.NORTH;
+         if (!found)
+         {
+            metamorphs.add(metamorph);
+         }
       }
-      metamorph.morphognostic.orientation = Orientation.NORTH;
-      if (!found)
-      {
-         metamorphs.add(metamorph);
-      }
-
       eventTime++;
+
       return(response);
    }
 

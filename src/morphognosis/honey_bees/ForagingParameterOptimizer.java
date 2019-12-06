@@ -1342,6 +1342,7 @@ public class ForagingParameterOptimizer
          // Run with cooperative foraging.
          int   randomSeed = optimizer.Randomizer.nextInt();
          World world      = new World(randomSeed);
+         world.noLearning = true;
          for (int i = 0; i < steps; i++)
          {
             world.step();
@@ -1352,7 +1353,8 @@ public class ForagingParameterOptimizer
          Parameters.BEE_LEAVE_HIVE_TO_FORAGE_PROBABILITY = 1.0f;
          Parameters.BEE_RETURN_TO_HIVE_PROBABILITY       = 0.0f;
          Parameters.BEE_NECTAR_DISPLAY_DURATION          = -1;
-         world = new World(randomSeed);
+         world            = new World(randomSeed);
+         world.noLearning = true;
          for (int i = 0; i < steps; i++)
          {
             world.step();
