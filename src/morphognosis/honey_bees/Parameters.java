@@ -37,7 +37,7 @@ public class Parameters
    public static int   BEE_NECTAR_DISPLAY_DURATION = 10;
 
    // Morphognosis parameters.
-   public static int NUM_NEIGHBORHOODS = Morphognostic.DEFAULT_NUM_NEIGHBORHOODS;
+   public static int NUM_NEIGHBORHOODS = 3;  // Morphognostic.DEFAULT_NUM_NEIGHBORHOODS + 1;
    public static int NEIGHBORHOOD_INITIAL_DIMENSION    = Morphognostic.DEFAULT_NEIGHBORHOOD_INITIAL_DIMENSION;
    public static int NEIGHBORHOOD_DIMENSION_STRIDE     = Morphognostic.DEFAULT_NEIGHBORHOOD_DIMENSION_STRIDE;
    public static int NEIGHBORHOOD_DIMENSION_MULTIPLIER = Morphognostic.DEFAULT_NEIGHBORHOOD_DIMENSION_MULTIPLIER;

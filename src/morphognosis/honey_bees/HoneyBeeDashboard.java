@@ -116,7 +116,8 @@ public class HoneyBeeDashboard extends JFrame
       JTextField adjacentBeeOrientationText;
       JTextField adjacentBeeNectarDistanceText;
       JTextField orientationText;
-      JTextField nectarText;
+      JTextField foragingStateText;
+      JTextField nectarCarryText;
       JTextField nectarDistanceDisplayText;
       JTextField responseText;
 
@@ -184,10 +185,17 @@ public class HoneyBeeDashboard extends JFrame
          JPanel nectarCarryPanel = new JPanel();
          nectarCarryPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
          statePanel.add(nectarCarryPanel);
-         nectarCarryPanel.add(new JLabel("Nectar: "));
-         nectarText = new JTextField(10);
-         nectarText.setEditable(false);
-         nectarCarryPanel.add(nectarText);
+         nectarCarryPanel.add(new JLabel("Nectar carry: "));
+         nectarCarryText = new JTextField(10);
+         nectarCarryText.setEditable(false);
+         nectarCarryPanel.add(nectarCarryText);
+         JPanel foragingStatePanel = new JPanel();
+         foragingStatePanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+         statePanel.add(foragingStatePanel);
+         foragingStatePanel.add(new JLabel("Foraging state: "));
+         foragingStateText = new JTextField(10);
+         foragingStateText.setEditable(false);
+         foragingStatePanel.add(foragingStateText);
          JPanel nectarDistanceDisplayPanel = new JPanel();
          nectarDistanceDisplayPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
          statePanel.add(nectarDistanceDisplayPanel);
@@ -233,7 +241,8 @@ public class HoneyBeeDashboard extends JFrame
 
          // Update state.
          orientationText.setText(Compass.toName(bee.orientation));
-         nectarText.setText(bee.nectarCarry + "");
+         foragingStateText.setText(bee.foraging + "");
+         nectarCarryText.setText(bee.nectarCarry + "");
          if (bee.nectarDistanceDisplay == -1)
          {
             nectarDistanceDisplayText.setText("NA");

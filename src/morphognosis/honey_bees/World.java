@@ -344,7 +344,14 @@ public class World
       float[] sensors = new float[HoneyBee.NUM_SENSORS];
       int width  = Parameters.WORLD_WIDTH;
       int height = Parameters.WORLD_HEIGHT;
-
+      if (cells[bee.x][bee.y].hive)
+      {
+         sensors[HoneyBee.HIVE_PRESENCE_INDEX] = 1.0f;
+      }
+      else
+      {
+         sensors[HoneyBee.HIVE_PRESENCE_INDEX] = 0.0f;
+      }
       int toX = bee.x;
       int toY = bee.y;
       switch (bee.orientation)
@@ -389,14 +396,6 @@ public class World
       bee.toY = toY;
       if ((toX >= 0) && (toX < width) && (toY >= 0) && (toY < height))
       {
-         if (cells[toX][toY].hive)
-         {
-            sensors[HoneyBee.HIVE_PRESENCE_INDEX] = 1.0f;
-         }
-         else
-         {
-            sensors[HoneyBee.HIVE_PRESENCE_INDEX] = 0.0f;
-         }
          if ((cells[toX][toY].flower != null) && (cells[toX][toY].flower.nectar > 0))
          {
             sensors[HoneyBee.ADJACENT_FLOWER_NECTAR_PRESENCE_INDEX] = 1.0f;
@@ -418,7 +417,6 @@ public class World
       }
       else
       {
-         sensors[HoneyBee.HIVE_PRESENCE_INDEX] = 0.0f;
          sensors[HoneyBee.ADJACENT_FLOWER_NECTAR_PRESENCE_INDEX] = 0.0f;
          sensors[HoneyBee.ADJACENT_BEE_ORIENTATION_INDEX]        = -1.0f;
          sensors[HoneyBee.ADJACENT_BEE_NECTAR_DISTANCE_INDEX]    = -1.0f;

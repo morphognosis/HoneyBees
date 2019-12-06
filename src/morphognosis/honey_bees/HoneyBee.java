@@ -77,6 +77,7 @@ public class HoneyBee
     *              <adjacent flower nectar presence>,
     *              <adjacent bee orientation>,
     *              <adjacent bee nectar distance>,
+    *              <foraging state>,
     *              <nectar carry status>
     *      }
     *      <orientation>: [<compass point true/false> x8]
@@ -187,6 +188,7 @@ public class HoneyBee
          1 +                                  // <adjacent flower nectar presence>
          Compass.NUM_POINTS +                 // <adjacent bee orientation>
          Parameters.BEE_NUM_DISTANCE_VALUES + // <adjacent bee nectar distance>
+         1 +                                  // <foraging state>
          1;                                   // <nectar carry status>
       int [] eventTypes = new int[numEventTypes];
       for (int i = 0; i < eventTypes.length; i++)
@@ -391,9 +393,13 @@ public class HoneyBee
          {
             values[2 + Compass.NUM_POINTS + (int)sensors[ADJACENT_BEE_NECTAR_DISTANCE_INDEX]] = 1;
          }
-         if (nectarCarry)
+         if (foraging)
          {
             values[2 + Compass.NUM_POINTS + Parameters.BEE_NUM_DISTANCE_VALUES] = 1;
+         }
+         if (nectarCarry)
+         {
+            values[2 + Compass.NUM_POINTS + Parameters.BEE_NUM_DISTANCE_VALUES + 1] = 1;
          }
          events.add(new Event(values, x, y, eventTime));
          if ((eventTime - events.get(0).time) > maxEventAge)
@@ -587,44 +593,38 @@ public class HoneyBee
          }
 
          // Return to hive?
-         if (random.nextFloat() < Parameters.BEE_RETURN_TO_HIVE_PROBABILITY)
+         if (!world.cells[x][y].hive && (random.nextFloat() < Parameters.BEE_RETURN_TO_HIVE_PROBABILITY))
          {
             foraging = false;
-            if (!world.cells[x][y].hive)
-            {
-               response = moveToFace(width / 2, height / 2);
-               return;
-            }
-            // In hive: fall through.
+            response = moveToFace(width / 2, height / 2);
+            return;
+         }
+
+         // Continue foraging.
+         if (random.nextFloat() < Parameters.BEE_FORAGE_TURN_PROBABILITY)
+         {
+            response = random.nextInt(Compass.NUM_POINTS);
          }
          else
          {
-            // Continue foraging.
-            if (random.nextFloat() < Parameters.BEE_FORAGE_TURN_PROBABILITY)
+            if (world.cells[toX][toY].bee == null)
             {
-               response = random.nextInt(Compass.NUM_POINTS);
-            }
-            else
-            {
-               if (world.cells[toX][toY].bee == null)
-               {
-                  // If outside of hive, do not enter it.
-                  if (!world.cells[x][y].hive && world.cells[toX][toY].hive)
-                  {
-                     response = random.nextInt(Compass.NUM_POINTS);
-                  }
-                  else
-                  {
-                     response = FORWARD;
-                  }
-               }
-               else
+               // If outside of hive, do not enter it.
+               if (!world.cells[x][y].hive && world.cells[toX][toY].hive)
                {
                   response = random.nextInt(Compass.NUM_POINTS);
                }
+               else
+               {
+                  response = FORWARD;
+               }
             }
-            return;
+            else
+            {
+               response = random.nextInt(Compass.NUM_POINTS);
+            }
          }
+         return;
       }
 
       // Not foraging.
@@ -650,7 +650,7 @@ public class HoneyBee
 
       // In hive.
 
-      // Got nectar?
+      // Carrying nectar?
       if (nectarCarry)
       {
          // Display nectar direction and distance to other bees?
@@ -709,8 +709,10 @@ public class HoneyBee
          return;
       }
 
+      // Not carrying nectar.
+
       // Resume foraging?
-      if (!foraging && (random.nextFloat() < Parameters.BEE_LEAVE_HIVE_TO_FORAGE_PROBABILITY))
+      if (random.nextFloat() < Parameters.BEE_LEAVE_HIVE_TO_FORAGE_PROBABILITY)
       {
          foraging = true;
          if (random.nextFloat() < Parameters.BEE_FORAGE_TURN_PROBABILITY)
@@ -728,31 +730,30 @@ public class HoneyBee
                response = FORWARD;
             }
          }
+         return;
+      }
+
+      // Move about in hive.
+      if (random.nextFloat() < Parameters.BEE_HIVE_TURN_PROBABILITY)
+      {
+         response = random.nextInt(Compass.NUM_POINTS);
       }
       else
       {
-         // Move about in hive.
-         if (random.nextFloat() < Parameters.BEE_HIVE_TURN_PROBABILITY)
+         if (world.cells[toX][toY].bee != null)
          {
             response = random.nextInt(Compass.NUM_POINTS);
          }
          else
          {
-            if (world.cells[toX][toY].bee != null)
+            // If inside of hive, do not leave it.
+            if (!world.cells[toX][toY].hive)
             {
                response = random.nextInt(Compass.NUM_POINTS);
             }
             else
             {
-               // If inside of hive, do not leave it.
-               if (!world.cells[toX][toY].hive)
-               {
-                  response = random.nextInt(Compass.NUM_POINTS);
-               }
-               else
-               {
-                  response = FORWARD;
-               }
+               response = FORWARD;
             }
          }
       }
@@ -1056,8 +1057,7 @@ public class HoneyBee
       PrintWriter writer = new PrintWriter(new BufferedWriter(new OutputStreamWriter(output)));
       for (Metamorph m : metamorphs)
       {
-         writer.println(morphognostic2csv(m.morphognostic) + "," +
-                        HoneyBee.getResponseName(m.response));
+         writer.println(morphognostic2csv(m.morphognostic) + "," + m.response);
       }
       writer.flush();
       output.close();
