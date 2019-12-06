@@ -43,7 +43,7 @@ public class HoneyBee
 
    // Sensors.
    public static final int HIVE_PRESENCE_INDEX = 0;
-   public static final int ADJACENT_FLOWER_NECTAR_QUANTITY_INDEX = 1;
+   public static final int ADJACENT_FLOWER_NECTAR_PRESENCE_INDEX = 1;
    public static final int ADJACENT_BEE_ORIENTATION_INDEX        = 2;
    public static final int ADJACENT_BEE_NECTAR_DISTANCE_INDEX    = 3;
    public static final int NUM_SENSORS = 4;
@@ -74,7 +74,7 @@ public class HoneyBee
     *      Event values:
     *      {
     *              <hive presence>,
-    *              <adjacent flower nectar quantity>,
+    *              <adjacent flower nectar presence>,
     *              <adjacent bee orientation>,
     *              <adjacent bee nectar distance>,
     *              <nectar carry status>
@@ -184,25 +184,15 @@ public class HoneyBee
       eventTime     = 0;
       numEventTypes =
          1 +                                  // <hive presence>
-         1 +                                  // <adjacent flower nectar quantity>
+         1 +                                  // <adjacent flower nectar presence>
          Compass.NUM_POINTS +                 // <adjacent bee orientation>
          Parameters.BEE_NUM_DISTANCE_VALUES + // <adjacent bee nectar distance>
          1;                                   // <nectar carry status>
       int [] eventTypes = new int[numEventTypes];
-      int i = 0;
-      eventTypes[i] = 2;
-      i++;
-      eventTypes[i] = Parameters.FLOWER_NECTAR_CAPACITY + 1;
-      i++;
-      for (int j = 0; j < Compass.NUM_POINTS; i++, j++)
+      for (int i = 0; i < eventTypes.length; i++)
       {
          eventTypes[i] = 2;
       }
-      for (int j = 0; j < Parameters.BEE_NUM_DISTANCE_VALUES; i++, j++)
-      {
-         eventTypes[i] = 2;
-      }
-      eventTypes[i] = 2;
       morphognostic = new Morphognostic(Orientation.NORTH, eventTypes,
                                         Parameters.NUM_NEIGHBORHOODS,
                                         Parameters.NEIGHBORHOOD_INITIAL_DIMENSION,
@@ -392,7 +382,7 @@ public class HoneyBee
       {
          int[] values = new int[numEventTypes];
          values[0]    = (int)sensors[HIVE_PRESENCE_INDEX];
-         values[1]    = (int)sensors[ADJACENT_FLOWER_NECTAR_QUANTITY_INDEX];
+         values[1]    = (int)sensors[ADJACENT_FLOWER_NECTAR_PRESENCE_INDEX];
          if (sensors[ADJACENT_BEE_ORIENTATION_INDEX] != -1)
          {
             values[2 + (int)sensors[ADJACENT_BEE_ORIENTATION_INDEX]] = 1;

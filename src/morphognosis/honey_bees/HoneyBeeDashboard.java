@@ -210,7 +210,7 @@ public class HoneyBeeDashboard extends JFrame
          {
             hiveText.setText("false");
          }
-         adjacentFlowerNectarText.setText((int)bee.sensors[HoneyBee.ADJACENT_FLOWER_NECTAR_QUANTITY_INDEX] + "");
+         adjacentFlowerNectarText.setText((int)bee.sensors[HoneyBee.ADJACENT_FLOWER_NECTAR_PRESENCE_INDEX] + "");
          if (bee.sensors[HoneyBee.ADJACENT_BEE_ORIENTATION_INDEX] >= 0.0f)
          {
             adjacentBeeOrientationText.setText(Compass.toName((int)bee.sensors[HoneyBee.ADJACENT_BEE_ORIENTATION_INDEX]));

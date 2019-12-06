@@ -397,13 +397,13 @@ public class World
          {
             sensors[HoneyBee.HIVE_PRESENCE_INDEX] = 0.0f;
          }
-         if (cells[toX][toY].flower != null)
+         if ((cells[toX][toY].flower != null) && (cells[toX][toY].flower.nectar > 0))
          {
-            sensors[HoneyBee.ADJACENT_FLOWER_NECTAR_QUANTITY_INDEX] = (float)cells[toX][toY].flower.nectar;
+            sensors[HoneyBee.ADJACENT_FLOWER_NECTAR_PRESENCE_INDEX] = 1.0f;
          }
          else
          {
-            sensors[HoneyBee.ADJACENT_FLOWER_NECTAR_QUANTITY_INDEX] = 0.0f;
+            sensors[HoneyBee.ADJACENT_FLOWER_NECTAR_PRESENCE_INDEX] = 0.0f;
          }
          if (cells[toX][toY].bee != null)
          {
@@ -419,7 +419,7 @@ public class World
       else
       {
          sensors[HoneyBee.HIVE_PRESENCE_INDEX] = 0.0f;
-         sensors[HoneyBee.ADJACENT_FLOWER_NECTAR_QUANTITY_INDEX] = 0.0f;
+         sensors[HoneyBee.ADJACENT_FLOWER_NECTAR_PRESENCE_INDEX] = 0.0f;
          sensors[HoneyBee.ADJACENT_BEE_ORIENTATION_INDEX]        = -1.0f;
          sensors[HoneyBee.ADJACENT_BEE_NECTAR_DISTANCE_INDEX]    = -1.0f;
       }

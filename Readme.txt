@@ -17,7 +17,7 @@ Relative to its orientation, bee can sense the contents of the adjacent cell tha
 1. Adjacent bee:
    a. Orientation, or NA.
    b. Distance to nectar: distance or NA.
-2. Adjacent object: hive, outside, adjacent flower nectar quantity.
+2. Adjacent object: hive, outside, adjacent flower nectar presence.
 
 Responses: wait, forward, turn N, NE, E, SE, S, SW, W, NW, extract nectar, deposit nectar, display nectar distance.
 
