@@ -6,6 +6,7 @@ package morphognosis.honey_bees;
 
 import java.security.SecureRandom;
 
+import morphognosis.Orientation;
 import morphognosis.Utility;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -259,27 +260,10 @@ public class World
          {
             if (cells[x][y].flower != null)
             {
-               if (random.nextFloat() < Parameters.FLOWER_DEATH_PROBABILITY)
+               if ((cells[x][y].flower.nectar < Parameters.FLOWER_NECTAR_CAPACITY) &&
+                   (random.nextFloat() < Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY))
                {
-                  cells[x][y].flower = null;
-               }
-               else
-               {
-                  if ((cells[x][y].flower.nectar < Parameters.FLOWER_NECTAR_CAPACITY) &&
-                      (random.nextFloat() < Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY))
-                  {
-                     cells[x][y].flower.nectar++;
-                  }
-               }
-            }
-            else
-            {
-               if (!cells[x][y].hive && (cells[x][y].bee == null))
-               {
-                  if (random.nextFloat() < Parameters.FLOWER_SPROUT_PROBABILITY)
-                  {
-                     cells[x][y].flower = new Flower();
-                  }
+                  cells[x][y].flower.nectar++;
                }
             }
          }
@@ -306,7 +290,7 @@ public class World
          int response = bee.cycle(getSensors(bee));
 
          // Process response.
-         if (response < Compass.NUM_POINTS)
+         if (response < Orientation.NUM_ORIENTATIONS)
          {
             bee.orientation = response;
          }
@@ -326,13 +310,30 @@ public class World
                break;
 
             case HoneyBee.EXTRACT_NECTAR:
-               if ((bee.toX >= 0) && (bee.toX < width) && (bee.toY >= 0) && (bee.toY < height) &&
-                   (cells[bee.toX][bee.toY].flower.nectar > 0) && !bee.nectarCarry)
+               if (!bee.nectarCarry && (cells[bee.x][bee.y].flower.nectar > 0))
                {
-                  cells[bee.toX][bee.toY].flower.nectar--;
+                  bee.nectarCarry = true;
+                  cells[bee.x][bee.y].flower.nectar--;
                }
                break;
+
+            case HoneyBee.DEPOSIT_NECTAR:
+               if (bee.nectarCarry && cells[bee.x][bee.y].hive)
+               {
+                  collectedNectar++;
+               }
+               bee.nectarCarry = false;
+               break;
             }
+         }
+
+         if ((response >= HoneyBee.DISPLAY_NECTAR_DISTANCE) && (response < HoneyBee.WAIT))
+         {
+            bee.nectarDistanceDisplay = response - HoneyBee.DISPLAY_NECTAR_DISTANCE;
+         }
+         else
+         {
+            bee.nectarDistanceDisplay = -1;
          }
       }
    }
@@ -344,6 +345,52 @@ public class World
       float[] sensors = new float[HoneyBee.NUM_SENSORS];
       int width  = Parameters.WORLD_WIDTH;
       int height = Parameters.WORLD_HEIGHT;
+
+      // Determine forward cell.
+      int toX = bee.x;
+      int toY = bee.y;
+      switch (bee.orientation)
+      {
+      case Orientation.NORTH:
+         toY++;
+         break;
+
+      case Orientation.NORTHEAST:
+         toX++;
+         toY++;
+         break;
+
+      case Orientation.EAST:
+         toX++;
+         break;
+
+      case Orientation.SOUTHEAST:
+         toX++;
+         toY--;
+         break;
+
+      case Orientation.SOUTH:
+         toY--;
+         break;
+
+      case Orientation.SOUTHWEST:
+         toX--;
+         toY--;
+         break;
+
+      case Orientation.WEST:
+         toX--;
+         break;
+
+      case Orientation.NORTHWEST:
+         toX--;
+         toY++;
+         break;
+      }
+      bee.toX = toX;
+      bee.toY = toY;
+
+      // Get hive and nectar sensors.
       if (cells[bee.x][bee.y].hive)
       {
          sensors[HoneyBee.HIVE_PRESENCE_INDEX] = 1.0f;
@@ -352,74 +399,74 @@ public class World
       {
          sensors[HoneyBee.HIVE_PRESENCE_INDEX] = 0.0f;
       }
-      int toX = bee.x;
-      int toY = bee.y;
-      switch (bee.orientation)
+      if ((cells[bee.x][bee.y].flower != null) && (cells[bee.x][bee.y].flower.nectar > 0))
       {
-      case Compass.NORTH:
-         toY++;
-         break;
-
-      case Compass.NORTHEAST:
-         toX++;
-         toY++;
-         break;
-
-      case Compass.EAST:
-         toX++;
-         break;
-
-      case Compass.SOUTHEAST:
-         toX++;
-         toY--;
-         break;
-
-      case Compass.SOUTH:
-         toY--;
-         break;
-
-      case Compass.SOUTHWEST:
-         toX--;
-         toY--;
-         break;
-
-      case Compass.WEST:
-         toX--;
-         break;
-
-      case Compass.NORTHWEST:
-         toX--;
-         toY++;
-         break;
-      }
-      bee.toX = toX;
-      bee.toY = toY;
-      if ((toX >= 0) && (toX < width) && (toY >= 0) && (toY < height))
-      {
-         if ((cells[toX][toY].flower != null) && (cells[toX][toY].flower.nectar > 0))
-         {
-            sensors[HoneyBee.ADJACENT_FLOWER_NECTAR_PRESENCE_INDEX] = 1.0f;
-         }
-         else
-         {
-            sensors[HoneyBee.ADJACENT_FLOWER_NECTAR_PRESENCE_INDEX] = 0.0f;
-         }
-         if (cells[toX][toY].bee != null)
-         {
-            sensors[HoneyBee.ADJACENT_BEE_ORIENTATION_INDEX]     = (float)cells[toX][toY].bee.orientation;
-            sensors[HoneyBee.ADJACENT_BEE_NECTAR_DISTANCE_INDEX] = (float)cells[toX][toY].bee.nectarDistanceDisplay;
-         }
-         else
-         {
-            sensors[HoneyBee.ADJACENT_BEE_ORIENTATION_INDEX]     = -1.0f;
-            sensors[HoneyBee.ADJACENT_BEE_NECTAR_DISTANCE_INDEX] = -1.0f;
-         }
+         sensors[HoneyBee.NECTAR_PRESENCE_INDEX] = 1.0f;
       }
       else
       {
-         sensors[HoneyBee.ADJACENT_FLOWER_NECTAR_PRESENCE_INDEX] = 0.0f;
-         sensors[HoneyBee.ADJACENT_BEE_ORIENTATION_INDEX]        = -1.0f;
-         sensors[HoneyBee.ADJACENT_BEE_NECTAR_DISTANCE_INDEX]    = -1.0f;
+         sensors[HoneyBee.NECTAR_PRESENCE_INDEX] = 0.0f;
+      }
+
+      // Get adjacent bee orientation and distance signals.
+      sensors[HoneyBee.ADJACENT_BEE_NECTAR_ORIENTATION_INDEX] = -1.0f;
+      sensors[HoneyBee.ADJACENT_BEE_NECTAR_DISTANCE_INDEX]    = -1.0f;
+      for (int i = 0, j = random.nextInt(Orientation.NUM_ORIENTATIONS);
+           i < Orientation.NUM_ORIENTATIONS; i++, j = (j + 1) % 2)
+      {
+         toX = bee.x;
+         toY = bee.y;
+         switch (j)
+         {
+         case Orientation.NORTH:
+            toY++;
+            break;
+
+         case Orientation.NORTHEAST:
+            toX++;
+            toY++;
+            break;
+
+         case Orientation.EAST:
+            toX++;
+            break;
+
+         case Orientation.SOUTHEAST:
+            toX++;
+            toY--;
+            break;
+
+         case Orientation.SOUTH:
+            toY--;
+            break;
+
+         case Orientation.SOUTHWEST:
+            toX--;
+            toY--;
+            break;
+
+         case Orientation.WEST:
+            toX--;
+            break;
+
+         case Orientation.NORTHWEST:
+            toX--;
+            toY++;
+            break;
+         }
+         if ((toX >= 0) && (toX < width) && (toY >= 0) && (toY < height))
+         {
+            if (cells[toX][toY].bee != null)
+            {
+               HoneyBee nearbyBee = cells[toX][toY].bee;
+               if (nearbyBee.nectarDistanceDisplay != -1)
+               {
+                  sensors[HoneyBee.ADJACENT_BEE_NECTAR_ORIENTATION_INDEX] = (float)nearbyBee.orientation;
+                  sensors[HoneyBee.ADJACENT_BEE_NECTAR_DISTANCE_INDEX]    = (float)nearbyBee.nectarDistanceDisplay;
+                  break;
+               }
+            }
+         }
       }
       return(sensors);
    }

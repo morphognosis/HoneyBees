@@ -12,14 +12,13 @@ World:
 Bee capabilities:
 
 Senses:
-If in hive.
-Foraging state.
+Hive presence.
+Nectar presence.
+Adjacent bee nectar signal: Orientation and distance to nectar.
+
+Internal state:
+Orientation.
 Carrying nectar.
-Relative to its orientation, the state of the adjacent cell that is immediately in front of it:
-  Bee:
-    Orientation.
-    Distance to nectar, or NA.
-  Nectar presence.
 
 Responses: wait, forward, turn N, NE, E, SE, S, SW, W, NW, extract nectar, deposit nectar, display nectar distance.
 

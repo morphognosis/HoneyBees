@@ -25,6 +25,7 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 import morphognosis.MorphognosticDisplay;
+import morphognosis.Orientation;
 
 public class HoneyBeeDashboard extends JFrame
 {
@@ -56,7 +57,7 @@ public class HoneyBeeDashboard extends JFrame
       basePanel.add(status);
       driver = new DriverPanel();
       basePanel.add(driver);
-      morphognostic = new MorphognosticDisplay(0, bee.morphognostic);
+      morphognostic = new MorphognosticDisplay(bee.id, bee.morphognostic);
       basePanel.add(morphognostic);
       operations = new OperationsPanel();
       basePanel.add(operations);
@@ -112,11 +113,10 @@ public class HoneyBeeDashboard extends JFrame
 
       // Components.
       JTextField hiveText;
-      JTextField adjacentFlowerNectarText;
+      JTextField nectarText;
       JTextField adjacentBeeOrientationText;
       JTextField adjacentBeeNectarDistanceText;
       JTextField orientationText;
-      JTextField foragingStateText;
       JTextField nectarCarryText;
       JTextField nectarDistanceDisplayText;
       JTextField responseText;
@@ -137,17 +137,17 @@ public class HoneyBeeDashboard extends JFrame
          JPanel hivePanel = new JPanel();
          hivePanel.setLayout(new FlowLayout(FlowLayout.LEFT));
          sensorsPanel.add(hivePanel);
-         hivePanel.add(new JLabel("Hive:"));
+         hivePanel.add(new JLabel("Hive presence:"));
          hiveText = new JTextField(10);
          hiveText.setEditable(false);
          hivePanel.add(hiveText);
-         JPanel adjacentFlowerNectarPanel = new JPanel();
-         adjacentFlowerNectarPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
-         sensorsPanel.add(adjacentFlowerNectarPanel);
-         adjacentFlowerNectarPanel.add(new JLabel("Adjacent flower nectar:"));
-         adjacentFlowerNectarText = new JTextField(10);
-         adjacentFlowerNectarText.setEditable(false);
-         adjacentFlowerNectarPanel.add(adjacentFlowerNectarText);
+         JPanel nectarPanel = new JPanel();
+         nectarPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+         sensorsPanel.add(nectarPanel);
+         nectarPanel.add(new JLabel("Nectar presence:"));
+         nectarText = new JTextField(10);
+         nectarText.setEditable(false);
+         nectarPanel.add(nectarText);
          JPanel adjacentBeeOrientationPanel = new JPanel();
          adjacentBeeOrientationPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
          sensorsPanel.add(adjacentBeeOrientationPanel);
@@ -189,13 +189,6 @@ public class HoneyBeeDashboard extends JFrame
          nectarCarryText = new JTextField(10);
          nectarCarryText.setEditable(false);
          nectarCarryPanel.add(nectarCarryText);
-         JPanel foragingStatePanel = new JPanel();
-         foragingStatePanel.setLayout(new FlowLayout(FlowLayout.LEFT));
-         statePanel.add(foragingStatePanel);
-         foragingStatePanel.add(new JLabel("Foraging state: "));
-         foragingStateText = new JTextField(10);
-         foragingStateText.setEditable(false);
-         foragingStatePanel.add(foragingStateText);
          JPanel nectarDistanceDisplayPanel = new JPanel();
          nectarDistanceDisplayPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
          statePanel.add(nectarDistanceDisplayPanel);
@@ -218,10 +211,11 @@ public class HoneyBeeDashboard extends JFrame
          {
             hiveText.setText("false");
          }
-         adjacentFlowerNectarText.setText((int)bee.sensors[HoneyBee.ADJACENT_FLOWER_NECTAR_PRESENCE_INDEX] + "");
-         if (bee.sensors[HoneyBee.ADJACENT_BEE_ORIENTATION_INDEX] >= 0.0f)
+         nectarText.setText((int)bee.sensors[HoneyBee.NECTAR_PRESENCE_INDEX] + "");
+         if (bee.sensors[HoneyBee.ADJACENT_BEE_NECTAR_ORIENTATION_INDEX] >= 0.0f)
          {
-            adjacentBeeOrientationText.setText(Compass.toName((int)bee.sensors[HoneyBee.ADJACENT_BEE_ORIENTATION_INDEX]));
+            adjacentBeeOrientationText.setText(Orientation.toName(
+                                                  (int)bee.sensors[HoneyBee.ADJACENT_BEE_NECTAR_ORIENTATION_INDEX]));
          }
          else
          {
@@ -240,8 +234,7 @@ public class HoneyBeeDashboard extends JFrame
          responseText.setText(HoneyBee.getResponseName(bee.response));
 
          // Update state.
-         orientationText.setText(Compass.toName(bee.orientation));
-         foragingStateText.setText(bee.foraging + "");
+         orientationText.setText(Orientation.toName(bee.orientation));
          nectarCarryText.setText(bee.nectarCarry + "");
          if (bee.nectarDistanceDisplay == -1)
          {

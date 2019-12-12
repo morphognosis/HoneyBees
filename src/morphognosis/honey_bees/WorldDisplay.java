@@ -48,6 +48,8 @@ import javax.swing.JTextField;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import morphognosis.Orientation;
+
 public class WorldDisplay extends JFrame
 {
    private static final long serialVersionUID = 0L;
@@ -361,7 +363,7 @@ public class WorldDisplay extends JFrame
                   // Bee displaying distance to nectar?
                   if (world.cells[x][y].hive && bee.nectarCarry)
                   {
-                     if (bee.response == HoneyBee.DISPLAY_NECTAR_DISTANCE)
+                     if ((bee.response >= HoneyBee.DISPLAY_NECTAR_DISTANCE) && (bee.response < HoneyBee.WAIT))
                      {
                         int maxDist    = Math.max(Parameters.WORLD_WIDTH, Parameters.WORLD_HEIGHT) / 2;
                         int unitDist   = maxDist / Parameters.BEE_NUM_DISTANCE_VALUES;
@@ -370,38 +372,38 @@ public class WorldDisplay extends JFrame
                         int toY        = bee.y;
                         switch (bee.orientation)
                         {
-                        case Compass.NORTH:
+                        case Orientation.NORTH:
                            toY += nectarDist;
                            break;
 
-                        case Compass.NORTHEAST:
+                        case Orientation.NORTHEAST:
                            toX += nectarDist;
                            toY += nectarDist;
                            break;
 
-                        case Compass.EAST:
+                        case Orientation.EAST:
                            toX += nectarDist;
                            break;
 
-                        case Compass.SOUTHEAST:
+                        case Orientation.SOUTHEAST:
                            toX += nectarDist;
                            toY -= nectarDist;
                            break;
 
-                        case Compass.SOUTH:
+                        case Orientation.SOUTH:
                            toY -= nectarDist;
                            break;
 
-                        case Compass.SOUTHWEST:
+                        case Orientation.SOUTHWEST:
                            toX -= nectarDist;
                            toY -= nectarDist;
                            break;
 
-                        case Compass.WEST:
+                        case Orientation.WEST:
                            toX -= nectarDist;
                            break;
 
-                        case Compass.NORTHWEST:
+                        case Orientation.NORTHWEST:
                            toX -= nectarDist;
                            toY += nectarDist;
                            break;
@@ -501,38 +503,38 @@ public class WorldDisplay extends JFrame
          canvasGraphics.setFont(font);
 
          // Create oriented bee images.
-         beeOrientedImages = new BufferedImage[Compass.NUM_POINTS];
-         beeOrientedImages[Compass.NORTH] = beeImage;
-         for (int i = 1; i < Compass.NUM_POINTS; i++)
+         beeOrientedImages = new BufferedImage[Orientation.NUM_ORIENTATIONS];
+         beeOrientedImages[Orientation.NORTH] = beeImage;
+         for (int i = 1; i < Orientation.NUM_ORIENTATIONS; i++)
          {
             double angle = 0.0;
             switch (i)
             {
-            case Compass.NORTHEAST:
+            case Orientation.NORTHEAST:
                angle = 45.0;
                break;
 
-            case Compass.EAST:
+            case Orientation.EAST:
                angle = 90.0;
                break;
 
-            case Compass.SOUTHEAST:
+            case Orientation.SOUTHEAST:
                angle = 135.0;
                break;
 
-            case Compass.SOUTH:
+            case Orientation.SOUTH:
                angle = 180.0;
                break;
 
-            case Compass.SOUTHWEST:
+            case Orientation.SOUTHWEST:
                angle = 225.0;
                break;
 
-            case Compass.WEST:
+            case Orientation.WEST:
                angle = 270.0;
                break;
 
-            case Compass.NORTHWEST:
+            case Orientation.NORTHWEST:
                angle = 315.0;
                break;
             }

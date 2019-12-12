@@ -58,15 +58,11 @@ public class Main
       "        [-hiveRadius <radius> (default=" + Parameters.HIVE_RADIUS + ")]\n" +
       "      Flower parameters:\n" +
       "        [-flowerSproutProbability <probability> (default=" + Parameters.FLOWER_SPROUT_PROBABILITY + ")]\n" +
-      "        [-flowerDeathProbability <probability> (default=" + Parameters.FLOWER_DEATH_PROBABILITY + ")]\n" +
       "        [-flowerNectarCapacity <quantity> (default=" + Parameters.FLOWER_NECTAR_CAPACITY + ")]\n" +
       "        [-flowerNectarProductionProbability <probability> (default=" + Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY + ")]\n" +
       "      Honey bee parameters:\n" +
       "        [-numBees <quantity> (default=" + Parameters.NUM_BEES + ")]\n" +
-      "        [-beeForageTurnProbability <probability> (default=" + Parameters.BEE_FORAGE_TURN_PROBABILITY + ")]\n" +
-      "        [-beeHiveTurnProbability <probability> (default=" + Parameters.BEE_HIVE_TURN_PROBABILITY + ")]\n" +
-      "        [-beeLeaveHiveToForageProbability <probability> (default=" + Parameters.BEE_LEAVE_HIVE_TO_FORAGE_PROBABILITY + ")]\n" +
-      "        [-beeReturnToHiveProbability <probability> (default=" + Parameters.BEE_RETURN_TO_HIVE_PROBABILITY + ")]\n" +
+      "        [-beeTurnProbability <probability> (default=" + Parameters.BEE_TURN_PROBABILITY + ")]\n" +
       "        [-beeNectarDisplayeDuration <quantity> (default=" + Parameters.BEE_NECTAR_DISPLAY_DURATION + ")]\n" +
       "      Morphognosis parameters:\n" +
       "        [-numNeighborhoods <quantity> (default=" + Parameters.NUM_NEIGHBORHOODS + ")]\n" +
@@ -446,34 +442,6 @@ public class Main
             gotParm = true;
             continue;
          }
-         if (args[i].equals("-flowerDeathProbability"))
-         {
-            i++;
-            if (i >= args.length)
-            {
-               System.err.println("Invalid flowerDeathProbability option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            try
-            {
-               Parameters.FLOWER_DEATH_PROBABILITY = Float.parseFloat(args[i]);
-            }
-            catch (NumberFormatException e) {
-               System.err.println("Invalid flowerDeathProbability option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            if ((Parameters.FLOWER_DEATH_PROBABILITY < 0.0f) ||
-                (Parameters.FLOWER_DEATH_PROBABILITY > 1.0f))
-            {
-               System.err.println("Invalid flowerDeathProbability option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            gotParm = true;
-            continue;
-         }
          if (args[i].equals("-flowerNectarCapacity"))
          {
             i++;
@@ -556,112 +524,28 @@ public class Main
             gotParm = true;
             continue;
          }
-         if (args[i].equals("-beeForageTurnProbability"))
+         if (args[i].equals("-beeTurnProbability"))
          {
             i++;
             if (i >= args.length)
             {
-               System.err.println("Invalid beeForageTurnProbability option");
+               System.err.println("Invalid beeTurnProbability option");
                System.err.println(Usage);
                System.exit(1);
             }
             try
             {
-               Parameters.BEE_FORAGE_TURN_PROBABILITY = Float.parseFloat(args[i]);
+               Parameters.BEE_TURN_PROBABILITY = Float.parseFloat(args[i]);
             }
             catch (NumberFormatException e) {
-               System.err.println("Invalid beeForageTurnProbability option");
+               System.err.println("Invalid beeTurnProbability option");
                System.err.println(Usage);
                System.exit(1);
             }
-            if ((Parameters.BEE_FORAGE_TURN_PROBABILITY < 0.0f) ||
-                (Parameters.BEE_FORAGE_TURN_PROBABILITY > 1.0f))
+            if ((Parameters.BEE_TURN_PROBABILITY < 0.0f) ||
+                (Parameters.BEE_TURN_PROBABILITY > 1.0f))
             {
-               System.err.println("Invalid beeForageTurnProbability option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            gotParm = true;
-            continue;
-         }
-         if (args[i].equals("-beeHiveTurnProbability"))
-         {
-            i++;
-            if (i >= args.length)
-            {
-               System.err.println("Invalid beeHiveTurnProbability option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            try
-            {
-               Parameters.BEE_HIVE_TURN_PROBABILITY = Float.parseFloat(args[i]);
-            }
-            catch (NumberFormatException e) {
-               System.err.println("Invalid beeHiveTurnProbability option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            if ((Parameters.BEE_HIVE_TURN_PROBABILITY < 0.0f) ||
-                (Parameters.BEE_HIVE_TURN_PROBABILITY > 1.0f))
-            {
-               System.err.println("Invalid beeHiveTurnProbability option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            gotParm = true;
-            continue;
-         }
-         if (args[i].equals("-beeLeaveHiveToForageProbability"))
-         {
-            i++;
-            if (i >= args.length)
-            {
-               System.err.println("Invalid beeLeaveHiveToForageProbability option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            try
-            {
-               Parameters.BEE_LEAVE_HIVE_TO_FORAGE_PROBABILITY = Float.parseFloat(args[i]);
-            }
-            catch (NumberFormatException e) {
-               System.err.println("Invalid beeLeaveHiveToForageProbability option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            if ((Parameters.BEE_LEAVE_HIVE_TO_FORAGE_PROBABILITY < 0.0f) ||
-                (Parameters.BEE_LEAVE_HIVE_TO_FORAGE_PROBABILITY > 1.0f))
-            {
-               System.err.println("Invalid beeLeaveHiveToForageProbability option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            gotParm = true;
-            continue;
-         }
-         if (args[i].equals("-beeReturnToHiveProbability"))
-         {
-            i++;
-            if (i >= args.length)
-            {
-               System.err.println("Invalid flowerNectarProductionProbability option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            try
-            {
-               Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY = Float.parseFloat(args[i]);
-            }
-            catch (NumberFormatException e) {
-               System.err.println("Invalid flowerNectarProductionProbability option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            if ((Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY < 0.0f) ||
-                (Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY > 1.0f))
-            {
-               System.err.println("Invalid flowerNectarProductionProbability option");
+               System.err.println("Invalid beeTurnProbability option");
                System.err.println(Usage);
                System.exit(1);
             }
