@@ -35,6 +35,7 @@ public class HoneyBee
    public int          nectarX, nectarY;
    public int          displayTimer;
    public int          nectarDist;
+   public float        returnToHiveProbability;
    public World        world;
    public int          driver;
    public int          driverResponse;
@@ -160,10 +161,11 @@ public class HoneyBee
       orientation           = orientation2 = random.nextInt(Orientation.NUM_ORIENTATIONS);
       nectarCarry           = false;
       nectarDistanceDisplay = -1;
-      nectarX      = nectarY = -1;
-      displayTimer = -1;
-      nectarDist   = -1;
-      sensors      = new float[NUM_SENSORS];
+      nectarX                 = nectarY = -1;
+      displayTimer            = -1;
+      nectarDist              = -1;
+      returnToHiveProbability = 0.0f;
+      sensors                 = new float[NUM_SENSORS];
       for (int n = 0; n < NUM_SENSORS; n++)
       {
          sensors[n] = 0.0f;
@@ -213,15 +215,16 @@ public class HoneyBee
    // Reset.
    void reset()
    {
-      x                     = x2;
-      y                     = y2;
-      orientation           = orientation2;
-      nectarCarry           = false;
-      nectarDistanceDisplay = -1;
-      nectarX               = nectarY = -1;
-      displayTimer          = -1;
-      nectarDist            = -1;
-      world.cells[x][y].bee = this;
+      x                       = x2;
+      y                       = y2;
+      orientation             = orientation2;
+      nectarCarry             = false;
+      nectarDistanceDisplay   = -1;
+      nectarX                 = nectarY = -1;
+      displayTimer            = -1;
+      nectarDist              = -1;
+      returnToHiveProbability = 0.0f;
+      world.cells[x][y].bee   = this;
       for (int i = 0; i < NUM_SENSORS; i++)
       {
          sensors[i] = 0.0f;
@@ -282,6 +285,7 @@ public class HoneyBee
       Utility.saveInt(writer, nectarY);
       Utility.saveInt(writer, displayTimer);
       Utility.saveInt(writer, nectarDist);
+      Utility.saveFloat(writer, returnToHiveProbability);
       morphognostic.save(writer);
       Utility.saveInt(writer, maxEventAge);
       Utility.saveInt(writer, metamorphs.size());
@@ -333,12 +337,13 @@ public class HoneyBee
          nectarCarry = false;
       }
       nectarDistanceDisplay = Utility.loadInt(reader);
-      nectarX       = Utility.loadInt(reader);
-      nectarY       = Utility.loadInt(reader);
-      displayTimer  = Utility.loadInt(reader);
-      nectarDist    = Utility.loadInt(reader);
-      morphognostic = Morphognostic.load(reader);
-      maxEventAge   = Utility.loadInt(reader);
+      nectarX                 = Utility.loadInt(reader);
+      nectarY                 = Utility.loadInt(reader);
+      displayTimer            = Utility.loadInt(reader);
+      nectarDist              = Utility.loadInt(reader);
+      returnToHiveProbability = Utility.loadFloat(reader);
+      morphognostic           = Morphognostic.load(reader);
+      maxEventAge             = Utility.loadInt(reader);
       metamorphs.clear();
       int n = Utility.loadInt(reader);
       for (int i = 0; i < n; i++)
@@ -496,6 +501,12 @@ public class HoneyBee
       int width  = Parameters.WORLD_WIDTH;
       int height = Parameters.WORLD_HEIGHT;
 
+      // If in hive clear probability to return to hive.
+      if (sensors[HIVE_PRESENCE_INDEX] == 1.0f)
+      {
+         returnToHiveProbability = 0.0f;
+      }
+
       // Turn at edge of world.
       if ((toX < 0) || (toX >= width) || (toY < 0) || (toY >= height))
       {
@@ -556,7 +567,8 @@ public class HoneyBee
                displayTimer--;
                int maxDist  = Math.max(Parameters.WORLD_WIDTH, Parameters.WORLD_HEIGHT) / 2;
                int unitDist = maxDist / Parameters.BEE_NUM_DISTANCE_VALUES;
-               int d        = (int)Math.sqrt((double)((nectarX - x) * (nectarX - x)) + (double)((nectarY - y) * (nectarY - y)));
+               int d        = (int)Math.sqrt((double)((nectarX - x) * (nectarX - x)) +
+                                             (double)((nectarY - y) * (nectarY - y)));
                d = d / unitDist;
                if (d >= Parameters.BEE_NUM_DISTANCE_VALUES)
                {
@@ -617,6 +629,25 @@ public class HoneyBee
          nectarDist = ((int)(sensors[ADJACENT_BEE_NECTAR_DISTANCE_INDEX]) + 1) * unitDist;
          response   = (int)sensors[ADJACENT_BEE_NECTAR_ORIENTATION_INDEX];
          return;
+      }
+
+      // Return to hive?
+      if (sensors[HIVE_PRESENCE_INDEX] == 0.0f)
+      {
+         if (random.nextFloat() < returnToHiveProbability)
+         {
+            response = moveTo(width / 2, height / 2);
+            return;
+         }
+         else
+         {
+            // Increase tendency to return.
+            returnToHiveProbability += Parameters.BEE_RETURN_TO_HIVE_PROBABILITY_INCREMENT;
+            if (returnToHiveProbability > 1.0f)
+            {
+               returnToHiveProbability = 1.0f;
+            }
+         }
       }
 
       // Continue foraging.
@@ -1016,5 +1047,26 @@ public class HoneyBee
       }
 
       return("unknown");
+   }
+
+
+   // Check for hive presence in morphognostic.
+   public void checkMorphognosticHivePresence(Morphognostic m)
+   {
+      float c = 0.0f;
+
+      for (int i = 0; i < m.NUM_NEIGHBORHOODS; i++)
+      {
+         Neighborhood n = m.neighborhoods.get(i);
+         for (int x = 0; x < n.sectors.length; x++)
+         {
+            for (int y = 0; y < n.sectors.length; y++)
+            {
+               Neighborhood.Sector s = n.sectors[x][y];
+               c += s.typeDensities[0][1];
+            }
+         }
+      }
+      if (c == 0.0f) { m.print(); }
    }
 }

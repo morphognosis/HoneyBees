@@ -7,18 +7,20 @@ package morphognosis.honey_bees;
 public class HoneyBeeTrainer extends World
 {
    // Parameters.
-   public static int NUM_TRIAL_FORAGES   = 1;
-   public static int MAX_STEPS_PER_TRIAL = 100;
-   public static int MIN_STEPS_TO_NECTAR = 3;
-   public static int MAX_STEPS_TO_NECTAR = 10;
-   public static int RANDOM_SEED         = Main.DEFAULT_RANDOM_SEED;
+   public static int NUM_TRAINING_FORAGES = 1;
+   public static int NUM_TESTING_FORAGES  = 1;
+   public static int MAX_STEPS_PER_TRIAL  = 100;
+   public static int MIN_STEPS_TO_NECTAR  = 3;
+   public static int MAX_STEPS_TO_NECTAR  = 10;
+   public static int RANDOM_SEED          = Main.DEFAULT_RANDOM_SEED;
 
    // Usage.
    public static final String Usage =
       "Usage:\n" +
       "    java morphognosis.honey_bees.HoneyBeeTrainer\n" +
       "     [-display <true | false> (default=true)]\n" +
-      "     [-numTrialForages <trials> (default=" + NUM_TRIAL_FORAGES + ")]\n" +
+      "     [-numTrainingForages <quantity> (default=" + NUM_TRAINING_FORAGES + ")]\n" +
+      "     [-numTestingForages <quantity> (default=" + NUM_TESTING_FORAGES + ")]\n" +
       "     [-maxStepsPerTrial <steps> (default=" + MAX_STEPS_PER_TRIAL + ")]\n" +
       "     [-minStepsToNectar <steps> (default=" + MIN_STEPS_TO_NECTAR + ")]\n" +
       "     [-maxStepsToNectar <steps> (default=" + MAX_STEPS_TO_NECTAR + ")]\n" +
@@ -96,27 +98,53 @@ public class HoneyBeeTrainer extends World
             }
             continue;
          }
-         if (args[i].equals("-numTrialForages"))
+         if (args[i].equals("-numTrainingForages"))
          {
             i++;
             if (i >= args.length)
             {
-               System.err.println("Invalid numTrialForages option");
+               System.err.println("Invalid numTrainingForages option");
                System.err.println(Usage);
                System.exit(1);
             }
             try
             {
-               NUM_TRIAL_FORAGES = Integer.parseInt(args[i]);
+               NUM_TRAINING_FORAGES = Integer.parseInt(args[i]);
             }
             catch (NumberFormatException e) {
-               System.err.println("Invalid numTrialForages option");
+               System.err.println("Invalid numTrainingForages option");
                System.err.println(Usage);
                System.exit(1);
             }
-            if (NUM_TRIAL_FORAGES < 0)
+            if (NUM_TRAINING_FORAGES < 0)
             {
-               System.err.println("Invalid numTrialForages option");
+               System.err.println("Invalid numTrainingForages option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            continue;
+         }
+         if (args[i].equals("-numTestingForages"))
+         {
+            i++;
+            if (i >= args.length)
+            {
+               System.err.println("Invalid numTestingForages option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            try
+            {
+               NUM_TESTING_FORAGES = Integer.parseInt(args[i]);
+            }
+            catch (NumberFormatException e) {
+               System.err.println("Invalid numTestingForages option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            if (NUM_TESTING_FORAGES < 0)
+            {
+               System.err.println("Invalid numTestingForages option");
                System.err.println(Usage);
                System.exit(1);
             }

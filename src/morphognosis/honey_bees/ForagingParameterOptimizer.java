@@ -1232,6 +1232,10 @@ public class ForagingParameterOptimizer
                      MUTATION_RATE, RANDOM_MUTATION_RATE, randomizer.nextInt()));
 
          genes.add(
+            new Gene("BEE_RETURN_TO_HIVE_PROBABILITY_INCREMENT", .01f, 0.0f, .05f, .01f,
+                     MUTATION_RATE, RANDOM_MUTATION_RATE, randomizer.nextInt()));
+
+         genes.add(
             new Gene("BEE_NUM_DISTANCE_VALUES", 3, 1, 5, 1,
                      MUTATION_RATE, RANDOM_MUTATION_RATE, randomizer.nextInt()));
 
@@ -1314,8 +1318,9 @@ public class ForagingParameterOptimizer
          Parameters.FLOWER_SPROUT_PROBABILITY            = (Float)parameters.get("FLOWER_SPROUT_PROBABILITY");
          Parameters.FLOWER_NECTAR_CAPACITY               = (Integer)parameters.get("FLOWER_NECTAR_CAPACITY");
          Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY = (Float)parameters.get("FLOWER_NECTAR_PRODUCTION_PROBABILITY");
-         Parameters.NUM_BEES                    = (Integer)parameters.get("NUM_BEES");
-         Parameters.BEE_TURN_PROBABILITY        = (Float)parameters.get("BEE_TURN_PROBABILITY");
+         Parameters.NUM_BEES             = (Integer)parameters.get("NUM_BEES");
+         Parameters.BEE_TURN_PROBABILITY = (Float)parameters.get("BEE_TURN_PROBABILITY");
+         Parameters.BEE_RETURN_TO_HIVE_PROBABILITY_INCREMENT = (Float)parameters.get("BEE_RETURN_TO_HIVE_PROBABILITY_INCREMENT");
          Parameters.BEE_NUM_DISTANCE_VALUES     = (Integer)parameters.get("BEE_NUM_DISTANCE_VALUES");
          Parameters.BEE_NECTAR_DISPLAY_DURATION = (Integer)parameters.get("BEE_NECTAR_DISPLAY_DURATION");
 

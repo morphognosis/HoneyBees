@@ -63,6 +63,7 @@ public class Main
       "      Honey bee parameters:\n" +
       "        [-numBees <quantity> (default=" + Parameters.NUM_BEES + ")]\n" +
       "        [-beeTurnProbability <probability> (default=" + Parameters.BEE_TURN_PROBABILITY + ")]\n" +
+      "        [-beeReturnToHiveProbabilityIncrement <probability> (default=" + Parameters.BEE_RETURN_TO_HIVE_PROBABILITY_INCREMENT + ")]\n" +
       "        [-beeNectarDisplayeDuration <quantity> (default=" + Parameters.BEE_NECTAR_DISPLAY_DURATION + ")]\n" +
       "      Morphognosis parameters:\n" +
       "        [-numNeighborhoods <quantity> (default=" + Parameters.NUM_NEIGHBORHOODS + ")]\n" +
@@ -572,6 +573,34 @@ public class Main
                 (Parameters.BEE_TURN_PROBABILITY > 1.0f))
             {
                System.err.println("Invalid beeTurnProbability option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            gotParm = true;
+            continue;
+         }
+         if (args[i].equals("-beeReturnToHiveProbabilityIncrement"))
+         {
+            i++;
+            if (i >= args.length)
+            {
+               System.err.println("Invalid beeReturnToHiveProbabilityIncrement option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            try
+            {
+               Parameters.BEE_RETURN_TO_HIVE_PROBABILITY_INCREMENT = Float.parseFloat(args[i]);
+            }
+            catch (NumberFormatException e) {
+               System.err.println("Invalid beeReturnToHiveProbabilityIncrement option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            if ((Parameters.BEE_RETURN_TO_HIVE_PROBABILITY_INCREMENT < 0.0f) ||
+                (Parameters.BEE_RETURN_TO_HIVE_PROBABILITY_INCREMENT > 1.0f))
+            {
+               System.err.println("Invalid beeReturnToHiveProbabilityIncrement option");
                System.err.println(Usage);
                System.exit(1);
             }

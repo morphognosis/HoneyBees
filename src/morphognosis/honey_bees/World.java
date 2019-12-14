@@ -299,7 +299,8 @@ public class World
             switch (response)
             {
             case HoneyBee.FORWARD:
-               if ((bee.toX >= 0) && (bee.toX < width) && (bee.toY >= 0) && (bee.toY < height) &&
+               if ((bee.toX >= 0) && (bee.toX < width) &&
+                   (bee.toY >= 0) && (bee.toY < height) &&
                    (cells[bee.toX][bee.toY].bee == null))
                {
                   cells[bee.x][bee.y].bee = null;
@@ -310,7 +311,8 @@ public class World
                break;
 
             case HoneyBee.EXTRACT_NECTAR:
-               if (!bee.nectarCarry && (cells[bee.x][bee.y].flower.nectar > 0))
+               if (!bee.nectarCarry && (cells[bee.x][bee.y].flower != null) &&
+                   (cells[bee.x][bee.y].flower.nectar > 0))
                {
                   bee.nectarCarry = true;
                   cells[bee.x][bee.y].flower.nectar--;
