@@ -27,7 +27,6 @@ import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.security.SecureRandom;
 import java.util.Objects;
 
 import javax.imageio.ImageIO;
@@ -55,19 +54,19 @@ public class WorldDisplay extends JFrame
    private static final long serialVersionUID = 0L;
 
    // World.
-   World world;
+   public World world;
 
    // Dimensions.
    public static final Dimension DISPLAY_SIZE = new Dimension(600, 700);
 
    // Display.
-   Display display;
+   public Display display;
 
    // Controls.
-   Controls controls;
+   public Controls controls;
 
    // Bee dashboard.
-   HoneyBeeDashboard beeDashboard;
+   public HoneyBeeDashboard beeDashboard;
 
    // Step frequency (ms).
    static final int MIN_STEP_DELAY = 0;
@@ -75,22 +74,12 @@ public class WorldDisplay extends JFrame
    int              stepDelay      = MAX_STEP_DELAY;
 
    // Quit.
-   boolean quit;
-
-   // Random numbers.
-   SecureRandom random;
-   int          randomSeed;
+   public boolean quit;
 
    // Constructor.
-   public WorldDisplay(World world, int randomSeed)
+   public WorldDisplay(World world)
    {
       this.world = world;
-
-      // Random numbers.
-      randomSeed      = world.randomSeed;
-      random          = new SecureRandom();
-      this.randomSeed = randomSeed;
-      random.setSeed(randomSeed);
 
       // Set up display.
       setTitle("Honey bees nectar foraging");
@@ -149,18 +138,26 @@ public class WorldDisplay extends JFrame
 
 
    // Update display.
-   public void update(int steps)
+   public boolean update(int step)
    {
-      controls.updateStepCounter(steps);
+      controls.updateStepCounter(step);
       controls.updateNectarCounter(world.collectedNectar);
-      update();
+      return(update());
+   }
+
+
+   public boolean update(int step, int steps)
+   {
+      controls.updateStepCounter(step, steps);
+      controls.updateNectarCounter(world.collectedNectar);
+      return(update());
    }
 
 
    private int timer = 0;
-   public void update()
+   public boolean update()
    {
-      if (quit) { return; }
+      if (quit) { return(false); }
 
       // Update bee dashboard.
       if (beeDashboard != null)
@@ -189,6 +186,7 @@ public class WorldDisplay extends JFrame
             timer--;
          }
       }
+      return(!quit);
    }
 
 
@@ -712,9 +710,15 @@ public class WorldDisplay extends JFrame
 
 
       // Update step counter display.
-      void updateStepCounter(int steps)
+      void updateStepCounter(int step)
       {
-         stepCounter.setText("Steps: " + steps);
+         stepCounter.setText("Step: " + step);
+      }
+
+
+      void updateStepCounter(int step, int steps)
+      {
+         stepCounter.setText("Step: " + step + "/" + steps);
       }
 
 
@@ -741,8 +745,6 @@ public class WorldDisplay extends JFrame
          // Reset?
          if (evt.getSource() == (Object)resetButton)
          {
-            random = new SecureRandom();
-            random.setSeed(randomSeed);
             world.reset();
             if (beeDashboard != null)
             {

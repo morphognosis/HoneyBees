@@ -52,7 +52,7 @@ public class Main
       "Usage:\n" +
       "  New run:\n" +
       "    java morphognosis.honey_bees.Main\n" +
-      "      [-steps <steps> | -display (default)]\n" +
+      "      [-steps <steps> | -display <true | false> (default=true)]\n" +
       "      World parameters:\n" +
       "        [-worldDimensions <width> <height> (default=" + Parameters.WORLD_WIDTH + " " + Parameters.WORLD_HEIGHT + ")]\n" +
       "        [-hiveRadius <radius> (default=" + Parameters.HIVE_RADIUS + ")]\n" +
@@ -100,7 +100,7 @@ public class Main
    public static World world;
 
    // Display.
-   public static WorldDisplay display;
+   public static WorldDisplay worldDisplay;
 
    // Random numbers.
    public static int          randomSeed = DEFAULT_RANDOM_SEED;
@@ -114,9 +114,9 @@ public class Main
       {
          world.reset();
       }
-      if (display != null)
+      if (worldDisplay != null)
       {
-         display.close();
+         worldDisplay.close();
       }
    }
 
@@ -124,10 +124,10 @@ public class Main
    // Clear.
    public static void clear()
    {
-      if (display != null)
+      if (worldDisplay != null)
       {
-         display.close();
-         display = null;
+         worldDisplay.close();
+         worldDisplay = null;
       }
       world = null;
    }
@@ -197,14 +197,22 @@ public class Main
       random.setSeed(randomSeed);
       if (steps >= 0)
       {
-         for ( ; steps > 0; steps--)
+         if ((worldDisplay != null) && !updateDisplay(0, steps))
+         {
+            return;
+         }
+         for (int i = 0; i < steps; i++)
          {
             world.step();
+            if ((worldDisplay != null) && !updateDisplay(i + 1, steps))
+            {
+               return;
+            }
          }
       }
       else
       {
-         for (int i = 0; updateDisplay(i); i++)
+         for (int i = 0; updateDisplay(i, steps); i++)
          {
             world.step();
          }
@@ -215,9 +223,9 @@ public class Main
    // Create display.
    public static void createDisplay()
    {
-      if (display == null)
+      if (worldDisplay == null)
       {
-         display = new WorldDisplay(world, randomSeed);
+         worldDisplay = new WorldDisplay(world);
       }
    }
 
@@ -225,29 +233,27 @@ public class Main
    // Destroy display.
    public static void destroyDisplay()
    {
-      if (display != null)
+      if (worldDisplay != null)
       {
-         display.close();
-         display = null;
+         worldDisplay.close();
+         worldDisplay = null;
       }
    }
 
 
    // Update display.
    // Return false for display quit.
-   public static boolean updateDisplay(int steps)
+   public static boolean updateDisplay(int step, int steps)
    {
-      if (display != null)
+      if (worldDisplay != null)
       {
-         display.update(steps);
-         if (display.quit)
+         if (steps != -1)
          {
-            display = null;
-            return(false);
+            return(worldDisplay.update(step, steps));
          }
          else
          {
-            return(true);
+            return(worldDisplay.update(step));
          }
       }
       else
@@ -271,7 +277,7 @@ public class Main
       boolean noLearning           = false;
       String  loadfile             = null;
       String  savefile             = null;
-      boolean display        = false;
+      boolean display        = true;
       boolean gotParm        = false;
       boolean printParms     = false;
       boolean gotDatasetParm = false;
@@ -306,7 +312,27 @@ public class Main
          }
          if (args[i].equals("-display"))
          {
-            display = true;
+            i++;
+            if (i >= args.length)
+            {
+               System.err.println("Invalid display option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            if ((args[i] != null) && args[i].equals("true"))
+            {
+               display = true;
+            }
+            else if ((args[i] != null) && args[i].equals("false"))
+            {
+               display = false;
+            }
+            else
+            {
+               System.err.println("Invalid display option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
             continue;
          }
          if (args[i].equals("-worldDimensions"))
@@ -874,15 +900,20 @@ public class Main
          System.exit(1);
       }
 
-      // Check options.
-      if ((steps != -1) && display)
+      // Print parameters?
+      if (printParms)
       {
+         System.out.println("Parameters:");
+         Parameters.print();
+         System.exit(0);
+      }
+
+      // Check options.
+      if ((steps == -1) && !display)
+      {
+         System.err.println("steps and/or display option required");
          System.err.println(Usage);
          System.exit(1);
-      }
-      else if ((steps == -1) && !display)
-      {
-         display = true;
       }
       if ((loadfile != null) && gotParm)
       {
@@ -910,7 +941,7 @@ public class Main
       }
       catch (Exception e)
       {
-         System.err.println("Cannot initialize: " + e.getMessage());
+         System.err.println("Cannot initialize world: " + e.getMessage());
          System.exit(1);
       }
       if (loadfile != null)
@@ -926,14 +957,6 @@ public class Main
          }
       }
 
-      // Print parameters?
-      if (printParms)
-      {
-         System.out.println("Parameters:");
-         Parameters.print();
-         System.exit(0);
-      }
-
       // Set driver.
       world.setDriver(driver);
 
@@ -941,10 +964,6 @@ public class Main
       if (display)
       {
          createDisplay();
-      }
-      else
-      {
-         reset();
       }
 
       // Run.
