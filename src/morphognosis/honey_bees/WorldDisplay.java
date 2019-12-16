@@ -142,6 +142,7 @@ public class WorldDisplay extends JFrame
    {
       controls.updateStepCounter(step);
       controls.updateNectarCounter(world.collectedNectar);
+      controls.updateDriver(world.driver);
       return(update());
    }
 
@@ -150,6 +151,7 @@ public class WorldDisplay extends JFrame
    {
       controls.updateStepCounter(step, steps);
       controls.updateNectarCounter(world.collectedNectar);
+      controls.updateDriver(world.driver);
       return(update());
    }
 
@@ -726,6 +728,13 @@ public class WorldDisplay extends JFrame
       void updateNectarCounter(int count)
       {
          nectarCounter.setText("Collected nectar: " + count);
+      }
+
+
+      // Update driver.
+      void updateDriver(int count)
+      {
+         driverChoice.select(world.driver);
       }
 
 

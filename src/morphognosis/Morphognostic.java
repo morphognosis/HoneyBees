@@ -615,7 +615,7 @@ public class Morphognostic
    // Print.
    public void print()
    {
-      //printParameters();
+      printParameters();
       for (int i = 0; i < neighborhoods.size(); i++)
       {
          Neighborhood n = neighborhoods.get(i);

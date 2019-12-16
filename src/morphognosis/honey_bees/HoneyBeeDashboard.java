@@ -203,7 +203,8 @@ public class HoneyBeeDashboard extends JFrame
       public void update()
       {
          // Update sensors
-         if (bee.sensors[HoneyBee.HIVE_PRESENCE_INDEX] != 0.0f)
+         float[] sensors = bee.world.getSensors(bee);
+         if (sensors[HoneyBee.HIVE_PRESENCE_INDEX] != 0.0f)
          {
             hiveText.setText("true");
          }
@@ -211,19 +212,19 @@ public class HoneyBeeDashboard extends JFrame
          {
             hiveText.setText("false");
          }
-         nectarText.setText((int)bee.sensors[HoneyBee.NECTAR_PRESENCE_INDEX] + "");
-         if (bee.sensors[HoneyBee.ADJACENT_BEE_NECTAR_ORIENTATION_INDEX] >= 0.0f)
+         nectarText.setText((int)sensors[HoneyBee.NECTAR_PRESENCE_INDEX] + "");
+         if (sensors[HoneyBee.ADJACENT_BEE_NECTAR_ORIENTATION_INDEX] >= 0.0f)
          {
             adjacentBeeOrientationText.setText(Orientation.toName(
-                                                  (int)bee.sensors[HoneyBee.ADJACENT_BEE_NECTAR_ORIENTATION_INDEX]));
+                                                  (int)sensors[HoneyBee.ADJACENT_BEE_NECTAR_ORIENTATION_INDEX]));
          }
          else
          {
             adjacentBeeOrientationText.setText("NA");
          }
-         if (bee.sensors[HoneyBee.ADJACENT_BEE_NECTAR_DISTANCE_INDEX] >= 0.0f)
+         if (sensors[HoneyBee.ADJACENT_BEE_NECTAR_DISTANCE_INDEX] >= 0.0f)
          {
-            adjacentBeeNectarDistanceText.setText((int)bee.sensors[HoneyBee.ADJACENT_BEE_NECTAR_DISTANCE_INDEX] + "");
+            adjacentBeeNectarDistanceText.setText((int)sensors[HoneyBee.ADJACENT_BEE_NECTAR_DISTANCE_INDEX] + "");
          }
          else
          {

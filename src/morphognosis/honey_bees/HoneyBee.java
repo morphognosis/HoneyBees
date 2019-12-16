@@ -193,7 +193,7 @@ public class HoneyBee
       int [] eventTypes = new int[numEventTypes];
       for (int i = 0; i < eventTypes.length; i++)
       {
-         eventTypes[i] = 2;
+         eventTypes[i] = 1;
       }
       morphognostic = new Morphognostic(Orientation.NORTH, eventTypes,
                                         Parameters.NUM_NEIGHBORHOODS,
@@ -465,29 +465,24 @@ public class HoneyBee
       float     d2;
       for (Metamorph m : metamorphs)
       {
-         for (int i = 0; i < Orientation.NUM_ORIENTATIONS; i++)
+         d2 = morphognostic.compare(m.morphognostic);
+         if ((metamorph == null) || (d2 < d))
          {
-            morphognostic.orientation = i;
-            d2 = morphognostic.compare(m.morphognostic);
-            if ((metamorph == null) || (d2 < d))
+            d         = d2;
+            metamorph = m;
+         }
+         else
+         {
+            if (d2 == d)
             {
-               d         = d2;
-               metamorph = m;
-            }
-            else
-            {
-               if (d2 == d)
+               if (random.nextBoolean())
                {
-                  if (random.nextBoolean())
-                  {
-                     d         = d2;
-                     metamorph = m;
-                  }
+                  d         = d2;
+                  metamorph = m;
                }
             }
          }
       }
-      morphognostic.orientation = Orientation.NORTH;
       if (metamorph != null)
       {
          response = metamorph.response;
