@@ -5,6 +5,7 @@
 package morphognosis.honey_bees;
 
 import java.awt.BorderLayout;
+import java.awt.Checkbox;
 import java.awt.Choice;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -32,18 +33,22 @@ public class HoneyBeeDashboard extends JFrame
    private static final long serialVersionUID = 0L;
 
    // Components.
-   StatusPanel          status;
-   DriverPanel          driver;
-   MorphognosticDisplay morphognostic;
-   OperationsPanel      operations;
+   StatusPanel              status;
+   DriverPanel              driver;
+   MorphognosticDisplay     morphognostic;
+   MetamorphOperationsPanel metamorphOperations;
 
    // Target honey bee.
    HoneyBee bee;
 
+   // World display.
+   WorldDisplay worldDisplay;
+
    // Constructor.
-   public HoneyBeeDashboard(HoneyBee bee)
+   public HoneyBeeDashboard(HoneyBee bee, WorldDisplay worldDisplay)
    {
-      this.bee = bee;
+      this.bee          = bee;
+      this.worldDisplay = worldDisplay;
 
       setTitle("Honey bee " + bee.id);
       addWindowListener(new WindowAdapter()
@@ -59,8 +64,8 @@ public class HoneyBeeDashboard extends JFrame
       basePanel.add(driver);
       morphognostic = new MorphognosticDisplay(bee.id, bee.morphognostic);
       basePanel.add(morphognostic);
-      operations = new OperationsPanel();
-      basePanel.add(operations);
+      metamorphOperations = new MetamorphOperationsPanel();
+      basePanel.add(metamorphOperations);
       pack();
       setLocation();
       setVisible(false);
@@ -127,7 +132,7 @@ public class HoneyBeeDashboard extends JFrame
          setLayout(new BorderLayout());
          setBorder(BorderFactory.createTitledBorder(
                       BorderFactory.createLineBorder(Color.black),
-                      "Status"));
+                      "State"));
          JPanel sensorsPanel = new JPanel();
          sensorsPanel.setLayout(new BoxLayout(sensorsPanel, BoxLayout.Y_AXIS));
          sensorsPanel.setBorder(BorderFactory.createTitledBorder(
@@ -173,7 +178,7 @@ public class HoneyBeeDashboard extends JFrame
          statePanel.setLayout(new BoxLayout(statePanel, BoxLayout.Y_AXIS));
          statePanel.setBorder(BorderFactory.createTitledBorder(
                                  BorderFactory.createLineBorder(Color.black),
-                                 "State"));
+                                 "Internal"));
          add(statePanel, BorderLayout.SOUTH);
          JPanel orientationPanel = new JPanel();
          orientationPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
@@ -311,30 +316,42 @@ public class HoneyBeeDashboard extends JFrame
       }
    }
 
-   // Operations panel.
-   class OperationsPanel extends JPanel implements ActionListener
+   // Metamorph operations panel.
+   class MetamorphOperationsPanel extends JPanel implements ActionListener, ItemListener
    {
       private static final long serialVersionUID = 0L;
 
       // Components.
-      JButton clearMetamorphsButton;
-      JButton writeMetamorphDatasetButton;
+      JButton  clearMetamorphsButton;
+      JButton  writeMetamorphDatasetButton;
+      Checkbox trainNNcheck;
 
       // Constructor.
-      public OperationsPanel()
+      public MetamorphOperationsPanel()
       {
          setLayout(new BorderLayout());
          setBorder(BorderFactory.createTitledBorder(
-                      BorderFactory.createLineBorder(Color.black), "Operations"));
-         JPanel operationspanel = new JPanel();
-         operationspanel.setLayout(new FlowLayout(FlowLayout.LEFT));
-         add(operationspanel, BorderLayout.CENTER);
-         clearMetamorphsButton = new JButton("Clear metamorph rules");
+                      BorderFactory.createLineBorder(Color.black), "Metamorph operations"));
+         JPanel clearMetamorphsPanel = new JPanel();
+         clearMetamorphsPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+         add(clearMetamorphsPanel, BorderLayout.NORTH);
+         clearMetamorphsButton = new JButton("Clear metamorphs");
          clearMetamorphsButton.addActionListener(this);
-         operationspanel.add(clearMetamorphsButton);
-         writeMetamorphDatasetButton = new JButton("Write metamorph dataset to " + HoneyBee.METAMORPH_DATASET_FILE_NAME);
+         clearMetamorphsPanel.add(clearMetamorphsButton);
+         JPanel writeMetamorphDatasetPanel = new JPanel();
+         writeMetamorphDatasetPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+         add(writeMetamorphDatasetPanel, BorderLayout.CENTER);
+         writeMetamorphDatasetButton = new JButton("Write metamorph dataset to " + bee.metamorphDatasetFilename);
          writeMetamorphDatasetButton.addActionListener(this);
-         operationspanel.add(writeMetamorphDatasetButton);
+         writeMetamorphDatasetPanel.add(writeMetamorphDatasetButton);
+         JPanel trainNNpanel = new JPanel();
+         trainNNpanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+         add(trainNNpanel, BorderLayout.SOUTH);
+         trainNNpanel.add(new JLabel("Train NN:"));
+         trainNNcheck = new Checkbox();
+         trainNNcheck.setState(false);
+         trainNNcheck.addItemListener(this);
+         trainNNpanel.add(trainNNcheck);
       }
 
 
@@ -350,10 +367,34 @@ public class HoneyBeeDashboard extends JFrame
          if ((JButton)evt.getSource() == writeMetamorphDatasetButton)
          {
             try {
-               bee.writeMetamorphDataset(false);
+               bee.writeMetamorphDataset(bee.metamorphDatasetFilename, false);
             }
             catch (Exception e) {
-               System.err.println("Cannot write metamorph dataset to file " + HoneyBee.METAMORPH_DATASET_FILE_NAME + ": " + e.getMessage());
+               worldDisplay.controls.messageText.setText("Cannot write metamorph dataset to file " + bee.metamorphDatasetFilename + ": " + e.getMessage());
+            }
+            return;
+         }
+      }
+
+
+      // Choice listener.
+      public void itemStateChanged(ItemEvent evt)
+      {
+         Object source = evt.getSource();
+
+         if (source instanceof Checkbox && ((Checkbox)source == trainNNcheck))
+         {
+            if (trainNNcheck.getState())
+            {
+               try
+               {
+                  //bee.createMetamorphNN();
+               }
+               catch (Exception e)
+               {
+                  worldDisplay.controls.messageText.setText("Cannot train metamorph NN: " + e.getMessage());
+               }
+               trainNNcheck.setState(false);
             }
             return;
          }

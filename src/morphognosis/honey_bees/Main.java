@@ -78,7 +78,7 @@ public class Main
       "     [-printCollectedNectar]\n" +
       "     [-noLearning (do not learn new metamorphs)]\n" +
       "     [-save <file name>]\n" +
-      "     [-writeMetamorphDataset <file name> (write metamorph dataset file, default=" + HoneyBee.METAMORPH_DATASET_FILE_NAME + ")]\n" +
+      "     [-writeMetamorphDataset [<file name>] (write metamorph dataset file, default=" + HoneyBee.METAMORPH_DATASET_FILE_BASENAME + ".csv)]\n" +
       "  Resume run:\n" +
       "    java morphognosis.honey_bees.Main\n" +
       "      -load <file name>\n" +
@@ -88,7 +88,7 @@ public class Main
       "     [-printCollectedNectar]\n" +
       "     [-noLearning (do not learn new metamorphs)]\n" +
       "     [-save <file name>]\n" +
-      "     [-writeMetamorphDataset <file name> (write metamorph dataset file, default=" + HoneyBee.METAMORPH_DATASET_FILE_NAME + ")]\n" +
+      "     [-writeMetamorphDataset [<file name>] (write metamorph dataset file, default=" + HoneyBee.METAMORPH_DATASET_FILE_BASENAME + ".csv)]\n" +
       "  Print parameters:\n" +
       "    java morphognosis.honey_bees.Main -printParameters\n" +
       "  Version:\n" +
@@ -278,10 +278,11 @@ public class Main
       boolean noLearning           = false;
       String  loadfile             = null;
       String  savefile             = null;
-      boolean display        = true;
-      boolean gotParm        = false;
-      boolean printParms     = false;
-      boolean gotDatasetParm = false;
+      boolean display         = true;
+      boolean gotParm         = false;
+      boolean printParms      = false;
+      boolean gotDatasetParm  = false;
+      String  datasetFilename = HoneyBee.METAMORPH_DATASET_FILE_BASENAME + ".csv";
 
       for (int i = 0; i < args.length; i++)
       {
@@ -902,15 +903,15 @@ public class Main
          }
          if (args[i].equals("-writeMetamorphDataset"))
          {
-            i++;
-            if (i >= args.length)
-            {
-               System.err.println("Invalid writeMetamorphDataset option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            HoneyBee.METAMORPH_DATASET_FILE_NAME = args[i];
             gotDatasetParm = true;
+            if (i < args.length - 1)
+            {
+               if (!args[i + 1].startsWith("-"))
+               {
+                  i++;
+                  datasetFilename = args[i];
+               }
+            }
             continue;
          }
          if (args[i].equals("-help") || args[i].equals("-h") || args[i].equals("-?"))
@@ -1021,11 +1022,11 @@ public class Main
       {
          try
          {
-            world.writeMetamorphDataset();
+            world.writeMetamorphDataset(datasetFilename);
          }
          catch (Exception e)
          {
-            System.err.println("Cannot write metamorph dataset to file " + HoneyBee.METAMORPH_DATASET_FILE_NAME + ": " + e.getMessage());
+            System.err.println("Cannot write metamorph dataset to file " + datasetFilename + ": " + e.getMessage());
             System.exit(1);
          }
       }

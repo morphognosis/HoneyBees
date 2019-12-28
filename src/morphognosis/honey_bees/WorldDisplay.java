@@ -7,9 +7,11 @@ package morphognosis.honey_bees;
 import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Canvas;
+import java.awt.Checkbox;
 import java.awt.Choice;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -57,7 +59,10 @@ public class WorldDisplay extends JFrame
    public World world;
 
    // Dimensions.
-   public static final Dimension DISPLAY_SIZE = new Dimension(600, 700);
+   public static final Dimension DISPLAY_SIZE = new Dimension(600, 800);
+
+   // World display.
+   public WorldDisplay worldDisplay;
 
    // Display.
    public Display display;
@@ -79,7 +84,8 @@ public class WorldDisplay extends JFrame
    // Constructor.
    public WorldDisplay(World world)
    {
-      this.world = world;
+      this.world   = world;
+      worldDisplay = this;
 
       // Set up display.
       setTitle("Honey bees nectar foraging");
@@ -98,7 +104,7 @@ public class WorldDisplay extends JFrame
 
       // Create display.
       Dimension displaySize = new Dimension(DISPLAY_SIZE.width,
-                                            (int)((double)DISPLAY_SIZE.height * .8));
+                                            (int)((double)DISPLAY_SIZE.height * .7));
       display = new Display(displaySize);
       basePanel.add(display, BorderLayout.NORTH);
 
@@ -614,7 +620,7 @@ public class WorldDisplay extends JFrame
                {
                   if (beeDashboard == null)
                   {
-                     beeDashboard = new HoneyBeeDashboard(world.cells[x][y].bee);
+                     beeDashboard = new HoneyBeeDashboard(world.cells[x][y].bee, worldDisplay);
                      beeDashboard.open();
                   }
                   else
@@ -626,7 +632,7 @@ public class WorldDisplay extends JFrame
                      }
                      else
                      {
-                        beeDashboard = new HoneyBeeDashboard(world.cells[x][y].bee);
+                        beeDashboard = new HoneyBeeDashboard(world.cells[x][y].bee, worldDisplay);
                         beeDashboard.open();
                      }
                   }
@@ -667,6 +673,9 @@ public class WorldDisplay extends JFrame
       JCheckBox  muteCheck;
       JTextField messageText;
       JLabel     nectarCounter;
+      JButton    clearMetamorphsButton;
+      JButton    writeMetamorphDatasetButton;
+      Checkbox   trainNNcheck;
 
       // Constructor.
       Controls()
@@ -696,7 +705,7 @@ public class WorldDisplay extends JFrame
          panel.add(driverChoice);
          driverChoice.add("autopilot");
          driverChoice.add("metamorphs");
-         driverChoice.add("variable");
+         driverChoice.add("local override");
          driverChoice.select(world.driver);
          driverChoice.addItemListener(this);
          muteCheck = new JCheckBox("Mute", true);
@@ -707,6 +716,19 @@ public class WorldDisplay extends JFrame
          panel.add(messageText);
          nectarCounter = new JLabel("Collected nectar: 0");
          panel.add(nectarCounter);
+         add(panel, BorderLayout.CENTER);
+         panel = new JPanel();
+         clearMetamorphsButton = new JButton("Clear metamorphs");
+         clearMetamorphsButton.addActionListener(this);
+         panel.add(clearMetamorphsButton);
+         writeMetamorphDatasetButton = new JButton("Write metamorph dataset to " + HoneyBee.METAMORPH_DATASET_FILE_BASENAME + ".csv");
+         writeMetamorphDatasetButton.addActionListener(this);
+         panel.add(writeMetamorphDatasetButton);
+         panel.add(new JLabel("Train NN:"));
+         trainNNcheck = new Checkbox();
+         trainNNcheck.setState(false);
+         trainNNcheck.addItemListener(this);
+         panel.add(trainNNcheck);
          add(panel, BorderLayout.SOUTH);
       }
 

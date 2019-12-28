@@ -495,7 +495,7 @@ public class World
 
 
    // Write metamporph dataset.
-   public void writeMetamorphDataset() throws Exception
+   public void writeMetamorphDataset(String filename) throws Exception
    {
       if (bees != null)
       {
@@ -503,7 +503,7 @@ public class World
          {
             if (bees[i] != null)
             {
-               bees[i].writeMetamorphDataset(true);
+               bees[i].writeMetamorphDataset(filename, true);
             }
          }
       }

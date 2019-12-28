@@ -66,7 +66,7 @@ public class HoneyBeeTrainer extends World
          forage(bee, "Training forage " + i);
          try
          {
-            bee.writeMetamorphDataset(true);
+            bee.writeMetamorphDataset(bee.metamorphDatasetFilename, true);
          }
          catch (Exception e)
          {
