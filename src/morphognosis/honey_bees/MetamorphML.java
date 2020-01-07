@@ -9,6 +9,7 @@ import morphognosis.Metamorph;
 
 public class MetamorphML
 {
+   // ML type.
    public static final int NEURAL_NETWORK = 0;
    public static final int DECISION_TREE  = 1;
    public int              type;

@@ -1070,7 +1070,7 @@ public class HoneyBee
 
 
    // Check for hive presence in morphognostic.
-   public void checkMorphognosticHivePresence(Morphognostic m)
+   public static void checkMorphognosticHivePresence(Morphognostic m)
    {
       float c = 0.0f;
 
@@ -1082,7 +1082,7 @@ public class HoneyBee
             for (int y = 0; y < n.sectors.length; y++)
             {
                Neighborhood.Sector s = n.sectors[x][y];
-               c += s.typeDensities[0][1];
+               c += s.typeDensities[0][0];
             }
          }
       }
