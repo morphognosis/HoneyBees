@@ -675,6 +675,7 @@ public class WorldDisplay extends JFrame
       JButton    clearMetamorphsButton;
       JButton    writeMetamorphDatasetButton;
       Checkbox   trainNNcheck;
+      Checkbox   trainDTcheck;
 
       // Constructor.
       Controls()
@@ -703,7 +704,8 @@ public class WorldDisplay extends JFrame
          driverChoice = new Choice();
          panel.add(driverChoice);
          driverChoice.add("autopilot");
-         driverChoice.add("metamorphs");
+         driverChoice.add("metamorphDB");
+         driverChoice.add("metamorphML");
          driverChoice.add("local override");
          driverChoice.select(world.driver);
          driverChoice.addItemListener(this);
@@ -720,14 +722,19 @@ public class WorldDisplay extends JFrame
          clearMetamorphsButton = new JButton("Clear metamorphs");
          clearMetamorphsButton.addActionListener(this);
          panel.add(clearMetamorphsButton);
-         writeMetamorphDatasetButton = new JButton("Write metamorph dataset to " + HoneyBee.METAMORPH_DATASET_FILE_BASENAME + ".csv");
+         writeMetamorphDatasetButton = new JButton("Write metamorphs to " + HoneyBee.METAMORPH_DATASET_FILE_BASENAME + ".csv");
          writeMetamorphDatasetButton.addActionListener(this);
          panel.add(writeMetamorphDatasetButton);
-         panel.add(new JLabel("Train NN:"));
+         panel.add(new JLabel("Train neural network:"));
          trainNNcheck = new Checkbox();
          trainNNcheck.setState(false);
          trainNNcheck.addItemListener(this);
          panel.add(trainNNcheck);
+         panel.add(new JLabel("decision tree:"));
+         trainDTcheck = new Checkbox();
+         trainDTcheck.setState(false);
+         trainDTcheck.addItemListener(this);
+         panel.add(trainDTcheck);
          add(panel, BorderLayout.SOUTH);
       }
 
@@ -805,7 +812,7 @@ public class WorldDisplay extends JFrame
             world.setDriver(driver);
             if (beeDashboard != null)
             {
-               if (driver != World.DRIVER_TYPE.LOCAL.getValue())
+               if (driver != Driver.LOCAL_OVERRIDE)
                {
                   beeDashboard.setDriverChoice(driver);
                }
@@ -823,6 +830,40 @@ public class WorldDisplay extends JFrame
             {
                display.beeSound.start();
                display.beeSound.loop(Clip.LOOP_CONTINUOUSLY);
+            }
+            return;
+         }
+
+         if (source instanceof Checkbox && ((Checkbox)source == trainNNcheck))
+         {
+            if (trainNNcheck.getState())
+            {
+               try
+               {
+                  world.trainMetamorphs(MetamorphML.NEURAL_NETWORK);
+               }
+               catch (Exception e)
+               {
+                  controls.messageText.setText("Cannot train neural network: " + e.getMessage());
+               }
+               trainNNcheck.setState(false);
+            }
+            return;
+         }
+
+         if (source instanceof Checkbox && ((Checkbox)source == trainDTcheck))
+         {
+            if (trainDTcheck.getState())
+            {
+               try
+               {
+                  world.trainMetamorphs(MetamorphML.DECISION_TREE);
+               }
+               catch (Exception e)
+               {
+                  controls.messageText.setText("Cannot train decision tree: " + e.getMessage());
+               }
+               trainDTcheck.setState(false);
             }
             return;
          }

@@ -5,7 +5,9 @@
 package morphognosis.honey_bees;
 
 import java.security.SecureRandom;
+import java.util.ArrayList;
 
+import morphognosis.Metamorph;
 import morphognosis.Orientation;
 import morphognosis.Utility;
 import java.io.BufferedInputStream;
@@ -33,24 +35,6 @@ public class World
    public int          randomSeed;
 
    // Driver.
-   public enum DRIVER_TYPE
-   {
-      AUTOPILOT(0),
-      METAMORPHS(1),
-      LOCAL(2);
-
-      private int value;
-
-      DRIVER_TYPE(int value)
-      {
-         this.value = value;
-      }
-
-      public int getValue()
-      {
-         return(value);
-      }
-   }
    int driver;
 
    // No metamorph learning?
@@ -123,7 +107,7 @@ public class World
       collectedNectar = 0;
 
       // Initialize driver.
-      driver = DRIVER_TYPE.AUTOPILOT.getValue();
+      driver = Driver.AUTOPILOT;
    }
 
 
@@ -478,7 +462,7 @@ public class World
    public void setDriver(int driver)
    {
       this.driver = driver;
-      if (driver != DRIVER_TYPE.LOCAL.getValue())
+      if (driver != Driver.LOCAL_OVERRIDE)
       {
          if (bees != null)
          {
@@ -490,6 +474,31 @@ public class World
                }
             }
          }
+      }
+   }
+
+
+   // Train metamorphs.
+   public void trainMetamorphs(int type)
+   {
+      // Create cumulative list of metamorphs.
+      ArrayList<Metamorph> metamorphs = new ArrayList<Metamorph>();
+      for (HoneyBee bee : bees)
+      {
+         for (Metamorph metamorph : bee.metamorphs)
+         {
+            metamorphs.add(metamorph);
+         }
+      }
+
+      // Create and train model.
+      MetamorphML metamorphML = new MetamorphML(type);
+      metamorphML.train(metamorphs);
+
+      // Distribute model to bees.
+      for (HoneyBee bee : bees)
+      {
+         bee.metamorphML = metamorphML;
       }
    }
 

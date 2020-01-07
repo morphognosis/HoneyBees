@@ -73,7 +73,7 @@ public class Main
       "        [-epochIntervalStride <quantity> (default=" + Parameters.EPOCH_INTERVAL_STRIDE + ")]\n" +
       "        [-epochIntervalMultiplier <quantity> (default=" + Parameters.EPOCH_INTERVAL_MULTIPLIER + ")]\n" +
       "        [-equivalentMorphognosticDistance <distance> (default=" + HoneyBee.EQUIVALENT_MORPHOGNOSTIC_DISTANCE + ")]\n" +
-      "     [-driver <autopilot | metamorphs | local> (honey bees driver: default=autopilot)]\n" +
+      "     [-driver <autopilot | metamorphDB | local_override> (honey bees driver: default=autopilot)]\n" +
       "     [-randomSeed <random number seed> (default=" + DEFAULT_RANDOM_SEED + ")]\n" +
       "     [-printCollectedNectar]\n" +
       "     [-noLearning (do not learn new metamorphs)]\n" +
@@ -83,7 +83,7 @@ public class Main
       "    java morphognosis.honey_bees.Main\n" +
       "      -load <file name>\n" +
       "     [-steps <steps> | -display (default)]\n" +
-      "     [-driver autopilot | metamorphs | local> (default=autopilot)]\n" +
+      "     [-driver autopilot | metamorphDB | metamorphML=neural_network | metamorphML=decision_tree | local_override>\n\t(default=autopilot; neural_network and decision_tree trained before resuming)]\n" +
       "     [-randomSeed <random number seed>]\n" +
       "     [-printCollectedNectar]\n" +
       "     [-noLearning (do not learn new metamorphs)]\n" +
@@ -272,17 +272,18 @@ public class Main
    public static void main(String[] args)
    {
       // Get options.
-      int     steps  = -1;
-      int     driver = HoneyBee.DRIVER_TYPE.AUTOPILOT.getValue();
+      int     steps                = -1;
+      int     driver               = Driver.AUTOPILOT;
+      int     metamorphMLtype      = -1;
       boolean printCollectedNectar = false;
       boolean noLearning           = false;
       String  loadfile             = null;
       String  savefile             = null;
-      boolean display         = true;
-      boolean gotParm         = false;
-      boolean printParms      = false;
-      boolean gotDatasetParm  = false;
-      String  datasetFilename = HoneyBee.METAMORPH_DATASET_FILE_BASENAME + ".csv";
+      boolean display              = true;
+      boolean gotParm              = false;
+      boolean printParms           = false;
+      boolean gotDatasetParm       = false;
+      String  datasetFilename      = HoneyBee.METAMORPH_DATASET_FILE_BASENAME + ".csv";
 
       for (int i = 0; i < args.length; i++)
       {
@@ -422,17 +423,27 @@ public class Main
                System.err.println(Usage);
                System.exit(1);
             }
-            if (args[i].equals("metamorphs"))
+            if (args[i].equals("autopilot"))
             {
-               driver = World.DRIVER_TYPE.METAMORPHS.getValue();
+               driver = Driver.AUTOPILOT;
             }
-            else if (args[i].equals("autopilot"))
+            else if (args[i].equals("metamorphDB"))
             {
-               driver = World.DRIVER_TYPE.AUTOPILOT.getValue();
+               driver = Driver.METAMORPH_DB;
             }
-            else if (args[i].equals("variable"))
+            else if (args[i].equals("metamorphML=neural_network"))
             {
-               driver = World.DRIVER_TYPE.LOCAL.getValue();
+               driver          = Driver.METAMORPH_ML;
+               metamorphMLtype = MetamorphML.NEURAL_NETWORK;
+            }
+            else if (args[i].equals("metamorphML=decision_tree"))
+            {
+               driver          = Driver.METAMORPH_ML;
+               metamorphMLtype = MetamorphML.DECISION_TREE;
+            }
+            else if (args[i].equals("local_override"))
+            {
+               driver = Driver.LOCAL_OVERRIDE;
             }
             else
             {
@@ -941,7 +952,7 @@ public class Main
       // Check options.
       if ((steps == -1) && !display)
       {
-         System.err.println("steps and/or display option required");
+         System.err.println("Steps and/or display option required");
          System.err.println(Usage);
          System.exit(1);
       }
@@ -986,9 +997,24 @@ public class Main
             System.exit(1);
          }
       }
+      else
+      {
+         if (driver == Driver.METAMORPH_ML)
+         {
+            System.err.println("Cannot train initial empty metamorphs dataset");
+            System.err.println(Usage);
+            System.exit(1);
+         }
+      }
 
       // Set driver.
       world.setDriver(driver);
+
+      // Train metamorphs?
+      if (driver == Driver.METAMORPH_ML)
+      {
+         world.trainMetamorphs(metamorphMLtype);
+      }
 
       // Create display?
       if (display)

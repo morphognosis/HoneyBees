@@ -120,6 +120,12 @@ public class Morphognostic
       // Update.
       public void update(int[][][][] events, int cx, int cy)
       {
+         update(events, cx, cy, false);
+      }
+
+
+      public void update(int[][][][] events, int cx, int cy, boolean wrapWorld)
+      {
          // Clear type densities.
          for (int sx1 = 0, sx2 = sectors.length; sx1 < sx2; sx1++)
          {
@@ -152,30 +158,41 @@ public class Morphognostic
             for (int y0 = cy + dy, y1 = y0, y2 = y0 + dimension; y1 < y2; y1++)
             {
                int x3 = x1;
-               while (x3 < 0) { x3 += events.length; }
-               while (x3 >= events.length) { x3 -= events.length; }
                int y3 = y1;
-               while (y3 < 0) { y3 += events[0].length; }
-               while (y3 >= events[0].length) { y3 -= events[0].length; }
-               for (int d = 0; d < eventDimensions; d++)
+               if (wrapWorld)
                {
-                  for (int i = epoch + duration - 1; i >= epoch; i--)
+                  while (x3 < 0) { x3 += events.length; }
+                  while (x3 >= events.length) { x3 -= events.length; }
+                  while (y3 < 0) { y3 += events[0].length; }
+                  while (y3 >= events[0].length) { y3 -= events[0].length; }
+               }
+               else
+               {
+                  if ((x3 < 0) || (x3 >= events.length) ||
+                      (y3 < 0) || (y3 >= events[0].length))
                   {
-                     if (events[x3][y3][d][i] != -1)
+                     continue;
+                  }
+               }
+               for (int sx1 = 0, sx2 = sectors.length; sx1 < sx2; sx1++)
+               {
+                  for (int sy1 = 0, sy2 = sectors.length; sy1 < sy2; sy1++)
+                  {
+                     int    x4 = x1 - x0;
+                     int    y4 = y1 - y0;
+                     Sector s  = sectors[sx1][sy1];
+                     if ((x4 >= s.dx) &&
+                         (x4 < (s.dx + s.dimension)) &&
+                         (y4 >= s.dy) &&
+                         (y4 < (s.dy + s.dimension)))
                      {
-                        int t = events[x3][y3][d][i];
-                        for (int sx1 = 0, sx2 = sectors.length; sx1 < sx2; sx1++)
+                        for (int d = 0; d < eventDimensions; d++)
                         {
-                           for (int sy1 = 0, sy2 = sectors.length; sy1 < sy2; sy1++)
+                           for (int i = epoch + duration - 1; i >= epoch; i--)
                            {
-                              int    x4 = x1 - x0;
-                              int    y4 = y1 - y0;
-                              Sector s  = sectors[sx1][sy1];
-                              if ((x4 >= s.dx) &&
-                                  (x4 < (s.dx + s.dimension)) &&
-                                  (y4 >= s.dy) &&
-                                  (y4 < (s.dy + s.dimension)))
+                              if (events[x3][y3][d][i] != -1)
                               {
+                                 int t = events[x3][y3][d][i];
                                  if (s.typeDensities[d].length == 1)
                                  {
                                     s.typeDensities[d][0] += (float)t;
@@ -194,7 +211,7 @@ public class Morphognostic
             }
          }
 
-         // Type density is relative to sector dimensions.
+         // Scale type density by duration.
          for (int sx1 = 0, sx2 = sectors.length; sx1 < sx2; sx1++)
          {
             for (int sy1 = 0, sy2 = sectors.length; sy1 < sy2; sy1++)
@@ -204,7 +221,7 @@ public class Morphognostic
                {
                   for (int i = 0; i < numEventTypes[d]; i++)
                   {
-                     s.typeDensities[d][i] /= ((float)s.dimension * (float)duration);
+                     s.typeDensities[d][i] /= (float)duration;
                   }
                }
             }

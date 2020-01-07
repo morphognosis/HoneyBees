@@ -62,10 +62,6 @@ public class HoneyBee
    public static final int NUM_RESPONSES = WAIT + 1;
    int response;
 
-   // Metamorph dataset file name.
-   public static String METAMORPH_DATASET_FILE_BASENAME = "metamorphs";
-   public String        metamorphDatasetFilename;
-
    // Maximum distance between equivalent morphognostics.
    public static float EQUIVALENT_MORPHOGNOSTIC_DISTANCE = 0.0f;
 
@@ -122,24 +118,12 @@ public class HoneyBee
    public static final boolean saveMetamorphWekaNN        = false;
    public static final boolean evaluateMetamorphWekaNN    = true;
 
-   // Driver type.
-   public enum DRIVER_TYPE
-   {
-      AUTOPILOT(0),
-      METAMORPHS(1);
+   // Metamorph machine learning.
+   public MetamorphML metamorphML;
 
-      private int value;
-
-      DRIVER_TYPE(int value)
-      {
-         this.value = value;
-      }
-
-      public int getValue()
-      {
-         return(value);
-      }
-   }
+   // Metamorph dataset file name.
+   public static String METAMORPH_DATASET_FILE_BASENAME = "metamorphs";
+   public String        metamorphDatasetFilename;
 
    // Constructor.
    public HoneyBee(int id, World world, SecureRandom random)
@@ -218,7 +202,7 @@ public class HoneyBee
       metamorphs  = new ArrayList<Metamorph>();
 
       // Initialize driver.
-      driver         = DRIVER_TYPE.AUTOPILOT.getValue();
+      driver         = Driver.AUTOPILOT;
       driverResponse = WAIT;
    }
 
@@ -250,7 +234,7 @@ public class HoneyBee
       }
       events.clear();
       morphognostic.clear();
-      driver         = DRIVER_TYPE.AUTOPILOT.getValue();
+      driver         = Driver.AUTOPILOT;
       driverResponse = WAIT;
    }
 
@@ -428,17 +412,23 @@ public class HoneyBee
       }
 
       // Respond.
-      if (driver == DRIVER_TYPE.METAMORPHS.getValue())
+      switch (driver)
       {
-         metamorphResponse();
-      }
-      else if (driver == DRIVER_TYPE.AUTOPILOT.getValue())
-      {
+      case Driver.AUTOPILOT:
          autoPilotResponse();
-      }
-      else
-      {
+         break;
+
+      case Driver.METAMORPH_DB:
+         metamorphDBresponse();
+         break;
+
+      case Driver.METAMORPH_ML:
+         metamorphMLresponse();
+         break;
+
+      default:
          response = driverResponse;
+         break;
       }
 
       // Update metamorphs.
@@ -464,40 +454,6 @@ public class HoneyBee
       eventTime++;
 
       return(response);
-   }
-
-
-   // Get metamorph response.
-   void metamorphResponse()
-   {
-      response = WAIT;
-      Metamorph metamorph = null;
-      float     d         = 0.0f;
-      float     d2;
-      for (Metamorph m : metamorphs)
-      {
-         d2 = morphognostic.compare(m.morphognostic);
-         if ((metamorph == null) || (d2 < d))
-         {
-            d         = d2;
-            metamorph = m;
-         }
-         else
-         {
-            if (d2 == d)
-            {
-               if (random.nextBoolean())
-               {
-                  d         = d2;
-                  metamorph = m;
-               }
-            }
-         }
-      }
-      if (metamorph != null)
-      {
-         response = metamorph.response;
-      }
    }
 
 
@@ -886,248 +842,62 @@ public class HoneyBee
    }
 
 
-   /*
-    * // Initialize metamorph Weka neural network.
-    * public void initMetamorphWekaNN(Morphognostic morphognostic)
-    * {
-    * metamorphWekaNNattributeNames = new FastVector();
-    * for (int i = 0; i < morphognostic.NUM_NEIGHBORHOODS; i++)
-    * {
-    *    int n = morphognostic.neighborhoods.get(i).sectors.length;
-    *    for (int x = 0; x < n; x++)
-    *    {
-    *       for (int y = 0; y < n; y++)
-    *       {
-    *          for (int d = 0; d < morphognostic.eventDimensions; d++)
-    *          {
-    *             for (int j = 0; j < morphognostic.numEventTypes[d]; j++)
-    *             {
-    *                metamorphWekaNNattributeNames.addElement(new Attribute(i + "-" + x + "-" + y + "-" + d + "-" + j));
-    *             }
-    *          }
-    *       }
-    *    }
-    * }
-    * FastVector responseVals = new FastVector();
-    * for (int i = 0; i < NUM_RESPONSES; i++)
-    * {
-    *    responseVals.addElement(i + "");
-    * }
-    * headMetamorphWekaNNattributeNames.addElement(new Attribute("type", responseVals));
-    * headMetamorphWekaInstances = new Instances("head_metamorphs", headMetamorphWekaNNattributeNames, 0);
-    * headMetamorphWekaNN        = new MultilayerPerceptron();
-    * }
-    *
-    *
-    * // Initialize body metamorph Weka neural network.
-    * public void initBodyMetamorphWekaNN(Morphognostic morphognostic)
-    * {
-    * bodyMetamorphWekaNNattributeNames = new FastVector();
-    * for (int i = 0; i < morphognostic.NUM_NEIGHBORHOODS; i++)
-    * {
-    *    int n = morphognostic.neighborhoods.get(i).sectors.length;
-    *    for (int x = 0; x < n; x++)
-    *    {
-    *       for (int y = 0; y < n; y++)
-    *       {
-    *          for (int d = 0; d < morphognostic.eventDimensions; d++)
-    *          {
-    *             for (int j = 0; j < morphognostic.numEventTypes[d]; j++)
-    *             {
-    *                bodyMetamorphWekaNNattributeNames.addElement(new Attribute(i + "-" + x + "-" + y + "-" + d + "-" + j));
-    *             }
-    *          }
-    *       }
-    *    }
-    * }
-    * FastVector responseVals = new FastVector();
-    * for (int i = 0; i < NUM_RESPONSES; i++)
-    * {
-    *    responseVals.addElement(i + "");
-    * }
-    * bodyMetamorphWekaNNattributeNames.addElement(new Attribute("type", responseVals));
-    * bodyMetamorphWekaInstances = new Instances("body_metamorphs", bodyMetamorphWekaNNattributeNames, 0);
-    * bodyMetamorphWekaNN        = new MultilayerPerceptron();
-    * }
-    *
-    *
-    * // Create and train head metamorph neural network.
-    * public void createHeadMetamorphWekaNN() throws Exception
-    * {
-    * // Create instances.
-    * headMetamorphWekaInstances = new Instances("head_metamorphs", headMetamorphWekaNNattributeNames, 0);
-    * for (List<Metamorph> metamorphList : headMetamorphs.values())
-    * {
-    *    for (Metamorph m : metamorphList)
-    *    {
-    *       headMetamorphWekaInstances.add(createInstance(headMetamorphWekaInstances, m));
-    *    }
-    * }
-    * headMetamorphWekaInstances.setClassIndex(headMetamorphWekaInstances.numAttributes() - 1);
-    *
-    * // Create and train the neural network.
-    * MultilayerPerceptron mlp = new MultilayerPerceptron();
-    * headMetamorphWekaNN = mlp;
-    * mlp.setLearningRate(0.1);
-    * mlp.setMomentum(0.2);
-    * mlp.setTrainingTime(2000);
-    * mlp.setHiddenLayers("20");
-    * mlp.setOptions(Utils.splitOptions("-L 0.1 -M 0.2 -N 2000 -V 0 -S 0 -E 20 -H 20"));
-    * mlp.buildClassifier(headMetamorphWekaInstances);
-    *
-    * // Save training instances?
-    * if (saveMetamorphWekaInstances)
-    * {
-    *    ArffSaver saver = new ArffSaver();
-    *    saver.setInstances(headMetamorphWekaInstances);
-    *    saver.setFile(new File("headMetamorphWekaInstances.arff"));
-    *    saver.writeBatch();
-    * }
-    *
-    * // Save networks?
-    * if (saveMetamorphWekaNN)
-    * {
-    *    Debug.saveToFile("headMetamorphWekaNN.dat", mlp);
-    * }
-    *
-    * // Evaluate the network.
-    * if (evaluateMetamorphWekaNN)
-    * {
-    *    Evaluation eval = new Evaluation(headMetamorphWekaInstances);
-    *    eval.evaluateModel(mlp, headMetamorphWekaInstances);
-    *    System.out.println("Error rate=" + eval.errorRate());
-    *    System.out.println(eval.toSummaryString());
-    * }
-    * }
-    *
-    *
-    * // Create and train body metamorph neural network.
-    * public void createBodyMetamorphWekaNN() throws Exception
-    * {
-    * // Create instances.
-    * bodyMetamorphWekaInstances = new Instances("body_metamorphs", bodyMetamorphWekaNNattributeNames, 0);
-    * for (List<Metamorph> metamorphList : bodyMetamorphs.values())
-    * {
-    *    for (Metamorph m : metamorphList)
-    *    {
-    *       bodyMetamorphWekaInstances.add(createInstance(bodyMetamorphWekaInstances, m));
-    *    }
-    * }
-    * bodyMetamorphWekaInstances.setClassIndex(bodyMetamorphWekaInstances.numAttributes() - 1);
-    *
-    * // Create and train the neural network.
-    * MultilayerPerceptron mlp = new MultilayerPerceptron();
-    * bodyMetamorphWekaNN = mlp;
-    * mlp.setLearningRate(0.1);
-    * mlp.setMomentum(0.2);
-    * mlp.setTrainingTime(2000);
-    * mlp.setHiddenLayers("20");
-    * mlp.setOptions(Utils.splitOptions("-L 0.1 -M 0.2 -N 2000 -V 0 -S 0 -E 20 -H 20"));
-    * mlp.buildClassifier(bodyMetamorphWekaInstances);
-    *
-    * // Save training instances?
-    * if (saveMetamorphWekaInstances)
-    * {
-    *    ArffSaver saver = new ArffSaver();
-    *    saver.setInstances(bodyMetamorphWekaInstances);
-    *    saver.setFile(new File("bodyMetamorphWekaInstances.arff"));
-    *    saver.writeBatch();
-    * }
-    *
-    * // Save networks?
-    * if (saveMetamorphWekaNN)
-    * {
-    *    Debug.saveToFile("bodyMetamorphWekaNN.dat", mlp);
-    * }
-    *
-    * // Evaluate the network.
-    * if (evaluateMetamorphWekaNN)
-    * {
-    *    Evaluation eval = new Evaluation(bodyMetamorphWekaInstances);
-    *    eval.evaluateModel(mlp, bodyMetamorphWekaInstances);
-    *    System.out.println("Error rate=" + eval.errorRate());
-    *    System.out.println(eval.toSummaryString());
-    * }
-    * }
-    *
-    *
-    * // Create metamorph Weka NN instance.
-    * Instance createInstance(Instances instances, Metamorph m)
-    * {
-    * double[]  attrValues = new double[instances.numAttributes()];
-    * int a = 0;
-    * for (int i = 0; i < m.morphognostic.NUM_NEIGHBORHOODS; i++)
-    * {
-    *    int n = m.morphognostic.neighborhoods.get(i).sectors.length;
-    *    for (int x = 0; x < n; x++)
-    *    {
-    *       for (int y = 0; y < n; y++)
-    *       {
-    *          Morphognostic.Neighborhood.Sector s = m.morphognostic.neighborhoods.get(i).sectors[x][y];
-    *          for (int d = 0; d < m.morphognostic.eventDimensions; d++)
-    *          {
-    *             for (int j = 0; j < s.typeDensities[d].length; j++)
-    *             {
-    *                attrValues[a] = s.typeDensities[d][j];
-    *                a++;
-    *             }
-    *          }
-    *       }
-    *    }
-    * }
-    * attrValues[a] = instances.attribute(a).indexOfValue(m.response + "");
-    * a++;
-    * return(new Instance(1.0, attrValues));
-    * }
-    *
-    *
-    * // Save head metamorph neural network training dataset.
-    * public void saveHeadMetamorphNNtrainingData() throws Exception
-    * {
-    * FileOutputStream output;
-    *
-    * try
-    * {
-    *    output = new FileOutputStream(new File(HEAD_NN_DATASET_SAVE_FILE_NAME));
-    * }
-    * catch (Exception e)
-    * {
-    *    throw new IOException("Cannot open output file " + HEAD_NN_DATASET_SAVE_FILE_NAME + ":" + e.getMessage());
-    * }
-    * PrintWriter writer = new PrintWriter(new BufferedWriter(new OutputStreamWriter(output)));
-    * boolean     header = true;
-    * for (List<Metamorph> metamorphList : headMetamorphs.values())
-    * {
-    *    for (Metamorph m : metamorphList)
-    *    {
-    *       String csv = morphognostic2csv(m.morphognostic);
-    *       if (m.responseName.isEmpty())
-    *       {
-    *          csv += ("," + m.response);
-    *       }
-    *       else
-    *       {
-    *          csv += ("," + m.responseName);
-    *       }
-    *       if (header)
-    *       {
-    *          header = false;
-    *          int    j    = csv.split(",").length - 1;
-    *          String csv2 = "";
-    *          for (int i = 0; i < j; i++)
-    *          {
-    *             csv2 += ("c" + i + ",");
-    *          }
-    *          csv2 += "response";
-    *          writer.println(csv2);
-    *       }
-    *       writer.println(csv);
-    *    }
-    * }
-    * writer.flush();
-    * output.close();
-    * }
-    */
+   // Get metamorph DB response.
+   void metamorphDBresponse()
+   {
+      response = WAIT;
+      Metamorph metamorph = null;
+      float     d         = 0.0f;
+      float     d2;
+      for (Metamorph m : metamorphs)
+      {
+         d2 = morphognostic.compare(m.morphognostic);
+         if ((metamorph == null) || (d2 < d))
+         {
+            d         = d2;
+            metamorph = m;
+         }
+         else
+         {
+            if (d2 == d)
+            {
+               if (random.nextBoolean())
+               {
+                  d         = d2;
+                  metamorph = m;
+               }
+            }
+         }
+      }
+      if (metamorph != null)
+      {
+         response = metamorph.response;
+      }
+   }
+
+
+   // Get metamorph ML response.
+   void metamorphMLresponse()
+   {
+      if (metamorphML != null)
+      {
+         response = metamorphML.respond();
+      }
+      else
+      {
+         System.err.println("Please train metamorphs!");
+         response = WAIT;
+      }
+   }
+
+
+   // Train metamorphs.
+   public void trainMetamorphs(int type)
+   {
+      metamorphML = new MetamorphML(type);
+      metamorphML.train(metamorphs);
+   }
+
 
    // Write metamporph dataset.
    public void writeMetamorphDataset(String filename, boolean append) throws Exception

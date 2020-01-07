@@ -287,7 +287,8 @@ public class HoneyBeeDashboard extends JFrame
          driverChoice = new Choice();
          driverPanel.add(driverChoice);
          driverChoice.add("autopilot");
-         driverChoice.add("metamorphs");
+         driverChoice.add("metamorphDB");
+         driverChoice.add("metamorphML");
          driverChoice.addItemListener(this);
          JPanel datasetpanel = new JPanel();
          datasetpanel.setLayout(new FlowLayout(FlowLayout.LEFT));
@@ -302,7 +303,7 @@ public class HoneyBeeDashboard extends JFrame
 
          if (source instanceof Choice && ((Choice)source == driverChoice))
          {
-            if (bee.world.driver == World.DRIVER_TYPE.LOCAL.getValue())
+            if (bee.world.driver == Driver.LOCAL_OVERRIDE)
             {
                bee.driver = driverChoice.getSelectedIndex();
             }
@@ -325,6 +326,7 @@ public class HoneyBeeDashboard extends JFrame
       JButton  clearMetamorphsButton;
       JButton  writeMetamorphDatasetButton;
       Checkbox trainNNcheck;
+      Checkbox trainDTcheck;
 
       // Constructor.
       public MetamorphOperationsPanel()
@@ -341,17 +343,22 @@ public class HoneyBeeDashboard extends JFrame
          JPanel writeMetamorphDatasetPanel = new JPanel();
          writeMetamorphDatasetPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
          add(writeMetamorphDatasetPanel, BorderLayout.CENTER);
-         writeMetamorphDatasetButton = new JButton("Write metamorph dataset to " + bee.metamorphDatasetFilename);
+         writeMetamorphDatasetButton = new JButton("Write metamorphs to " + bee.metamorphDatasetFilename);
          writeMetamorphDatasetButton.addActionListener(this);
          writeMetamorphDatasetPanel.add(writeMetamorphDatasetButton);
-         JPanel trainNNpanel = new JPanel();
-         trainNNpanel.setLayout(new FlowLayout(FlowLayout.LEFT));
-         add(trainNNpanel, BorderLayout.SOUTH);
-         trainNNpanel.add(new JLabel("Train NN:"));
+         JPanel trainMLpanel = new JPanel();
+         trainMLpanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+         add(trainMLpanel, BorderLayout.SOUTH);
+         trainMLpanel.add(new JLabel("Train neural network:"));
          trainNNcheck = new Checkbox();
          trainNNcheck.setState(false);
          trainNNcheck.addItemListener(this);
-         trainNNpanel.add(trainNNcheck);
+         trainMLpanel.add(trainNNcheck);
+         trainMLpanel.add(new JLabel("decision tree:"));
+         trainDTcheck = new Checkbox();
+         trainDTcheck.setState(false);
+         trainDTcheck.addItemListener(this);
+         trainMLpanel.add(trainDTcheck);
       }
 
 
@@ -388,13 +395,30 @@ public class HoneyBeeDashboard extends JFrame
             {
                try
                {
-                  //bee.createMetamorphNN();
+                  bee.trainMetamorphs(MetamorphML.NEURAL_NETWORK);
                }
                catch (Exception e)
                {
-                  worldDisplay.controls.messageText.setText("Cannot train metamorph NN: " + e.getMessage());
+                  worldDisplay.controls.messageText.setText("Cannot train neural network: " + e.getMessage());
                }
                trainNNcheck.setState(false);
+            }
+            return;
+         }
+
+         if (source instanceof Checkbox && ((Checkbox)source == trainDTcheck))
+         {
+            if (trainDTcheck.getState())
+            {
+               try
+               {
+                  bee.trainMetamorphs(MetamorphML.DECISION_TREE);
+               }
+               catch (Exception e)
+               {
+                  worldDisplay.controls.messageText.setText("Cannot train decision tree: " + e.getMessage());
+               }
+               trainDTcheck.setState(false);
             }
             return;
          }

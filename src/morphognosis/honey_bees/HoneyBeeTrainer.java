@@ -62,7 +62,7 @@ public class HoneyBeeTrainer extends World
          reset();
          placeBee(bee);
          flowerX = flowerY = -1;
-         setDriver(HoneyBee.DRIVER_TYPE.AUTOPILOT.getValue());
+         setDriver(Driver.AUTOPILOT);
          forage(bee, "Training forage " + i);
          try
          {
@@ -79,7 +79,7 @@ public class HoneyBeeTrainer extends World
             flower.nectar = 1;
             cells[flowerX][flowerY].flower = flower;
          }
-         setDriver(HoneyBee.DRIVER_TYPE.METAMORPHS.getValue());
+         setDriver(Driver.METAMORPH_DB);
          forage(bee, "Testing forage " + i);
          System.out.println("Collected nectar = " + collectedNectar);
       }
