@@ -155,21 +155,30 @@ public class Morphognostic
          // Accumulate types per sector.
          for (int x0 = cx + dx, x1 = x0, x2 = x0 + dimension; x1 < x2; x1++)
          {
+            int x3 = x1;
+            if (wrapWorld)
+            {
+               while (x3 < 0) { x3 += events.length; }
+               while (x3 >= events.length) { x3 -= events.length; }
+            }
+            else
+            {
+               if ((x3 < 0) || (x3 >= events.length))
+               {
+                  continue;
+               }
+            }
             for (int y0 = cy + dy, y1 = y0, y2 = y0 + dimension; y1 < y2; y1++)
             {
-               int x3 = x1;
                int y3 = y1;
                if (wrapWorld)
                {
-                  while (x3 < 0) { x3 += events.length; }
-                  while (x3 >= events.length) { x3 -= events.length; }
                   while (y3 < 0) { y3 += events[0].length; }
                   while (y3 >= events[0].length) { y3 -= events[0].length; }
                }
                else
                {
-                  if ((x3 < 0) || (x3 >= events.length) ||
-                      (y3 < 0) || (y3 >= events[0].length))
+                  if ((y3 < 0) || (y3 >= events[0].length))
                   {
                      continue;
                   }
@@ -335,17 +344,18 @@ public class Morphognostic
       }
    }
 
-   // Neighborhoods.
+
+// Neighborhoods.
    public Vector<Neighborhood> neighborhoods;
 
-   // Orientation.
+// Orientation.
    public int orientation;
 
-   // Event quantities.
+// Event quantities.
    public int[] numEventTypes;
    public int   eventDimensions;
 
-   // Constructors.
+// Constructors.
    public Morphognostic(int orientation, int eventDimensions)
    {
       int[] numEventTypes = new int[eventDimensions];
@@ -357,7 +367,7 @@ public class Morphognostic
    }
 
 
-   // Construct with parameters.
+// Construct with parameters.
    public Morphognostic(int orientation, int eventDimensions,
                         int NUM_NEIGHBORHOODS,
                         int NEIGHBORHOOD_INITIAL_DIMENSION,
@@ -388,7 +398,7 @@ public class Morphognostic
    }
 
 
-   // Construct with parameters.
+// Construct with parameters.
    public Morphognostic(int orientation, int[] numEventTypes,
                         int NUM_NEIGHBORHOODS,
                         int NEIGHBORHOOD_INITIAL_DIMENSION,
@@ -433,7 +443,7 @@ public class Morphognostic
    }
 
 
-   // Update.
+// Update.
    public void update(int[][][][] events, int cx, int cy)
    {
       for (int i = 0; i < NUM_NEIGHBORHOODS; i++)
@@ -443,7 +453,7 @@ public class Morphognostic
    }
 
 
-   // Compare.
+// Compare.
    public float compare(Morphognostic m)
    {
       float d = 0.0f;
@@ -456,7 +466,7 @@ public class Morphognostic
    }
 
 
-   // Clear.
+// Clear.
    public void clear()
    {
       for (Neighborhood n : neighborhoods)
@@ -486,7 +496,7 @@ public class Morphognostic
    }
 
 
-   // Save.
+// Save.
    public void save(DataOutputStream output) throws IOException
    {
       Utility.saveInt(output, NUM_NEIGHBORHOODS);
@@ -529,7 +539,7 @@ public class Morphognostic
    }
 
 
-   // Load.
+// Load.
    public static Morphognostic load(DataInputStream input) throws EOFException, IOException
    {
       int NUM_NEIGHBORHOODS = Utility.loadInt(input);
@@ -582,7 +592,7 @@ public class Morphognostic
    }
 
 
-   // Clone.
+// Clone.
    public Morphognostic clone()
    {
       Morphognostic m = new Morphognostic(orientation, numEventTypes,
@@ -625,7 +635,7 @@ public class Morphognostic
    }
 
 
-   // Print.
+// Print.
    public void print()
    {
       printParameters();
@@ -657,7 +667,10 @@ public class Morphognostic
                      System.out.print("\t\t\t");
                      for (int y2 = 0; y2 < s.events[0].length; y2++)
                      {
-                        if (s.events[x2][y2][d] >= 0) { System.out.print(" "); }
+                        if (s.events[x2][y2][d] >= 0)
+                        {
+                           System.out.print(" ");
+                        }
                         System.out.print(s.events[x2][y2][d] + " ");
                      }
                      System.out.println("");
@@ -669,7 +682,7 @@ public class Morphognostic
    }
 
 
-   // Print parameters.
+// Print parameters.
    public void printParameters()
    {
       System.out.println("NUM_NEIGHBORHOODS=" + NUM_NEIGHBORHOODS);
