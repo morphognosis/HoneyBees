@@ -881,7 +881,7 @@ public class HoneyBee
    {
       if (metamorphML != null)
       {
-         response = metamorphML.respond();
+         response = metamorphML.respond(morphognostic);
       }
       else
       {

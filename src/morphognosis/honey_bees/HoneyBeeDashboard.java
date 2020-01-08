@@ -395,7 +395,9 @@ public class HoneyBeeDashboard extends JFrame
             {
                try
                {
+                  worldDisplay.controls.messageText.setText("Training neural network...");
                   bee.trainMetamorphs(MetamorphML.NEURAL_NETWORK);
+                  worldDisplay.controls.messageText.setText("");
                }
                catch (Exception e)
                {
@@ -412,7 +414,9 @@ public class HoneyBeeDashboard extends JFrame
             {
                try
                {
+                  worldDisplay.controls.messageText.setText("Training decision tree...");
                   bee.trainMetamorphs(MetamorphML.DECISION_TREE);
+                  worldDisplay.controls.messageText.setText("");
                }
                catch (Exception e)
                {

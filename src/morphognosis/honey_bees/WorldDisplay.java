@@ -840,7 +840,9 @@ public class WorldDisplay extends JFrame
             {
                try
                {
+                  controls.messageText.setText("Training neural network...");
                   world.trainMetamorphs(MetamorphML.NEURAL_NETWORK);
+                  controls.messageText.setText("");
                }
                catch (Exception e)
                {
@@ -857,7 +859,9 @@ public class WorldDisplay extends JFrame
             {
                try
                {
+                  controls.messageText.setText("Training decision tree...");
                   world.trainMetamorphs(MetamorphML.DECISION_TREE);
+                  controls.messageText.setText("");
                }
                catch (Exception e)
                {
