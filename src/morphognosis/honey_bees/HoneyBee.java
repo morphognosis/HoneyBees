@@ -894,7 +894,7 @@ public class HoneyBee
    // Train metamorphs.
    public void trainMetamorphs(int type)
    {
-      metamorphML = new MetamorphML(type);
+      metamorphML = new MetamorphML(type, random);
       metamorphML.train(metamorphs);
    }
 

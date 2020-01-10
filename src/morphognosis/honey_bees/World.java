@@ -492,7 +492,7 @@ public class World
       }
 
       // Create and train model.
-      MetamorphML metamorphML = new MetamorphML(type);
+      MetamorphML metamorphML = new MetamorphML(type, random);
       metamorphML.train(metamorphs);
 
       // Distribute model to bees.

@@ -6,12 +6,14 @@ package morphognosis.honey_bees;
 
 import java.security.SecureRandom;
 
+import javax.swing.UIManager;
+
 import morphognosis.Orientation;
 
 public class HoneyBeeTrainer extends World
 {
    // Parameters.
-   public static int NUM_FORAGES          = 2;
+   public static int NUM_FORAGES          = 1;
    public static int MAX_STEPS_PER_FORAGE = 100;
    public static int MIN_STEPS_TO_NECTAR  = 3;
    public static int MAX_STEPS_TO_NECTAR  = 10;
@@ -26,7 +28,8 @@ public class HoneyBeeTrainer extends World
       "     [-maxStepsPerForage <steps> (default=" + MAX_STEPS_PER_FORAGE + ")]\n" +
       "     [-minStepsToNectar <steps> (default=" + MIN_STEPS_TO_NECTAR + ")]\n" +
       "     [-maxStepsToNectar <steps> (default=" + MAX_STEPS_TO_NECTAR + ")]\n" +
-      "     [-randomSeed <random number seed> (default=" + RANDOM_SEED + ")]";
+      "     [-randomSeed <random number seed> (default=" + RANDOM_SEED + ")]\n" +
+      "     [-testDriver metamorphDB | metamorphML=neural_network | metamorphML=decision_tree (default=metamorphDB)]";
 
    // World display.
    public WorldDisplay worldDisplay;
@@ -38,8 +41,12 @@ public class HoneyBeeTrainer extends World
    // Random numbers.
    SecureRandom trainRandom;
 
+   // Test driver.
+   int testDriver;
+   int metamorphMLtype;
+
    // Constructor.
-   public HoneyBeeTrainer(boolean display)
+   public HoneyBeeTrainer(boolean display, int testDriver, int metamorphMLtype)
    {
       super(RANDOM_SEED);
       trainRandom = new SecureRandom();
@@ -48,6 +55,8 @@ public class HoneyBeeTrainer extends World
       {
          worldDisplay = new WorldDisplay(this);
       }
+      this.testDriver      = testDriver;
+      this.metamorphMLtype = metamorphMLtype;
    }
 
 
@@ -79,7 +88,11 @@ public class HoneyBeeTrainer extends World
             flower.nectar = 1;
             cells[flowerX][flowerY].flower = flower;
          }
-         setDriver(Driver.METAMORPH_DB);
+         setDriver(testDriver);
+         if (testDriver == Driver.METAMORPH_ML)
+         {
+            bee.trainMetamorphs(metamorphMLtype);
+         }
          forage(bee, "Testing forage " + i);
          System.out.println("Collected nectar = " + collectedNectar);
       }
@@ -153,7 +166,9 @@ public class HoneyBeeTrainer extends World
    // Main.
    public static void main(String[] args)
    {
-      boolean displayWorld = true;
+      boolean displayWorld    = true;
+      int     testDriver      = Driver.METAMORPH_DB;
+      int     metamorphMLtype = MetamorphML.NEURAL_NETWORK;
 
       for (int i = 0; i < args.length; i++)
       {
@@ -306,6 +321,37 @@ public class HoneyBeeTrainer extends World
             }
             continue;
          }
+         if (args[i].equals("-testDriver"))
+         {
+            i++;
+            if (i >= args.length)
+            {
+               System.err.println("Invalid testDriver option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            if (args[i].equals("metamorphDB"))
+            {
+               testDriver = Driver.METAMORPH_DB;
+            }
+            else if (args[i].equals("metamorphML=neural_network"))
+            {
+               testDriver      = Driver.METAMORPH_ML;
+               metamorphMLtype = MetamorphML.NEURAL_NETWORK;
+            }
+            else if (args[i].equals("metamorphML=decision_tree"))
+            {
+               testDriver      = Driver.METAMORPH_ML;
+               metamorphMLtype = MetamorphML.DECISION_TREE;
+            }
+            else
+            {
+               System.err.println("Invalid testDriver option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            continue;
+         }
          if (args[i].equals("-help") || args[i].equals("-h") || args[i].equals("-?"))
          {
             System.out.println(Usage);
@@ -326,8 +372,18 @@ public class HoneyBeeTrainer extends World
       Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY = 0.0f;
       Parameters.NUM_BEES = 1;
 
+      // Set look and feel.
+      try
+      {
+         UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+      }
+      catch (Exception e)
+      {
+         System.err.println("Warning: cannot set look and feel");
+      }
+
       // Train.
-      HoneyBeeTrainer trainer = new HoneyBeeTrainer(displayWorld);
+      HoneyBeeTrainer trainer = new HoneyBeeTrainer(displayWorld, testDriver, metamorphMLtype);
       trainer.train();
 
       System.exit(0);
