@@ -40,6 +40,9 @@ public class World
    // No metamorph learning?
    public boolean noLearning;
 
+   // Metamorph neural network.
+   public MetamorphNN metamorphNN;
+
    // Constructor.
    public World(int randomSeed)
    {
@@ -478,8 +481,8 @@ public class World
    }
 
 
-   // Train metamorphs.
-   public void trainMetamorphs(int type)
+   // Train metamorph neural network.
+   public void trainMetamorphNN()
    {
       // Create cumulative list of metamorphs.
       ArrayList<Metamorph> metamorphs = new ArrayList<Metamorph>();
@@ -491,20 +494,41 @@ public class World
          }
       }
 
-      // Create and train model.
-      MetamorphML metamorphML = new MetamorphML(type, random);
-      metamorphML.train(metamorphs);
+      // Create and train neural network.
+      metamorphNN = new MetamorphNN(random);
+      metamorphNN.train(metamorphs);
 
       // Distribute model to bees.
       for (HoneyBee bee : bees)
       {
-         bee.metamorphML = metamorphML;
+         bee.metamorphNN = metamorphNN;
       }
    }
 
 
-   // Write metamporph dataset.
-   public void writeMetamorphDataset(String filename) throws Exception
+   // Save metamorph neural network.
+   public void saveMetamorphNN(String filename)
+   {
+      if (metamorphNN != null)
+      {
+         metamorphNN.saveModel(filename);
+      }
+   }
+
+
+   // Load metamorph neural network.
+   public void loadMetamorphNN(String filename)
+   {
+      if (metamorphNN == null)
+      {
+         metamorphNN = new MetamorphNN(random);
+      }
+      metamorphNN.loadModel(filename);
+   }
+
+
+   // Clear metamorphs.
+   public void clearMetamorphs()
    {
       if (bees != null)
       {
@@ -512,7 +536,25 @@ public class World
          {
             if (bees[i] != null)
             {
-               bees[i].writeMetamorphDataset(filename, true);
+               bees[i].metamorphs.clear();
+            }
+         }
+      }
+   }
+
+
+   // Write metamorph dataset.
+   public void writeMetamorphDataset(String filename) throws Exception
+   {
+      if (bees != null)
+      {
+         boolean append = false;
+         for (int i = 0; i < bees.length; i++)
+         {
+            if (bees[i] != null)
+            {
+               bees[i].writeMetamorphDataset(filename, append);
+               append = true;
             }
          }
       }

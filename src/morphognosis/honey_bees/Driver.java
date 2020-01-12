@@ -8,6 +8,6 @@ public class Driver
 {
    public static final int AUTOPILOT      = 0;
    public static final int METAMORPH_DB   = 1;
-   public static final int METAMORPH_ML   = 2;
+   public static final int METAMORPH_NN   = 2;
    public static final int LOCAL_OVERRIDE = 3;
 }

@@ -41,6 +41,12 @@ public class Parameters
    public static int EPOCH_INTERVAL_STRIDE             = 3;
    public static int EPOCH_INTERVAL_MULTIPLIER         = Morphognostic.DEFAULT_EPOCH_INTERVAL_MULTIPLIER;
 
+   // Metamorph neural network parameters.
+   public static double NN_LEARNING_RATE = 0.1;
+   public static double NN_MOMENTUM      = 0.2;
+   public static String NN_HIDDEN_LAYERS = "5";
+   public static int    NN_TRAINING_TIME = 2000;
+
    // Save.
    public static void save(DataOutputStream writer) throws IOException
    {
@@ -62,6 +68,10 @@ public class Parameters
       Utility.saveInt(writer, NEIGHBORHOOD_DIMENSION_MULTIPLIER);
       Utility.saveInt(writer, EPOCH_INTERVAL_STRIDE);
       Utility.saveInt(writer, EPOCH_INTERVAL_MULTIPLIER);
+      Utility.saveDouble(writer, NN_LEARNING_RATE);
+      Utility.saveDouble(writer, NN_MOMENTUM);
+      Utility.saveString(writer, NN_HIDDEN_LAYERS);
+      Utility.saveInt(writer, NN_TRAINING_TIME);
       writer.flush();
    }
 
@@ -87,6 +97,10 @@ public class Parameters
       NEIGHBORHOOD_DIMENSION_MULTIPLIER = Utility.loadInt(reader);
       EPOCH_INTERVAL_STRIDE             = Utility.loadInt(reader);
       EPOCH_INTERVAL_MULTIPLIER         = Utility.loadInt(reader);
+      NN_LEARNING_RATE = Utility.loadDouble(reader);
+      NN_MOMENTUM      = Utility.loadDouble(reader);
+      NN_HIDDEN_LAYERS = Utility.loadString(reader);
+      NN_TRAINING_TIME = Utility.loadInt(reader);
    }
 
 
@@ -111,5 +125,9 @@ public class Parameters
       System.out.println("NEIGHBORHOOD_DIMENSION_MULTIPLIER = " + NEIGHBORHOOD_DIMENSION_MULTIPLIER);
       System.out.println("EPOCH_INTERVAL_STRIDE = " + EPOCH_INTERVAL_STRIDE);
       System.out.println("EPOCH_INTERVAL_MULTIPLIER = " + EPOCH_INTERVAL_MULTIPLIER);
+      System.out.println("NN_LEARNING_RATE = " + NN_LEARNING_RATE);
+      System.out.println("NN_MOMENTUM = " + NN_MOMENTUM);
+      System.out.println("NN_HIDDEN_LAYERS = " + NN_HIDDEN_LAYERS);
+      System.out.println("NN_TRAINING_TIME = " + NN_TRAINING_TIME);
    }
 }

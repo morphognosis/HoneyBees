@@ -675,7 +675,6 @@ public class WorldDisplay extends JFrame
       JButton    clearMetamorphsButton;
       JButton    writeMetamorphDatasetButton;
       Checkbox   trainNNcheck;
-      Checkbox   trainDTcheck;
 
       // Constructor.
       Controls()
@@ -705,7 +704,7 @@ public class WorldDisplay extends JFrame
          panel.add(driverChoice);
          driverChoice.add("autopilot");
          driverChoice.add("metamorphDB");
-         driverChoice.add("metamorphML");
+         driverChoice.add("metamorphNN");
          driverChoice.add("local override");
          driverChoice.select(world.driver);
          driverChoice.addItemListener(this);
@@ -725,16 +724,11 @@ public class WorldDisplay extends JFrame
          writeMetamorphDatasetButton = new JButton("Write metamorphs to " + HoneyBee.METAMORPH_DATASET_FILE_BASENAME + ".csv");
          writeMetamorphDatasetButton.addActionListener(this);
          panel.add(writeMetamorphDatasetButton);
-         panel.add(new JLabel("Train neural network:"));
+         panel.add(new JLabel("Train metamorph neural network:"));
          trainNNcheck = new Checkbox();
          trainNNcheck.setState(false);
          trainNNcheck.addItemListener(this);
          panel.add(trainNNcheck);
-         panel.add(new JLabel("decision tree:"));
-         trainDTcheck = new Checkbox();
-         trainDTcheck.setState(false);
-         trainDTcheck.addItemListener(this);
-         panel.add(trainDTcheck);
          add(panel, BorderLayout.SOUTH);
       }
 
@@ -798,6 +792,28 @@ public class WorldDisplay extends JFrame
 
             return;
          }
+
+         // Clear metamorphs?
+         if ((JButton)evt.getSource() == clearMetamorphsButton)
+         {
+            world.clearMetamorphs();
+            return;
+         }
+
+         // Write metamorph dataset?
+         if ((JButton)evt.getSource() == writeMetamorphDatasetButton)
+         {
+            String filename = HoneyBee.METAMORPH_DATASET_FILE_BASENAME + ".csv";
+            try
+            {
+               world.writeMetamorphDataset(filename);
+            }
+            catch (Exception e)
+            {
+               controls.messageText.setText("Cannot write metamorph dataset to file " + filename + ": " + e.getMessage());
+            }
+            return;
+         }
       }
 
 
@@ -810,6 +826,20 @@ public class WorldDisplay extends JFrame
          {
             int driver = driverChoice.getSelectedIndex();
             world.setDriver(driver);
+            if ((driver == Driver.METAMORPH_NN) && (world.metamorphNN == null))
+            {
+               try
+               {
+                  controls.messageText.setText("Training metamorph neural network...");
+                  paint(getGraphics());
+                  world.trainMetamorphNN();
+                  controls.messageText.setText("");
+               }
+               catch (Exception e)
+               {
+                  controls.messageText.setText("Cannot train metamorph neural network: " + e.getMessage());
+               }
+            }
             if (beeDashboard != null)
             {
                if (driver != Driver.LOCAL_OVERRIDE)
@@ -840,34 +870,16 @@ public class WorldDisplay extends JFrame
             {
                try
                {
-                  controls.messageText.setText("Training neural network...");
-                  world.trainMetamorphs(MetamorphML.NEURAL_NETWORK);
+                  controls.messageText.setText("Training metamorph neural network...");
+                  paint(getGraphics());
+                  world.trainMetamorphNN();
                   controls.messageText.setText("");
                }
                catch (Exception e)
                {
-                  controls.messageText.setText("Cannot train neural network: " + e.getMessage());
+                  controls.messageText.setText("Cannot train metamorph neural network: " + e.getMessage());
                }
                trainNNcheck.setState(false);
-            }
-            return;
-         }
-
-         if (source instanceof Checkbox && ((Checkbox)source == trainDTcheck))
-         {
-            if (trainDTcheck.getState())
-            {
-               try
-               {
-                  controls.messageText.setText("Training decision tree...");
-                  world.trainMetamorphs(MetamorphML.DECISION_TREE);
-                  controls.messageText.setText("");
-               }
-               catch (Exception e)
-               {
-                  controls.messageText.setText("Cannot train decision tree: " + e.getMessage());
-               }
-               trainDTcheck.setState(false);
             }
             return;
          }

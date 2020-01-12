@@ -29,7 +29,7 @@ public class HoneyBeeTrainer extends World
       "     [-minStepsToNectar <steps> (default=" + MIN_STEPS_TO_NECTAR + ")]\n" +
       "     [-maxStepsToNectar <steps> (default=" + MAX_STEPS_TO_NECTAR + ")]\n" +
       "     [-randomSeed <random number seed> (default=" + RANDOM_SEED + ")]\n" +
-      "     [-testDriver metamorphDB | metamorphML=neural_network | metamorphML=decision_tree (default=metamorphDB)]";
+      "     [-testDriver metamorphDB | metamorphNN (default=metamorphDB)]";
 
    // World display.
    public WorldDisplay worldDisplay;
@@ -43,10 +43,9 @@ public class HoneyBeeTrainer extends World
 
    // Test driver.
    int testDriver;
-   int metamorphMLtype;
 
    // Constructor.
-   public HoneyBeeTrainer(boolean display, int testDriver, int metamorphMLtype)
+   public HoneyBeeTrainer(boolean display, int testDriver)
    {
       super(RANDOM_SEED);
       trainRandom = new SecureRandom();
@@ -54,9 +53,9 @@ public class HoneyBeeTrainer extends World
       if (display)
       {
          worldDisplay = new WorldDisplay(this);
+         worldDisplay.setTitle("Honey bees nectar foraging trainer");
       }
-      this.testDriver      = testDriver;
-      this.metamorphMLtype = metamorphMLtype;
+      this.testDriver = testDriver;
    }
 
 
@@ -85,13 +84,13 @@ public class HoneyBeeTrainer extends World
          if (flowerX != -1)
          {
             Flower flower = new Flower();
-            flower.nectar = 1;
+            flower.nectar = 2;
             cells[flowerX][flowerY].flower = flower;
          }
          setDriver(testDriver);
-         if (testDriver == Driver.METAMORPH_ML)
+         if (testDriver == Driver.METAMORPH_NN)
          {
-            bee.trainMetamorphs(metamorphMLtype);
+            bee.trainMetamorphNN();
          }
          forage(bee, "Testing forage " + i);
          System.out.println("Collected nectar = " + collectedNectar);
@@ -146,7 +145,7 @@ public class HoneyBeeTrainer extends World
             flowerX = bee.x;
             flowerY = bee.y;
             Flower flower = new Flower();
-            flower.nectar = 1;
+            flower.nectar = 2;
             cells[bee.x][bee.y].flower = flower;
          }
          step();
@@ -166,9 +165,8 @@ public class HoneyBeeTrainer extends World
    // Main.
    public static void main(String[] args)
    {
-      boolean displayWorld    = true;
-      int     testDriver      = Driver.METAMORPH_DB;
-      int     metamorphMLtype = MetamorphML.NEURAL_NETWORK;
+      boolean displayWorld = true;
+      int     testDriver   = Driver.METAMORPH_DB;
 
       for (int i = 0; i < args.length; i++)
       {
@@ -334,15 +332,9 @@ public class HoneyBeeTrainer extends World
             {
                testDriver = Driver.METAMORPH_DB;
             }
-            else if (args[i].equals("metamorphML=neural_network"))
+            else if (args[i].equals("metamorphNN"))
             {
-               testDriver      = Driver.METAMORPH_ML;
-               metamorphMLtype = MetamorphML.NEURAL_NETWORK;
-            }
-            else if (args[i].equals("metamorphML=decision_tree"))
-            {
-               testDriver      = Driver.METAMORPH_ML;
-               metamorphMLtype = MetamorphML.DECISION_TREE;
+               testDriver = Driver.METAMORPH_NN;
             }
             else
             {
@@ -383,7 +375,7 @@ public class HoneyBeeTrainer extends World
       }
 
       // Train.
-      HoneyBeeTrainer trainer = new HoneyBeeTrainer(displayWorld, testDriver, metamorphMLtype);
+      HoneyBeeTrainer trainer = new HoneyBeeTrainer(displayWorld, testDriver);
       trainer.train();
 
       System.exit(0);

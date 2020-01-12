@@ -118,8 +118,8 @@ public class HoneyBee
    public static final boolean saveMetamorphWekaNN        = false;
    public static final boolean evaluateMetamorphWekaNN    = true;
 
-   // Metamorph machine learning.
-   public MetamorphML metamorphML;
+   // Metamorph neural network.
+   public MetamorphNN metamorphNN;
 
    // Metamorph dataset file name.
    public static String METAMORPH_DATASET_FILE_BASENAME = "metamorphs";
@@ -422,8 +422,8 @@ public class HoneyBee
          metamorphDBresponse();
          break;
 
-      case Driver.METAMORPH_ML:
-         metamorphMLresponse();
+      case Driver.METAMORPH_NN:
+         metamorphNNresponse();
          break;
 
       default:
@@ -876,12 +876,12 @@ public class HoneyBee
    }
 
 
-   // Get metamorph ML response.
-   void metamorphMLresponse()
+   // Get metamorph neural network response.
+   void metamorphNNresponse()
    {
-      if (metamorphML != null)
+      if (metamorphNN != null)
       {
-         response = metamorphML.respond(morphognostic);
+         response = metamorphNN.respond(morphognostic);
       }
       else
       {
@@ -891,11 +891,11 @@ public class HoneyBee
    }
 
 
-   // Train metamorphs.
-   public void trainMetamorphs(int type)
+   // Train metamorph neural network.
+   public void trainMetamorphNN()
    {
-      metamorphML = new MetamorphML(type, random);
-      metamorphML.train(metamorphs);
+      metamorphNN = new MetamorphNN(random);
+      metamorphNN.train(metamorphs);
    }
 
 

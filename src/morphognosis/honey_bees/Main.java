@@ -73,21 +73,30 @@ public class Main
       "        [-epochIntervalStride <quantity> (default=" + Parameters.EPOCH_INTERVAL_STRIDE + ")]\n" +
       "        [-epochIntervalMultiplier <quantity> (default=" + Parameters.EPOCH_INTERVAL_MULTIPLIER + ")]\n" +
       "        [-equivalentMorphognosticDistance <distance> (default=" + HoneyBee.EQUIVALENT_MORPHOGNOSTIC_DISTANCE + ")]\n" +
-      "     [-driver <autopilot | metamorphDB | local_override> (honey bees driver: default=autopilot)]\n" +
+      "      Metamorph Weka neural network parameters:\n" +
+      "        [-NNlearningRate <quantity> (default=" + Parameters.NN_LEARNING_RATE + ")]\n" +
+      "        [-NNmomentum <quantity> (default=" + Parameters.NN_MOMENTUM + ")]\n" +
+      "        [-NNhiddenLayers <quantity> (default=\"" + Parameters.NN_HIDDEN_LAYERS + "\")]\n" +
+      "        [-NNtrainingTime <quantity> (default=" + Parameters.NN_TRAINING_TIME + ")]\n" +
+      "     [-driver <autopilot | metamorphDB | metamorphNN | local_override> (honey bees driver: default=autopilot)]\n" +
       "     [-randomSeed <random number seed> (default=" + DEFAULT_RANDOM_SEED + ")]\n" +
       "     [-printCollectedNectar]\n" +
       "     [-noLearning (do not learn new metamorphs)]\n" +
       "     [-save <file name>]\n" +
+      "     [-saveNN <metamorph neural network model file name>]\n" +
+      "     [-loadNN <metamorph neural network model file name>]\n" +
       "     [-writeMetamorphDataset [<file name>] (write metamorph dataset file, default=" + HoneyBee.METAMORPH_DATASET_FILE_BASENAME + ".csv)]\n" +
       "  Resume run:\n" +
       "    java morphognosis.honey_bees.Main\n" +
       "      -load <file name>\n" +
       "     [-steps <steps> | -display (default)]\n" +
-      "     [-driver autopilot | metamorphDB | metamorphML=neural_network | metamorphML=decision_tree | local_override>\n\t(default=autopilot; neural_network and decision_tree trained before resuming)]\n" +
+      "     [-driver autopilot | metamorphDB | metamorphNN | local_override>\n\t(default=autopilot)]\n" +
       "     [-randomSeed <random number seed>]\n" +
       "     [-printCollectedNectar]\n" +
       "     [-noLearning (do not learn new metamorphs)]\n" +
       "     [-save <file name>]\n" +
+      "     [-saveNN <metamorph neural network model file name>]\n" +
+      "     [-loadNN <metamorph neural network model file name>]\n" +
       "     [-writeMetamorphDataset [<file name>] (write metamorph dataset file, default=" + HoneyBee.METAMORPH_DATASET_FILE_BASENAME + ".csv)]\n" +
       "  Print parameters:\n" +
       "    java morphognosis.honey_bees.Main -printParameters\n" +
@@ -272,18 +281,19 @@ public class Main
    public static void main(String[] args)
    {
       // Get options.
-      int     steps                = -1;
-      int     driver               = Driver.AUTOPILOT;
-      int     metamorphMLtype      = -1;
+      int     steps  = -1;
+      int     driver = Driver.AUTOPILOT;
       boolean printCollectedNectar = false;
       boolean noLearning           = false;
       String  loadfile             = null;
       String  savefile             = null;
-      boolean display              = true;
-      boolean gotParm              = false;
-      boolean printParms           = false;
-      boolean gotDatasetParm       = false;
-      String  datasetFilename      = HoneyBee.METAMORPH_DATASET_FILE_BASENAME + ".csv";
+      boolean display         = true;
+      boolean gotParm         = false;
+      boolean printParms      = false;
+      String  NNloadfile      = null;
+      String  NNsavefile      = null;
+      boolean gotDatasetParm  = false;
+      String  datasetFilename = HoneyBee.METAMORPH_DATASET_FILE_BASENAME + ".csv";
 
       for (int i = 0; i < args.length; i++)
       {
@@ -431,15 +441,9 @@ public class Main
             {
                driver = Driver.METAMORPH_DB;
             }
-            else if (args[i].equals("metamorphML=neural_network"))
+            else if (args[i].equals("metamorphNN"))
             {
-               driver          = Driver.METAMORPH_ML;
-               metamorphMLtype = MetamorphML.NEURAL_NETWORK;
-            }
-            else if (args[i].equals("metamorphML=decision_tree"))
-            {
-               driver          = Driver.METAMORPH_ML;
-               metamorphMLtype = MetamorphML.DECISION_TREE;
+               driver = Driver.METAMORPH_NN;
             }
             else if (args[i].equals("local_override"))
             {
@@ -835,6 +839,102 @@ public class Main
             }
             continue;
          }
+         if (args[i].equals("-NNlearningRate"))
+         {
+            i++;
+            if (i >= args.length)
+            {
+               System.err.println("Invalid NNlearningRate option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            try
+            {
+               Parameters.NN_LEARNING_RATE = Double.parseDouble(args[i]);
+            }
+            catch (NumberFormatException e) {
+               System.err.println("Invalid NNlearningRate option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            if (Parameters.NN_LEARNING_RATE < 0.0)
+            {
+               System.err.println("Invalid NNlearningRate option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            continue;
+         }
+         if (args[i].equals("-NNmomentum"))
+         {
+            i++;
+            if (i >= args.length)
+            {
+               System.err.println("Invalid NNmomentum option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            try
+            {
+               Parameters.NN_MOMENTUM = Double.parseDouble(args[i]);
+            }
+            catch (NumberFormatException e) {
+               System.err.println("Invalid NNmomentum option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            if (Parameters.NN_MOMENTUM < 0.0)
+            {
+               System.err.println("Invalid NNmomentum option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            continue;
+         }
+         if (args[i].equals("-NNhiddenLayers"))
+         {
+            i++;
+            if (i >= args.length)
+            {
+               System.err.println("Invalid NNhiddenLayers option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            Parameters.NN_HIDDEN_LAYERS = new String(args[i]);
+            if (Parameters.NN_HIDDEN_LAYERS.isEmpty())
+            {
+               System.err.println("Invalid NNhiddenLayers option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            continue;
+         }
+         if (args[i].equals("-NNtrainingTime"))
+         {
+            i++;
+            if (i >= args.length)
+            {
+               System.err.println("Invalid NNtrainingTime option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            try
+            {
+               Parameters.NN_TRAINING_TIME = Integer.parseInt(args[i]);
+            }
+            catch (NumberFormatException e) {
+               System.err.println("Invalid NNtrainingTime option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            if (Parameters.NN_TRAINING_TIME < 0)
+            {
+               System.err.println("Invalid NNtrainingTime option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            continue;
+         }
          if (args[i].equals("-randomSeed"))
          {
             i++;
@@ -902,6 +1002,48 @@ public class Main
             else
             {
                System.err.println("Duplicate save option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            continue;
+         }
+         if (args[i].equals("-loadNN"))
+         {
+            i++;
+            if (i >= args.length)
+            {
+               System.err.println("Invalid loadNN option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            if (NNloadfile == null)
+            {
+               NNloadfile = args[i];
+            }
+            else
+            {
+               System.err.println("Duplicate loadNN option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            continue;
+         }
+         if (args[i].equals("-saveNN"))
+         {
+            i++;
+            if (i >= args.length)
+            {
+               System.err.println("Invalid saveNN option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            if (NNsavefile == null)
+            {
+               NNsavefile = args[i];
+            }
+            else
+            {
+               System.err.println("Duplicate saveNN option");
                System.err.println(Usage);
                System.exit(1);
             }
@@ -985,6 +1127,11 @@ public class Main
          System.err.println("Cannot initialize world: " + e.getMessage());
          System.exit(1);
       }
+
+      // Set driver.
+      world.setDriver(driver);
+
+      // Load?
       if (loadfile != null)
       {
          try
@@ -997,23 +1144,21 @@ public class Main
             System.exit(1);
          }
       }
+
+      // Load metamorph neural network?
+      if (NNloadfile != null)
+      {
+         world.loadMetamorphNN(NNloadfile);
+      }
       else
       {
-         if (driver == Driver.METAMORPH_ML)
+         // Train metamorph neural network?
+         if (driver == Driver.METAMORPH_NN)
          {
-            System.err.println("Cannot train initial empty metamorphs dataset");
-            System.err.println(Usage);
-            System.exit(1);
+            System.out.print("Training metamorph neural network...");
+            world.trainMetamorphNN();
+            System.out.println("done");
          }
-      }
-
-      // Set driver.
-      world.setDriver(driver);
-
-      // Train metamorphs?
-      if (driver == Driver.METAMORPH_ML)
-      {
-         world.trainMetamorphs(metamorphMLtype);
       }
 
       // Create display?
@@ -1041,6 +1186,15 @@ public class Main
             System.err.println("Cannot save to file " + savefile + ": " + e.getMessage());
             System.exit(1);
          }
+      }
+
+      // Save metamorph neural network?
+      if (NNsavefile != null)
+      {
+         System.out.print("Training metamorph neural network...");
+         world.trainMetamorphNN();
+         System.out.println("done");
+         world.saveMetamorphNN(NNsavefile);
       }
 
       // Write metamorph dataset?
