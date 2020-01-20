@@ -4,19 +4,11 @@
 
 package morphognosis.honey_bees;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import morphognosis.Metamorph;
 import morphognosis.Morphognostic;
-import morphognosis.Utility;
 import weka.classifiers.evaluation.Evaluation;
 import weka.classifiers.functions.MultilayerPerceptron;
 import weka.classifiers.misc.SerializedClassifier;

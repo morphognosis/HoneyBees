@@ -1238,10 +1238,6 @@ public class ForagingParameterOptimizer
          genes.add(
             new Gene("BEE_NUM_DISTANCE_VALUES", 3, 1, 5, 1,
                      MUTATION_RATE, RANDOM_MUTATION_RATE, randomizer.nextInt()));
-
-         genes.add(
-            new Gene("BEE_NECTAR_DISPLAY_DURATION", 10, 1, 15, 1,
-                     MUTATION_RATE, RANDOM_MUTATION_RATE, randomizer.nextInt()));
       }
 
 
@@ -1321,8 +1317,7 @@ public class ForagingParameterOptimizer
          Parameters.NUM_BEES             = (Integer)parameters.get("NUM_BEES");
          Parameters.BEE_TURN_PROBABILITY = (Float)parameters.get("BEE_TURN_PROBABILITY");
          Parameters.BEE_RETURN_TO_HIVE_PROBABILITY_INCREMENT = (Float)parameters.get("BEE_RETURN_TO_HIVE_PROBABILITY_INCREMENT");
-         Parameters.BEE_NUM_DISTANCE_VALUES     = (Integer)parameters.get("BEE_NUM_DISTANCE_VALUES");
-         Parameters.BEE_NECTAR_DISPLAY_DURATION = (Integer)parameters.get("BEE_NECTAR_DISPLAY_DURATION");
+         Parameters.BEE_NUM_DISTANCE_VALUES = (Integer)parameters.get("BEE_NUM_DISTANCE_VALUES");
 
          // Run with cooperative foraging.
          int   randomSeed = optimizer.Randomizer.nextInt();
@@ -1335,7 +1330,6 @@ public class ForagingParameterOptimizer
          int collectedNectar = world.collectedNectar;
 
          // Run without foraging cooperation.
-         Parameters.BEE_NECTAR_DISPLAY_DURATION = -1;
          world            = new World(randomSeed);
          world.noLearning = true;
          for (int i = 0; i < steps; i++)

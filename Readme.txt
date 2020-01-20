@@ -14,7 +14,7 @@ Bee capabilities:
 Senses:
 Hive presence.
 Nectar presence.
-Adjacent bee nectar signal: Orientation and distance to nectar.
+In hive bee nectar signal: Orientation and distance to nectar.
 
 Internal state:
 Orientation.

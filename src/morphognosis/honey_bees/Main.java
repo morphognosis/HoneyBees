@@ -64,7 +64,6 @@ public class Main
       "        [-numBees <quantity> (default=" + Parameters.NUM_BEES + ")]\n" +
       "        [-beeTurnProbability <probability> (default=" + Parameters.BEE_TURN_PROBABILITY + ")]\n" +
       "        [-beeReturnToHiveProbabilityIncrement <probability> (default=" + Parameters.BEE_RETURN_TO_HIVE_PROBABILITY_INCREMENT + ")]\n" +
-      "        [-beeNectarDisplayeDuration <quantity> (default=" + Parameters.BEE_NECTAR_DISPLAY_DURATION + ")]\n" +
       "      Morphognosis parameters:\n" +
       "        [-numNeighborhoods <quantity> (default=" + Parameters.NUM_NEIGHBORHOODS + ")]\n" +
       "        [-neighborhoodInitialDimension <quantity> (default=" + Parameters.NEIGHBORHOOD_INITIAL_DIMENSION + ")]\n" +
@@ -623,33 +622,6 @@ public class Main
             gotParm = true;
             continue;
          }
-         if (args[i].equals("-beeNectarDisplayDuration"))
-         {
-            i++;
-            if (i >= args.length)
-            {
-               System.err.println("Invalid beeDanceDuration option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            try
-            {
-               Parameters.BEE_NECTAR_DISPLAY_DURATION = Integer.parseInt(args[i]);
-            }
-            catch (NumberFormatException e) {
-               System.err.println("Invalid beeNectarDisplayDuration option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            if (Parameters.BEE_NECTAR_DISPLAY_DURATION < 0)
-            {
-               System.err.println("Invalid beeNectarDisplayDuration option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            gotParm = true;
-            continue;
-         }
          if (args[i].equals("-numNeighborhoods"))
          {
             i++;
@@ -1189,7 +1161,7 @@ public class Main
       }
 
       // Save metamorph neural network?
-      if (NNsavefile != null)
+      if ((NNsavefile != null) && ((world.metamorphNN == null) || (world.metamorphNN.mlp == null)))
       {
          System.out.print("Training metamorph neural network...");
          world.trainMetamorphNN();

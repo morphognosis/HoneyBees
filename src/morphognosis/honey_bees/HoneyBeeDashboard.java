@@ -119,8 +119,8 @@ public class HoneyBeeDashboard extends JFrame
       // Components.
       JTextField hiveText;
       JTextField nectarText;
-      JTextField adjacentBeeOrientationText;
-      JTextField adjacentBeeNectarDistanceText;
+      JTextField nectarDanceDirectionText;
+      JTextField nectarDanceDistanceText;
       JTextField orientationText;
       JTextField nectarCarryText;
       JTextField nectarDistanceDisplayText;
@@ -153,20 +153,20 @@ public class HoneyBeeDashboard extends JFrame
          nectarText = new JTextField(10);
          nectarText.setEditable(false);
          nectarPanel.add(nectarText);
-         JPanel adjacentBeeOrientationPanel = new JPanel();
-         adjacentBeeOrientationPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
-         sensorsPanel.add(adjacentBeeOrientationPanel);
-         adjacentBeeOrientationPanel.add(new JLabel("Adjacent bee orientation:"));
-         adjacentBeeOrientationText = new JTextField(10);
-         adjacentBeeOrientationText.setEditable(false);
-         adjacentBeeOrientationPanel.add(adjacentBeeOrientationText);
-         JPanel adjacentBeeNectarDistancePanel = new JPanel();
-         adjacentBeeNectarDistancePanel.setLayout(new FlowLayout(FlowLayout.LEFT));
-         sensorsPanel.add(adjacentBeeNectarDistancePanel);
-         adjacentBeeNectarDistancePanel.add(new JLabel("Adjacent bee nectar distance:"));
-         adjacentBeeNectarDistanceText = new JTextField(10);
-         adjacentBeeNectarDistanceText.setEditable(false);
-         adjacentBeeNectarDistancePanel.add(adjacentBeeNectarDistanceText);
+         JPanel nectarDanceDirectionPanel = new JPanel();
+         nectarDanceDirectionPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+         sensorsPanel.add(nectarDanceDirectionPanel);
+         nectarDanceDirectionPanel.add(new JLabel("Nectar dance direction:"));
+         nectarDanceDirectionText = new JTextField(10);
+         nectarDanceDirectionText.setEditable(false);
+         nectarDanceDirectionPanel.add(nectarDanceDirectionText);
+         JPanel nectarDanceDistancePanel = new JPanel();
+         nectarDanceDistancePanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+         sensorsPanel.add(nectarDanceDistancePanel);
+         nectarDanceDistancePanel.add(new JLabel("Nectar dance distance:"));
+         nectarDanceDistanceText = new JTextField(10);
+         nectarDanceDistanceText.setEditable(false);
+         nectarDanceDistancePanel.add(nectarDanceDistanceText);
          JPanel responsePanel = new JPanel();
          responsePanel.setLayout(new FlowLayout(FlowLayout.LEFT));
          add(responsePanel, BorderLayout.CENTER);
@@ -207,9 +207,9 @@ public class HoneyBeeDashboard extends JFrame
       // Update.
       public void update()
       {
-         // Update sensors
+         // Get sensor values.
          float[] sensors = bee.world.getSensors(bee);
-         if (sensors[HoneyBee.HIVE_PRESENCE_INDEX] != 0.0f)
+         if (sensors[HoneyBee.HIVE_PRESENCE_INDEX] == 1.0f)
          {
             hiveText.setText("true");
          }
@@ -217,23 +217,30 @@ public class HoneyBeeDashboard extends JFrame
          {
             hiveText.setText("false");
          }
-         nectarText.setText((int)sensors[HoneyBee.NECTAR_PRESENCE_INDEX] + "");
-         if (sensors[HoneyBee.ADJACENT_BEE_NECTAR_ORIENTATION_INDEX] >= 0.0f)
+         if (sensors[HoneyBee.NECTAR_PRESENCE_INDEX] == 1.0f)
          {
-            adjacentBeeOrientationText.setText(Orientation.toName(
-                                                  (int)sensors[HoneyBee.ADJACENT_BEE_NECTAR_ORIENTATION_INDEX]));
+            nectarText.setText("true");
          }
          else
          {
-            adjacentBeeOrientationText.setText("NA");
+            nectarText.setText("false");
          }
-         if (sensors[HoneyBee.ADJACENT_BEE_NECTAR_DISTANCE_INDEX] >= 0.0f)
+         if (sensors[HoneyBee.NECTAR_DANCE_DIRECTION_INDEX] >= 0.0f)
          {
-            adjacentBeeNectarDistanceText.setText((int)sensors[HoneyBee.ADJACENT_BEE_NECTAR_DISTANCE_INDEX] + "");
+            nectarDanceDirectionText.setText(Orientation.toName(
+                                                (int)sensors[HoneyBee.NECTAR_DANCE_DIRECTION_INDEX]));
          }
          else
          {
-            adjacentBeeNectarDistanceText.setText("NA");
+            nectarDanceDirectionText.setText("NA");
+         }
+         if (sensors[HoneyBee.NECTAR_DANCE_DISTANCE_INDEX] >= 0.0f)
+         {
+            nectarDanceDistanceText.setText((int)sensors[HoneyBee.NECTAR_DANCE_DISTANCE_INDEX] + "");
+         }
+         else
+         {
+            nectarDanceDistanceText.setText("NA");
          }
 
          // Update response.
@@ -306,20 +313,6 @@ public class HoneyBeeDashboard extends JFrame
             if (bee.world.driver == Driver.LOCAL_OVERRIDE)
             {
                bee.driver = driverChoice.getSelectedIndex();
-               if ((bee.driver == Driver.METAMORPH_NN) && (bee.metamorphNN == null))
-               {
-                  try
-                  {
-                     worldDisplay.controls.messageText.setText("Training metamorph neural network...");
-                     paint(getGraphics());
-                     bee.trainMetamorphNN();
-                     worldDisplay.controls.messageText.setText("");
-                  }
-                  catch (Exception e)
-                  {
-                     worldDisplay.controls.messageText.setText("Cannot train metamorph neural network: " + e.getMessage());
-                  }
-               }
             }
             else
             {

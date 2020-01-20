@@ -777,6 +777,7 @@ public class WorldDisplay extends JFrame
          if (evt.getSource() == (Object)resetButton)
          {
             world.reset();
+            updateNectarCounter(world.collectedNectar);
             if (beeDashboard != null)
             {
                beeDashboard.update();
@@ -826,20 +827,6 @@ public class WorldDisplay extends JFrame
          {
             int driver = driverChoice.getSelectedIndex();
             world.setDriver(driver);
-            if ((driver == Driver.METAMORPH_NN) && (world.metamorphNN == null))
-            {
-               try
-               {
-                  controls.messageText.setText("Training metamorph neural network...");
-                  paint(getGraphics());
-                  world.trainMetamorphNN();
-                  controls.messageText.setText("");
-               }
-               catch (Exception e)
-               {
-                  controls.messageText.setText("Cannot train metamorph neural network: " + e.getMessage());
-               }
-            }
             if (beeDashboard != null)
             {
                if (driver != Driver.LOCAL_OVERRIDE)
