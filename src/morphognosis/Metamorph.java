@@ -16,16 +16,12 @@ public class Metamorph
    public int    response;
    public String responseName;
 
-   // Neural network trainable?
-   public boolean NNtrainable;
-
    // Constructors.
    public Metamorph(Morphognostic morphognostic, int response)
    {
       this.morphognostic = morphognostic;
       this.response      = response;
       responseName       = "";
-      NNtrainable        = false;
    }
 
 
@@ -34,7 +30,6 @@ public class Metamorph
       this.morphognostic = morphognostic;
       this.response      = response;
       this.responseName  = responseName;
-      NNtrainable        = false;
    }
 
 
@@ -59,14 +54,6 @@ public class Metamorph
       morphognostic.save(output);
       Utility.saveInt(output, response);
       Utility.saveString(output, responseName);
-      if (NNtrainable)
-      {
-         Utility.saveInt(output, 1);
-      }
-      else
-      {
-         Utility.saveInt(output, 0);
-      }
       output.flush();
    }
 
@@ -77,17 +64,8 @@ public class Metamorph
       Morphognostic morphognostic = Morphognostic.load(input);
       int           response      = Utility.loadInt(input);
       String        responseName  = Utility.loadString(input);
-      int           NNtrainable   = Utility.loadInt(input);
       Metamorph     metamorph     = new Metamorph(morphognostic, response, responseName);
 
-      if (NNtrainable == 1)
-      {
-         metamorph.NNtrainable = true;
-      }
-      else
-      {
-         metamorph.NNtrainable = false;
-      }
       return(metamorph);
    }
 
@@ -99,6 +77,5 @@ public class Metamorph
       morphognostic.print();
       System.out.println("Response=" + response);
       System.out.println("ResponseName=" + responseName);
-      System.out.println("NNtrainable=" + NNtrainable);
    }
 }

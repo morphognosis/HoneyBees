@@ -310,7 +310,7 @@ public class World
                break;
 
             case HoneyBee.EXTRACT_NECTAR:
-               if (!bee.nectarCarry && (cells[bee.x][bee.y].flower != null) &&
+               if ((cells[bee.x][bee.y].flower != null) &&
                    (cells[bee.x][bee.y].flower.nectar > 0))
                {
                   bee.nectarCarry = true;
@@ -461,10 +461,7 @@ public class World
       {
          for (Metamorph metamorph : bee.metamorphs)
          {
-            if (metamorph.NNtrainable)
-            {
-               metamorphs.add(metamorph);
-            }
+            metamorphs.add(metamorph);
          }
       }
 

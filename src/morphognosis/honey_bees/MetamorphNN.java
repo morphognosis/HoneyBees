@@ -43,6 +43,10 @@ public class MetamorphNN
       // Create metamorph training dataset.
       Morphognostic        morphognostic  = metamorphs.get(0).morphognostic;
       ArrayList<Attribute> attributeNames = new ArrayList<Attribute>();
+      for (int i = 0; i < morphognostic.numImmediateValues; i++)
+      {
+         attributeNames.add(new Attribute(i + ""));
+      }
       for (int i = 0; i < morphognostic.NUM_NEIGHBORHOODS; i++)
       {
          int n = morphognostic.neighborhoods.get(i).sectors.length;
@@ -113,6 +117,11 @@ public class MetamorphNN
    {
       double[]  attrValues = new double[numAttributes];
       int a = 0;
+      for (int i = 0; i < morphognostic.numImmediateValues; i++)
+      {
+         attrValues[a] = morphognostic.immediateValues[i];
+         a++;
+      }
       for (int i = 0; i < morphognostic.NUM_NEIGHBORHOODS; i++)
       {
          int n = morphognostic.neighborhoods.get(i).sectors.length;

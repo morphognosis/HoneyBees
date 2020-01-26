@@ -33,12 +33,13 @@ public class Parameters
    public static float BEE_DEADLOCK_PREVENTION_PROBABILITY = .001f;
 
    // Morphognosis parameters.
-   public static int NUM_NEIGHBORHOODS = 1;
-   public static int NEIGHBORHOOD_INITIAL_DIMENSION    = 3;
-   public static int NEIGHBORHOOD_DIMENSION_STRIDE     = Morphognostic.DEFAULT_NEIGHBORHOOD_DIMENSION_STRIDE;
-   public static int NEIGHBORHOOD_DIMENSION_MULTIPLIER = Morphognostic.DEFAULT_NEIGHBORHOOD_DIMENSION_MULTIPLIER;
-   public static int EPOCH_INTERVAL_STRIDE             = 21;
-   public static int EPOCH_INTERVAL_MULTIPLIER         = Morphognostic.DEFAULT_EPOCH_INTERVAL_MULTIPLIER;
+   public static int     NUM_NEIGHBORHOODS = 2;
+   public static int     NEIGHBORHOOD_INITIAL_DIMENSION    = 3;
+   public static int     NEIGHBORHOOD_DIMENSION_STRIDE     = Morphognostic.DEFAULT_NEIGHBORHOOD_DIMENSION_STRIDE;
+   public static int     NEIGHBORHOOD_DIMENSION_MULTIPLIER = Morphognostic.DEFAULT_NEIGHBORHOOD_DIMENSION_MULTIPLIER;
+   public static int     EPOCH_INTERVAL_STRIDE             = 21;
+   public static int     EPOCH_INTERVAL_MULTIPLIER         = Morphognostic.DEFAULT_EPOCH_INTERVAL_MULTIPLIER;
+   public static boolean BINARY_VALUE_AGGREGATION          = true;
 
    // Metamorph neural network parameters.
    public static double NN_LEARNING_RATE = 0.1;
@@ -66,6 +67,12 @@ public class Parameters
       Utility.saveInt(writer, NEIGHBORHOOD_DIMENSION_MULTIPLIER);
       Utility.saveInt(writer, EPOCH_INTERVAL_STRIDE);
       Utility.saveInt(writer, EPOCH_INTERVAL_MULTIPLIER);
+      int v = 0;
+      if (BINARY_VALUE_AGGREGATION)
+      {
+         v = 1;
+      }
+      Utility.saveInt(writer, v);
       Utility.saveDouble(writer, NN_LEARNING_RATE);
       Utility.saveDouble(writer, NN_MOMENTUM);
       Utility.saveString(writer, NN_HIDDEN_LAYERS);
@@ -94,6 +101,15 @@ public class Parameters
       NEIGHBORHOOD_DIMENSION_MULTIPLIER = Utility.loadInt(reader);
       EPOCH_INTERVAL_STRIDE             = Utility.loadInt(reader);
       EPOCH_INTERVAL_MULTIPLIER         = Utility.loadInt(reader);
+      int v = Utility.loadInt(reader);
+      if (v == 1)
+      {
+         BINARY_VALUE_AGGREGATION = true;
+      }
+      else
+      {
+         BINARY_VALUE_AGGREGATION = false;
+      }
       NN_LEARNING_RATE = Utility.loadDouble(reader);
       NN_MOMENTUM      = Utility.loadDouble(reader);
       NN_HIDDEN_LAYERS = Utility.loadString(reader);
@@ -121,6 +137,7 @@ public class Parameters
       System.out.println("NEIGHBORHOOD_DIMENSION_MULTIPLIER = " + NEIGHBORHOOD_DIMENSION_MULTIPLIER);
       System.out.println("EPOCH_INTERVAL_STRIDE = " + EPOCH_INTERVAL_STRIDE);
       System.out.println("EPOCH_INTERVAL_MULTIPLIER = " + EPOCH_INTERVAL_MULTIPLIER);
+      System.out.println("BINARY_VALUE_AGGREGATION = " + BINARY_VALUE_AGGREGATION);
       System.out.println("NN_LEARNING_RATE = " + NN_LEARNING_RATE);
       System.out.println("NN_MOMENTUM = " + NN_MOMENTUM);
       System.out.println("NN_HIDDEN_LAYERS = " + NN_HIDDEN_LAYERS);

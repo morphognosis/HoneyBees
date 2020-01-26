@@ -84,7 +84,7 @@ public class HoneyBeeTrainer extends World
          if (flowerX != -1)
          {
             Flower flower = new Flower();
-            flower.nectar = 2;
+            flower.nectar = 1;
             cells[flowerX][flowerY].flower = flower;
          }
          setDriver(testDriver);
@@ -145,7 +145,7 @@ public class HoneyBeeTrainer extends World
             flowerX = bee.x;
             flowerY = bee.y;
             Flower flower = new Flower();
-            flower.nectar = 2;
+            flower.nectar = 1;
             cells[bee.x][bee.y].flower = flower;
          }
          step();

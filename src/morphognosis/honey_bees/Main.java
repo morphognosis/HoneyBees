@@ -71,6 +71,7 @@ public class Main
       "        [-neighborhoodDimensionMultiplier <quantity> (default=" + Parameters.NEIGHBORHOOD_DIMENSION_MULTIPLIER + ")]\n" +
       "        [-epochIntervalStride <quantity> (default=" + Parameters.EPOCH_INTERVAL_STRIDE + ")]\n" +
       "        [-epochIntervalMultiplier <quantity> (default=" + Parameters.EPOCH_INTERVAL_MULTIPLIER + ")]\n" +
+      "        [-binaryValueAggregation <true|false> (default=" + Parameters.BINARY_VALUE_AGGREGATION + ")]\n" +
       "        [-equivalentMorphognosticDistance <distance> (default=" + HoneyBee.EQUIVALENT_MORPHOGNOSTIC_DISTANCE + ")]\n" +
       "      Metamorph Weka neural network parameters:\n" +
       "        [-NNlearningRate <quantity> (default=" + Parameters.NN_LEARNING_RATE + ")]\n" +
@@ -779,6 +780,41 @@ public class Main
             if (Parameters.EPOCH_INTERVAL_MULTIPLIER < 0)
             {
                System.err.println("Invalid epochIntervalMultiplier option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            gotParm = true;
+            continue;
+         }
+         if (args[i].equals("-binaryValueAggregation"))
+         {
+            i++;
+            if (i >= args.length)
+            {
+               System.err.println("Invalid binaryValueAggregation option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            if (args[i] != null)
+            {
+               if (args[i].equals("true"))
+               {
+                  Parameters.BINARY_VALUE_AGGREGATION = true;
+               }
+               else if (args[i].equals("false"))
+               {
+                  Parameters.BINARY_VALUE_AGGREGATION = false;
+               }
+               else
+               {
+                  System.err.println("Invalid binaryValueAggregation option");
+                  System.err.println(Usage);
+                  System.exit(1);
+               }
+            }
+            else
+            {
+               System.err.println("Invalid binaryValueAggregation option");
                System.err.println(Usage);
                System.exit(1);
             }
