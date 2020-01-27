@@ -366,7 +366,8 @@ public class WorldDisplay extends JFrame
                   }
 
                   // Bee displaying distance to nectar?
-                  if (world.cells[x][y].hive && bee.nectarCarry)
+                  if (world.cells[x][y].hive &&
+                      (bee.response >= HoneyBee.DISPLAY_NECTAR_DISTANCE) && (bee.response < HoneyBee.WAIT))
                   {
                      if ((bee.response >= HoneyBee.DISPLAY_NECTAR_DISTANCE) && (bee.response < HoneyBee.WAIT))
                      {

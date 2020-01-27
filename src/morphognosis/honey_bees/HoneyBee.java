@@ -440,8 +440,13 @@ public class HoneyBee
       // Carrying nectar?
       if (nectarCarry)
       {
-         // Not in hive?
-         if (sensors[HIVE_PRESENCE_INDEX] == 0.0f)
+         // In hive?
+         if (sensors[HIVE_PRESENCE_INDEX] == 1.0f)
+         {
+            // Deposit nectar.
+            response = DEPOSIT_NECTAR;
+         }
+         else
          {
             // Sense closer nectar to dance about?
             if (sensors[NECTAR_PRESENCE_INDEX] == 1.0f)
@@ -461,13 +466,17 @@ public class HoneyBee
             {
                response = moveTo(width / 2, height / 2);
             }
-            return(true);
          }
+         return(true);
+      }
 
-         // Carrying nectar in hive.
+      // Not carrying nectar.
 
-         // Surplus nectar known?
-         nectarX = nectarY = -1;  // TODO: train dance.
+      // In hive?
+      if (sensors[HIVE_PRESENCE_INDEX] == 1.0f)
+      {
+         // Surplus nectar detected?
+         nectarX = nectarY = -1; // TODO: train dance.
          if (nectarX != -1)
          {
             // Orient toward nectar?
@@ -478,7 +487,7 @@ public class HoneyBee
                return(true);
             }
 
-            // Dance display of nectar direction and distance to other bees in hive.
+            // Dance display of nectar direction and distance to bees in hive.
             int d = (int)Math.sqrt((double)((nectarX - x) * (nectarX - x)) +
                                    (double)((nectarY - y) * (nectarY - y)));
             d = d / unitDist;
@@ -492,20 +501,24 @@ public class HoneyBee
             return(true);
          }
 
-         // Deposit nectar.
-         response = DEPOSIT_NECTAR;
-         return(true);
+         // Sense nectar dance?
+         if (sensors[NECTAR_DANCE_DIRECTION_INDEX] != -1.0f)
+         {
+            nectarDist = ((int)(sensors[NECTAR_DANCE_DISTANCE_INDEX]) + 1) * unitDist;
+            response   = (int)sensors[NECTAR_DANCE_DIRECTION_INDEX];
+            return(true);
+         }
       }
-
-      // Not carrying nectar.
-
-      // Found nectar to extract?
-      if (sensors[NECTAR_PRESENCE_INDEX] == 1.0f)
+      else
       {
-         nectarDist = -1;
-         nectarX    = nectarY = -1;
-         response   = EXTRACT_NECTAR;
-         return(true);
+         // Found nectar to extract?
+         if (sensors[NECTAR_PRESENCE_INDEX] == 1.0f)
+         {
+            nectarDist = -1;
+            nectarX    = nectarY = -1;
+            response   = EXTRACT_NECTAR;
+            return(true);
+         }
       }
 
       // Heading to nectar?
@@ -522,14 +535,6 @@ public class HoneyBee
             nectarDist--;
             response = FORWARD;
          }
-         return(true);
-      }
-
-      // Sense nectar dance?
-      if (sensors[NECTAR_DANCE_DIRECTION_INDEX] != -1.0f)
-      {
-         nectarDist = ((int)(sensors[NECTAR_DANCE_DISTANCE_INDEX]) + 1) * unitDist;
-         response   = (int)sensors[NECTAR_DANCE_DIRECTION_INDEX];
          return(true);
       }
 
@@ -786,33 +791,40 @@ public class HoneyBee
    // Get metamorph DB response.
    void metamorphDBresponse()
    {
-      response = WAIT;
-      Metamorph metamorph = null;
-      float     d         = 0.0f;
-      float     d2;
-      for (Metamorph m : metamorphs)
+      // Handling nectar?
+      if (autoPilotResponse())
       {
-         d2 = morphognostic.compare(m.morphognostic);
-         if ((metamorph == null) || (d2 < d))
+         Metamorph metamorph = null;
+         float     d         = 0.0f;
+         float     d2;
+         for (Metamorph m : metamorphs)
          {
-            d         = d2;
-            metamorph = m;
-         }
-         else
-         {
-            if (d2 == d)
+            d2 = morphognostic.compare(m.morphognostic);
+            if ((metamorph == null) || (d2 < d))
             {
-               if (random.nextBoolean())
+               d         = d2;
+               metamorph = m;
+            }
+            else
+            {
+               if (d2 == d)
                {
-                  d         = d2;
-                  metamorph = m;
+                  if (random.nextBoolean())
+                  {
+                     d         = d2;
+                     metamorph = m;
+                  }
                }
             }
          }
-      }
-      if (metamorph != null)
-      {
-         response = metamorph.response;
+         if (metamorph != null)
+         {
+            response = metamorph.response;
+         }
+         else
+         {
+            response = WAIT;
+         }
       }
    }
 

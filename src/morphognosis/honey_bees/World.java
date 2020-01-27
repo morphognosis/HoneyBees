@@ -416,8 +416,7 @@ public class World
          {
             if (bees[i] == bee) { break; }
          }
-         for (int k = 0, j = (i + 1) % Parameters.NUM_BEES;
-              k < Parameters.NUM_BEES; k++, j = (j + 1) % Parameters.NUM_BEES)
+         for (int k = 0, j = i; k < Parameters.NUM_BEES; k++, j = (j + 1) % Parameters.NUM_BEES)
          {
             HoneyBee dancingBee = bees[j];
             if (cells[dancingBee.x][dancingBee.y].hive && (dancingBee.nectarDistanceDisplay != -1))
