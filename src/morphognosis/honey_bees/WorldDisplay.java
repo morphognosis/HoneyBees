@@ -366,64 +366,60 @@ public class WorldDisplay extends JFrame
                   }
 
                   // Bee displaying distance to nectar?
-                  if (world.cells[x][y].hive &&
-                      (bee.response >= HoneyBee.DISPLAY_NECTAR_DISTANCE) && (bee.response < HoneyBee.WAIT))
+                  if (bee.nectarDistanceDisplay != -1)
                   {
-                     if ((bee.response >= HoneyBee.DISPLAY_NECTAR_DISTANCE) && (bee.response < HoneyBee.WAIT))
+                     int maxDist    = Math.max(Parameters.WORLD_WIDTH, Parameters.WORLD_HEIGHT) / 2;
+                     int unitDist   = maxDist / Parameters.BEE_NUM_DISTANCE_VALUES;
+                     int nectarDist = (bee.nectarDistanceDisplay * unitDist) + (unitDist / 2);
+                     int toX        = bee.x;
+                     int toY        = bee.y;
+                     switch (bee.orientation)
                      {
-                        int maxDist    = Math.max(Parameters.WORLD_WIDTH, Parameters.WORLD_HEIGHT) / 2;
-                        int unitDist   = maxDist / Parameters.BEE_NUM_DISTANCE_VALUES;
-                        int nectarDist = (bee.nectarDistanceDisplay * unitDist) + (unitDist / 2);
-                        int toX        = bee.x;
-                        int toY        = bee.y;
-                        switch (bee.orientation)
-                        {
-                        case Orientation.NORTH:
-                           toY += nectarDist;
-                           break;
+                     case Orientation.NORTH:
+                        toY += nectarDist;
+                        break;
 
-                        case Orientation.NORTHEAST:
-                           toX += nectarDist;
-                           toY += nectarDist;
-                           break;
+                     case Orientation.NORTHEAST:
+                        toX += nectarDist;
+                        toY += nectarDist;
+                        break;
 
-                        case Orientation.EAST:
-                           toX += nectarDist;
-                           break;
+                     case Orientation.EAST:
+                        toX += nectarDist;
+                        break;
 
-                        case Orientation.SOUTHEAST:
-                           toX += nectarDist;
-                           toY -= nectarDist;
-                           break;
+                     case Orientation.SOUTHEAST:
+                        toX += nectarDist;
+                        toY -= nectarDist;
+                        break;
 
-                        case Orientation.SOUTH:
-                           toY -= nectarDist;
-                           break;
+                     case Orientation.SOUTH:
+                        toY -= nectarDist;
+                        break;
 
-                        case Orientation.SOUTHWEST:
-                           toX -= nectarDist;
-                           toY -= nectarDist;
-                           break;
+                     case Orientation.SOUTHWEST:
+                        toX -= nectarDist;
+                        toY -= nectarDist;
+                        break;
 
-                        case Orientation.WEST:
-                           toX -= nectarDist;
-                           break;
+                     case Orientation.WEST:
+                        toX -= nectarDist;
+                        break;
 
-                        case Orientation.NORTHWEST:
-                           toX -= nectarDist;
-                           toY += nectarDist;
-                           break;
-                        }
-                        canvasGraphics.setColor(Color.BLACK);
-                        canvasGraphics.setStroke(dashedLine);
-                        int fromX = x2 + (int)(cellWidth / 2.0f);
-                        int fromY = y2 + (int)(cellHeight / 2.0f);
-                        toX = (int)((float)toX * cellWidth) + (int)(cellWidth / 2.0f);
-                        toY = (int)(cellHeight * (float)(height - (toY + 1))) + (int)(cellHeight / 2.0f);
-                        canvasGraphics.drawLine(fromX, fromY, toX, toY);
-                        canvasGraphics.setColor(Color.WHITE);
-                        canvasGraphics.setStroke(thinLine);
+                     case Orientation.NORTHWEST:
+                        toX -= nectarDist;
+                        toY += nectarDist;
+                        break;
                      }
+                     canvasGraphics.setColor(Color.BLACK);
+                     canvasGraphics.setStroke(dashedLine);
+                     int fromX = x2 + (int)(cellWidth / 2.0f);
+                     int fromY = y2 + (int)(cellHeight / 2.0f);
+                     toX = (int)((float)toX * cellWidth) + (int)(cellWidth / 2.0f);
+                     toY = (int)(cellHeight * (float)(height - (toY + 1))) + (int)(cellHeight / 2.0f);
+                     canvasGraphics.drawLine(fromX, fromY, toX, toY);
+                     canvasGraphics.setColor(Color.WHITE);
+                     canvasGraphics.setStroke(thinLine);
                   }
 
                   // Highlight selected bee?

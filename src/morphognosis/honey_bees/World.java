@@ -37,9 +37,6 @@ public class World
    // Driver.
    int driver;
 
-   // No metamorph learning?
-   public boolean noLearning;
-
    // Metamorph neural network.
    public MetamorphNN metamorphNN;
 
@@ -409,6 +406,7 @@ public class World
       // If in hive, check for dancing bee nectar direction and distance display.
       sensors[HoneyBee.NECTAR_DANCE_DIRECTION_INDEX] = -1.0f;
       sensors[HoneyBee.NECTAR_DANCE_DISTANCE_INDEX]  = -1.0f;
+      if (HoneyBee.NNtrain) { return(sensors); }
       if (cells[bee.x][bee.y].hive && !bee.nectarCarry)
       {
          int i = 0;

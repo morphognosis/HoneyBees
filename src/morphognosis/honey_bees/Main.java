@@ -81,7 +81,6 @@ public class Main
       "     [-driver <autopilot | metamorphDB | metamorphNN | local_override> (honey bees driver: default=autopilot)]\n" +
       "     [-randomSeed <random number seed> (default=" + DEFAULT_RANDOM_SEED + ")]\n" +
       "     [-printCollectedNectar]\n" +
-      "     [-noLearning (do not learn new metamorphs)]\n" +
       "     [-save <file name>]\n" +
       "     [-saveNN <metamorph neural network model file name>]\n" +
       "     [-loadNN <metamorph neural network model file name>]\n" +
@@ -93,7 +92,6 @@ public class Main
       "     [-driver autopilot | metamorphDB | metamorphNN | local_override>\n\t(default=autopilot)]\n" +
       "     [-randomSeed <random number seed>]\n" +
       "     [-printCollectedNectar]\n" +
-      "     [-noLearning (do not learn new metamorphs)]\n" +
       "     [-save <file name>]\n" +
       "     [-saveNN <metamorph neural network model file name>]\n" +
       "     [-loadNN <metamorph neural network model file name>]\n" +
@@ -284,7 +282,6 @@ public class Main
       int     steps  = -1;
       int     driver = Driver.AUTOPILOT;
       boolean printCollectedNectar = false;
-      boolean noLearning           = false;
       String  loadfile             = null;
       String  savefile             = null;
       boolean display         = true;
@@ -968,11 +965,6 @@ public class Main
             printCollectedNectar = true;
             continue;
          }
-         if (args[i].equals("-noLearning"))
-         {
-            noLearning = true;
-            continue;
-         }
          if (args[i].equals("-load"))
          {
             i++;
@@ -1127,8 +1119,7 @@ public class Main
       random.setSeed(randomSeed);
       try
       {
-         world            = new World(randomSeed);
-         world.noLearning = noLearning;
+         world = new World(randomSeed);
       }
       catch (Exception e)
       {

@@ -370,9 +370,9 @@ public class Morphognostic
       }
    }
 
-   // Immediate values.
-   public int[] immediateValues;
-   public int   numImmediateValues;
+   // Immediate events.
+   public int[] immediateEvents;
+   public int   numImmediateEvents;
 
    // Neighborhoods.
    public Vector<Neighborhood> neighborhoods;
@@ -381,7 +381,7 @@ public class Morphognostic
    public int orientation;
 
    // Constructors.
-   public Morphognostic(int orientation, int numImmediateValues, int eventDimensions,
+   public Morphognostic(int orientation, int numImmediateEvents, int eventDimensions,
                         int eventsWidth, int eventsHeight)
    {
       int[] numEventTypes = new int[eventDimensions];
@@ -389,12 +389,12 @@ public class Morphognostic
       {
          numEventTypes[i] = 1;
       }
-      init(orientation, numImmediateValues, numEventTypes, eventsWidth, eventsHeight);
+      init(orientation, numImmediateEvents, numEventTypes, eventsWidth, eventsHeight);
    }
 
 
    // Construct with parameters.
-   public Morphognostic(int orientation, int numImmediateValues, int eventDimensions,
+   public Morphognostic(int orientation, int numImmediateEvents, int eventDimensions,
                         int eventsWidth, int eventsHeight,
                         int NUM_NEIGHBORHOODS,
                         int NEIGHBORHOOD_INITIAL_DIMENSION,
@@ -417,19 +417,19 @@ public class Morphognostic
       {
          numEventTypes[i] = 1;
       }
-      init(orientation, numImmediateValues, numEventTypes, eventsWidth, eventsHeight);
+      init(orientation, numImmediateEvents, numEventTypes, eventsWidth, eventsHeight);
    }
 
 
-   public Morphognostic(int orientation, int numImmediateValues, int[] numEventTypes,
+   public Morphognostic(int orientation, int numImmediateEvents, int[] numEventTypes,
                         int eventsWidth, int eventsHeight)
    {
-      init(orientation, numImmediateValues, numEventTypes, eventsWidth, eventsHeight);
+      init(orientation, numImmediateEvents, numEventTypes, eventsWidth, eventsHeight);
    }
 
 
    // Construct with parameters.
-   public Morphognostic(int orientation, int numImmediateValues, int[] numEventTypes,
+   public Morphognostic(int orientation, int numImmediateEvents, int[] numEventTypes,
                         int eventsWidth, int eventsHeight,
                         int NUM_NEIGHBORHOODS,
                         int NEIGHBORHOOD_INITIAL_DIMENSION,
@@ -447,19 +447,19 @@ public class Morphognostic
       this.EPOCH_INTERVAL_STRIDE             = EPOCH_INTERVAL_STRIDE;
       this.EPOCH_INTERVAL_MULTIPLIER         = EPOCH_INTERVAL_MULTIPLIER;
       this.BINARY_VALUE_AGGREGATION          = BINARY_VALUE_AGGREGATION;
-      init(orientation, numImmediateValues, numEventTypes, eventsWidth, eventsHeight);
+      init(orientation, numImmediateEvents, numEventTypes, eventsWidth, eventsHeight);
    }
 
 
-   public void init(int orientation, int numImmediateValues, int[] numEventTypes,
+   public void init(int orientation, int numImmediateEvents, int[] numEventTypes,
                     int eventsWidth, int eventsHeight)
    {
       this.orientation        = orientation;
       this.numEventTypes      = numEventTypes;
       this.eventsWidth        = eventsWidth;
       this.eventsHeight       = eventsHeight;
-      this.numImmediateValues = numImmediateValues;
-      immediateValues         = new int[numImmediateValues];
+      this.numImmediateEvents = numImmediateEvents;
+      immediateEvents         = new int[numImmediateEvents];
       eventDimensions         = numEventTypes.length;
 
       // Create neighborhoods.
@@ -490,19 +490,19 @@ public class Morphognostic
 
 
    // Update morphognostic.
-   public void update(int[] immediateValues, int[] eventValues, int cx, int cy)
+   public void update(int[] immediateEvents, int[] eventValues, int cx, int cy)
    {
-      update(immediateValues, eventValues, cx, cy, false);
+      update(immediateEvents, eventValues, cx, cy, false);
    }
 
 
-   public void update(int[] immediateValues, int[] eventValues,
+   public void update(int[] immediateEvents, int[] eventValues,
                       int cx, int cy, boolean wrapWorld)
    {
       // Update immediate values.
-      for (int i = 0; i < numImmediateValues; i++)
+      for (int i = 0; i < numImmediateEvents; i++)
       {
-         this.immediateValues[i] = immediateValues[i];
+         this.immediateEvents[i] = immediateEvents[i];
       }
 
       // Update events.
@@ -526,9 +526,9 @@ public class Morphognostic
    {
       float d = 0.0f;
 
-      for (int i = 0; i < numImmediateValues; i++)
+      for (int i = 0; i < numImmediateEvents; i++)
       {
-         d += Math.abs(m.immediateValues[i] - immediateValues[i]);
+         d += Math.abs(m.immediateEvents[i] - immediateEvents[i]);
       }
       for (int i = 0; i < NUM_NEIGHBORHOODS; i++)
       {
@@ -541,9 +541,9 @@ public class Morphognostic
    // Clear.
    public void clear()
    {
-      for (int i = 0; i < numImmediateValues; i++)
+      for (int i = 0; i < numImmediateEvents; i++)
       {
-         immediateValues[i] = 0;
+         immediateEvents[i] = 0;
       }
       for (Neighborhood n : neighborhoods)
       {
@@ -586,7 +586,7 @@ public class Morphognostic
       if (BINARY_VALUE_AGGREGATION) { v = 1; }
       Utility.saveInt(output, v);
       Utility.saveInt(output, orientation);
-      Utility.saveInt(output, numImmediateValues);
+      Utility.saveInt(output, numImmediateEvents);
       Utility.saveInt(output, eventsWidth);
       Utility.saveInt(output, eventsHeight);
       Utility.saveInt(output, eventDimensions);
@@ -594,9 +594,9 @@ public class Morphognostic
       {
          Utility.saveInt(output, numEventTypes[d]);
       }
-      for (int i = 0; i < numImmediateValues; i++)
+      for (int i = 0; i < numImmediateEvents; i++)
       {
-         Utility.saveInt(output, immediateValues[i]);
+         Utility.saveInt(output, immediateEvents[i]);
       }
       for (Neighborhood n : neighborhoods)
       {
@@ -647,7 +647,7 @@ public class Morphognostic
          BINARY_VALUE_AGGREGATION = false;
       }
       int orientation        = Utility.loadInt(input);
-      int numImmediateValues = Utility.loadInt(input);
+      int numImmediateEvents = Utility.loadInt(input);
       int eventsWidth        = Utility.loadInt(input);
       int eventsHeight       = Utility.loadInt(input);
       int eventDimensions    = Utility.loadInt(input);
@@ -657,7 +657,7 @@ public class Morphognostic
       {
          numEventTypes[d] = Utility.loadInt(input);
       }
-      Morphognostic m = new Morphognostic(orientation, numImmediateValues, numEventTypes,
+      Morphognostic m = new Morphognostic(orientation, numImmediateEvents, numEventTypes,
                                           eventsWidth, eventsHeight,
                                           NUM_NEIGHBORHOODS,
                                           NEIGHBORHOOD_INITIAL_DIMENSION,
@@ -667,9 +667,9 @@ public class Morphognostic
                                           EPOCH_INTERVAL_MULTIPLIER,
                                           BINARY_VALUE_AGGREGATION
                                           );
-      for (int i = 0; i < numImmediateValues; i++)
+      for (int i = 0; i < numImmediateEvents; i++)
       {
-         m.immediateValues[i] = Utility.loadInt(input);
+         m.immediateEvents[i] = Utility.loadInt(input);
       }
       for (Neighborhood n : m.neighborhoods)
       {
@@ -702,7 +702,7 @@ public class Morphognostic
    // Clone.
    public Morphognostic clone()
    {
-      Morphognostic m = new Morphognostic(orientation, numImmediateValues, numEventTypes,
+      Morphognostic m = new Morphognostic(orientation, numImmediateEvents, numEventTypes,
                                           eventsWidth, eventsHeight,
                                           NUM_NEIGHBORHOODS,
                                           NEIGHBORHOOD_INITIAL_DIMENSION,
@@ -713,9 +713,9 @@ public class Morphognostic
                                           BINARY_VALUE_AGGREGATION
                                           );
 
-      for (int i = 0; i < numImmediateValues; i++)
+      for (int i = 0; i < numImmediateEvents; i++)
       {
-         m.immediateValues[i] = immediateValues[i];
+         m.immediateEvents[i] = immediateEvents[i];
       }
       for (int i = 0; i < NUM_NEIGHBORHOODS; i++)
       {
@@ -752,10 +752,10 @@ public class Morphognostic
    public void print()
    {
       printParameters();
-      System.out.println("immediateValues:");
-      for (int i = 0; i < numImmediateValues; i++)
+      System.out.println("immediateEvents:");
+      for (int i = 0; i < numImmediateEvents; i++)
       {
-         System.out.println("\t" + immediateValues[i]);
+         System.out.println("\t" + immediateEvents[i]);
       }
       for (int i = 0; i < neighborhoods.size(); i++)
       {
@@ -811,7 +811,7 @@ public class Morphognostic
       System.out.println("EPOCH_INTERVAL_MULTIPLIER=" + EPOCH_INTERVAL_MULTIPLIER);
       System.out.println("BINARY_VALUE_AGGREGATION=" + BINARY_VALUE_AGGREGATION);
       System.out.println("orientation=" + orientation);
-      System.out.println("numImmediateValues=" + numImmediateValues);
+      System.out.println("numImmediateEvents=" + numImmediateEvents);
       System.out.println("eventDimensions=" + eventDimensions);
    }
 }

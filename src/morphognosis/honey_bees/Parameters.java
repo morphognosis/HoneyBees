@@ -21,31 +21,31 @@ public class Parameters
    // Note: probabilities are applied for each step.
 
    // Flower parameters.
-   public static float FLOWER_SPROUT_PROBABILITY            = .01f;
-   public static int   FLOWER_NECTAR_CAPACITY               = 3;
-   public static float FLOWER_NECTAR_PRODUCTION_PROBABILITY = .01f;
+   public static float FLOWER_SPROUT_PROBABILITY            = .015f;
+   public static int   FLOWER_NECTAR_CAPACITY               = 2;
+   public static float FLOWER_NECTAR_PRODUCTION_PROBABILITY = 0.0f;
 
    // Bee parameters.
-   public static int   NUM_BEES             = 5;
+   public static int   NUM_BEES             = 1;
    public static float BEE_TURN_PROBABILITY = .2f;
    public static float BEE_RETURN_TO_HIVE_PROBABILITY_INCREMENT = .01f;
-   public static int   BEE_NUM_DISTANCE_VALUES             = 3;
-   public static float BEE_DEADLOCK_PREVENTION_PROBABILITY = .001f;
+   public static int   BEE_NUM_DISTANCE_VALUES             = 1;
+   public static float BEE_DEADLOCK_PREVENTION_PROBABILITY = 0.0f;
 
    // Morphognosis parameters.
-   public static int     NUM_NEIGHBORHOODS = 2;
+   public static int     NUM_NEIGHBORHOODS = 1;
    public static int     NEIGHBORHOOD_INITIAL_DIMENSION    = 3;
    public static int     NEIGHBORHOOD_DIMENSION_STRIDE     = Morphognostic.DEFAULT_NEIGHBORHOOD_DIMENSION_STRIDE;
    public static int     NEIGHBORHOOD_DIMENSION_MULTIPLIER = Morphognostic.DEFAULT_NEIGHBORHOOD_DIMENSION_MULTIPLIER;
-   public static int     EPOCH_INTERVAL_STRIDE             = 21;
+   public static int     EPOCH_INTERVAL_STRIDE             = 75;
    public static int     EPOCH_INTERVAL_MULTIPLIER         = Morphognostic.DEFAULT_EPOCH_INTERVAL_MULTIPLIER;
    public static boolean BINARY_VALUE_AGGREGATION          = true;
 
    // Metamorph neural network parameters.
    public static double NN_LEARNING_RATE = 0.1;
    public static double NN_MOMENTUM      = 0.2;
-   public static String NN_HIDDEN_LAYERS = "5";
-   public static int    NN_TRAINING_TIME = 2000;
+   public static String NN_HIDDEN_LAYERS = "10";
+   public static int    NN_TRAINING_TIME = 10000;
 
    // Save.
    public static void save(DataOutputStream writer) throws IOException

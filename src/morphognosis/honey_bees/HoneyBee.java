@@ -32,7 +32,7 @@ public class HoneyBee
    public boolean      nectarCarry;
    public int          nectarDistanceDisplay;
    public int          nectarX, nectarY;
-   public int          nectarDist;
+   public int          nectarDistance;
    public float        returnToHiveProbability;
    public World        world;
    public int          driver;
@@ -86,6 +86,10 @@ public class HoneyBee
    // Metamorph neural network.
    public MetamorphNN metamorphNN;
 
+   // NN train.
+   public static boolean NNtrain  = true;
+   public boolean        resetRun = false;
+
    // Metamorph dataset file name.
    public static String METAMORPH_DATASET_FILE_BASENAME = "metamorphs";
    public String        metamorphDatasetFilename;
@@ -128,10 +132,10 @@ public class HoneyBee
       orientation           = orientation2 = random.nextInt(Orientation.NUM_ORIENTATIONS);
       nectarCarry           = false;
       nectarDistanceDisplay = -1;
-      nectarX    = nectarY = -1;
-      nectarDist = -1;
+      nectarX                 = nectarY = -1;
+      nectarDistance          = -1;
       returnToHiveProbability = 0.0f;
-      sensors = new float[NUM_SENSORS];
+      sensors                 = new float[NUM_SENSORS];
       for (int n = 0; n < NUM_SENSORS; n++)
       {
          sensors[n] = 0.0f;
@@ -139,20 +143,21 @@ public class HoneyBee
       response = WAIT;
 
       // Initialize Morphognostic.
-      int numImmediateValues =
+      int numImmediateEvents =
          1 +                                          // <nectar presence>
-         1 +                                          // <surplus nectar presence>
          Orientation.NUM_ORIENTATIONS +               // <nectar dance direction>
          Parameters.BEE_NUM_DISTANCE_VALUES +         // <nectar dance distance>
          Orientation.NUM_ORIENTATIONS +               // <orientation>
          1;                                           // <nectar carry status>
-      int numEventTypes = 1;                          // <hive presence.
+      int numEventTypes =
+         1 +                                          // <hive presence.
+         1;                                           // <surplus nectar presence>
       int [] eventTypes = new int[numEventTypes];
       for (int i = 0; i < eventTypes.length; i++)
       {
          eventTypes[i] = 1;
       }
-      morphognostic = new Morphognostic(Orientation.NORTH, numImmediateValues, eventTypes,
+      morphognostic = new Morphognostic(Orientation.NORTH, numImmediateEvents, eventTypes,
                                         Parameters.WORLD_WIDTH, Parameters.WORLD_HEIGHT,
                                         Parameters.NUM_NEIGHBORHOODS,
                                         Parameters.NEIGHBORHOOD_INITIAL_DIMENSION,
@@ -194,7 +199,7 @@ public class HoneyBee
       nectarCarry             = false;
       nectarDistanceDisplay   = -1;
       nectarX                 = nectarY = -1;
-      nectarDist              = -1;
+      nectarDistance          = -1;
       returnToHiveProbability = 0.0f;
       world.cells[x][y].bee   = this;
       for (int i = 0; i < NUM_SENSORS; i++)
@@ -253,7 +258,7 @@ public class HoneyBee
       Utility.saveInt(writer, nectarDistanceDisplay);
       Utility.saveInt(writer, nectarX);
       Utility.saveInt(writer, nectarY);
-      Utility.saveInt(writer, nectarDist);
+      Utility.saveInt(writer, nectarDistance);
       Utility.saveFloat(writer, returnToHiveProbability);
       morphognostic.save(writer);
       Utility.saveInt(writer, metamorphs.size());
@@ -305,9 +310,9 @@ public class HoneyBee
          nectarCarry = false;
       }
       nectarDistanceDisplay = Utility.loadInt(reader);
-      nectarX    = Utility.loadInt(reader);
-      nectarY    = Utility.loadInt(reader);
-      nectarDist = Utility.loadInt(reader);
+      nectarX                 = Utility.loadInt(reader);
+      nectarY                 = Utility.loadInt(reader);
+      nectarDistance          = Utility.loadInt(reader);
       returnToHiveProbability = Utility.loadFloat(reader);
       morphognostic           = Morphognostic.load(reader);
       metamorphs.clear();
@@ -326,56 +331,73 @@ public class HoneyBee
    // Sense/response cycle.
    public int cycle(float[] sensors)
    {
+      if (NNtrain)
+      {
+         if (resetRun)
+         {
+            resetRun = false;
+            for (int x = 0; x < Parameters.WORLD_WIDTH; x++)
+            {
+               for (int y = 0; y < Parameters.WORLD_HEIGHT; y++)
+               {
+                  if (world.cells[x][y].flower != null)
+                  {
+                     world.cells[x][y].flower.nectar = 0;
+                  }
+               }
+            }
+            morphognostic.clear();
+         }
+      }
       for (int i = 0; i < NUM_SENSORS; i++)
       {
          this.sensors[i] = sensors[i];
       }
 
       // Update morphognostic.
-      if (!world.noLearning)
+      int[] immediateEvents = new int[morphognostic.numImmediateEvents];
+      immediateEvents[0]    = 0;
+      int surplusNectar = 0;
+      if (nectarCarry)
       {
-         int[] immediateValues = new int[morphognostic.numImmediateValues];
-         immediateValues[0]    = immediateValues[1] = 0;
-         if (nectarCarry)
+         // Surplus nectar?
+         if ((int)sensors[NECTAR_PRESENCE_INDEX] == 1.0f)
          {
-            // Surplus nectar?
-            if ((int)sensors[NECTAR_PRESENCE_INDEX] == 1.0f)
-            {
-               immediateValues[1] = 1;
-            }
+            surplusNectar = 1;
          }
-         else
-         {
-            // Nectar present?
-            if ((int)sensors[NECTAR_PRESENCE_INDEX] == 1.0f)
-            {
-               immediateValues[0] = 1;
-            }
-         }
-         if (sensors[NECTAR_DANCE_DIRECTION_INDEX] != -1)
-         {
-            immediateValues[2 + (int)sensors[NECTAR_DANCE_DIRECTION_INDEX]] = 1;
-         }
-         if (sensors[NECTAR_DANCE_DISTANCE_INDEX] != -1)
-         {
-            immediateValues[2 + Orientation.NUM_ORIENTATIONS + (int)sensors[NECTAR_DANCE_DISTANCE_INDEX]] = 1;
-         }
-         immediateValues[2 + Orientation.NUM_ORIENTATIONS + Parameters.BEE_NUM_DISTANCE_VALUES + orientation] = 1;
-         if (nectarCarry)
-         {
-            immediateValues[2 + Orientation.NUM_ORIENTATIONS + Parameters.BEE_NUM_DISTANCE_VALUES + Orientation.NUM_ORIENTATIONS] = 1;
-         }
-         int[] eventValues = new int[morphognostic.eventDimensions];
-         eventValues[0]    = (int)sensors[HIVE_PRESENCE_INDEX];
-         morphognostic.update(immediateValues, eventValues, x, y);
       }
+      else
+      {
+         // Nectar present?
+         if ((int)sensors[NECTAR_PRESENCE_INDEX] == 1.0f)
+         {
+            immediateEvents[0] = 1;
+         }
+      }
+      if (sensors[NECTAR_DANCE_DIRECTION_INDEX] != -1)
+      {
+         immediateEvents[1 + (int)sensors[NECTAR_DANCE_DIRECTION_INDEX]] = 1;
+      }
+      if (sensors[NECTAR_DANCE_DISTANCE_INDEX] != -1)
+      {
+         immediateEvents[1 + Orientation.NUM_ORIENTATIONS + (int)sensors[NECTAR_DANCE_DISTANCE_INDEX]] = 1;
+      }
+      immediateEvents[1 + Orientation.NUM_ORIENTATIONS + Parameters.BEE_NUM_DISTANCE_VALUES + orientation] = 1;
+      if (nectarCarry)
+      {
+         immediateEvents[1 + Orientation.NUM_ORIENTATIONS + Parameters.BEE_NUM_DISTANCE_VALUES + Orientation.NUM_ORIENTATIONS] = 1;
+      }
+      int[] eventValues = new int[morphognostic.eventDimensions];
+      eventValues[0]    = (int)sensors[HIVE_PRESENCE_INDEX];
+      eventValues[1]    = surplusNectar;
+      morphognostic.update(immediateEvents, eventValues, x, y);
 
       // Respond.
-      boolean validMetamorph = true;
+      boolean validMetamorph = false;
       switch (driver)
       {
       case Driver.AUTOPILOT:
-         validMetamorph = autoPilotResponse();
+         validMetamorph = autopilotResponse();
          break;
 
       case Driver.METAMORPH_DB:
@@ -392,7 +414,7 @@ public class HoneyBee
       }
 
       // Update metamorphs.
-      if (!world.noLearning && validMetamorph)
+      if (validMetamorph)
       {
          Metamorph metamorph = new Metamorph(morphognostic.clone(), response, getResponseName(response));
          metamorph.morphognostic.orientation = Orientation.NORTH;
@@ -418,7 +440,7 @@ public class HoneyBee
 
    // Autopilot response.
    // Returns: true if handling nectar; false if randomly foraging.
-   boolean autoPilotResponse()
+   boolean autopilotResponse()
    {
       int width  = Parameters.WORLD_WIDTH;
       int height = Parameters.WORLD_HEIGHT;
@@ -432,8 +454,8 @@ public class HoneyBee
       // Turn at edge of world.
       if ((toX < 0) || (toX >= width) || (toY < 0) || (toY >= height))
       {
-         nectarDist = -1;
-         response   = random.nextInt(Orientation.NUM_ORIENTATIONS);
+         nectarDistance = -1;
+         response       = random.nextInt(Orientation.NUM_ORIENTATIONS);
          return(false);
       }
 
@@ -445,10 +467,17 @@ public class HoneyBee
          {
             // Deposit nectar.
             response = DEPOSIT_NECTAR;
+            if (NNtrain)
+            {
+               if (nectarX == -1)
+               {
+                  resetRun = true;
+               }
+            }
          }
          else
          {
-            // Sense closer nectar to dance about?
+            // Sense surplus nectar to dance about?
             if (sensors[NECTAR_PRESENCE_INDEX] == 1.0f)
             {
                // Remember nectar location for later display.
@@ -476,7 +505,6 @@ public class HoneyBee
       if (sensors[HIVE_PRESENCE_INDEX] == 1.0f)
       {
          // Surplus nectar detected?
-         nectarX = nectarY = -1; // TODO: train dance.
          if (nectarX != -1)
          {
             // Orient toward nectar?
@@ -495,44 +523,63 @@ public class HoneyBee
             {
                d = Parameters.BEE_NUM_DISTANCE_VALUES - 1;
             }
-            nectarDist = (unitDist * d) + (unitDist / 2);
-            nectarX    = nectarY = -1;
-            response   = DISPLAY_NECTAR_DISTANCE + d;
+            nectarX        = nectarY = -1;
+            nectarDistance = -1;
+            response       = DISPLAY_NECTAR_DISTANCE + d;
+            if (NNtrain)
+            {
+               resetRun = true;
+            }
             return(true);
          }
 
          // Sense nectar dance?
          if (sensors[NECTAR_DANCE_DIRECTION_INDEX] != -1.0f)
          {
-            nectarDist = ((int)(sensors[NECTAR_DANCE_DISTANCE_INDEX]) + 1) * unitDist;
-            response   = (int)sensors[NECTAR_DANCE_DIRECTION_INDEX];
+            nectarDistance = ((int)(sensors[NECTAR_DANCE_DISTANCE_INDEX]) + 1) * unitDist;
+            response       = (int)sensors[NECTAR_DANCE_DIRECTION_INDEX];
             return(true);
          }
       }
       else
       {
          // Found nectar to extract?
+         if (NNtrain)
+         {
+            if (world.cells[x][y].flower != null)
+            {
+               if (random.nextBoolean())
+               {
+                  world.cells[x][y].flower.nectar = 2;
+               }
+               else
+               {
+                  world.cells[x][y].flower.nectar = 1;
+               }
+               sensors[NECTAR_PRESENCE_INDEX] = 1.0f;
+            }
+         }
          if (sensors[NECTAR_PRESENCE_INDEX] == 1.0f)
          {
-            nectarDist = -1;
-            nectarX    = nectarY = -1;
-            response   = EXTRACT_NECTAR;
+            nectarDistance = -1;
+            nectarX        = nectarY = -1;
+            response       = EXTRACT_NECTAR;
             return(true);
          }
       }
 
       // Heading to nectar?
-      if (nectarDist != -1)
+      if (nectarDistance != -1)
       {
          if (random.nextFloat() < Parameters.BEE_DEADLOCK_PREVENTION_PROBABILITY)
          {
             // Abandon nectar to avoid deadlock.
-            nectarDist = -1;
-            response   = random.nextInt(Orientation.NUM_ORIENTATIONS);
+            nectarDistance = -1;
+            response       = random.nextInt(Orientation.NUM_ORIENTATIONS);
          }
          else
          {
-            nectarDist--;
+            nectarDistance--;
             response = FORWARD;
          }
          return(true);
@@ -792,7 +839,9 @@ public class HoneyBee
    void metamorphDBresponse()
    {
       // Handling nectar?
-      if (autoPilotResponse())
+      int previousResponse = response;
+
+      if (autopilotResponse())
       {
          Metamorph metamorph = null;
          float     d         = 0.0f;
@@ -825,6 +874,16 @@ public class HoneyBee
          {
             response = WAIT;
          }
+
+         // Check for hung nectar display.
+         if ((previousResponse >= DISPLAY_NECTAR_DISTANCE) && (previousResponse < WAIT))
+         {
+            if ((response >= DISPLAY_NECTAR_DISTANCE) && (response < WAIT))
+            {
+               nectarX        = nectarY = -1;
+               nectarDistance = -1;
+            }
+         }
       }
    }
 
@@ -833,11 +892,28 @@ public class HoneyBee
    void metamorphNNresponse()
    {
       // Handling nectar?
-      if (autoPilotResponse() && checkMorphognosticFeaturePresence(morphognostic, 0, false))
+      int previousResponse = response;
+
+      if (autopilotResponse())
       {
          if (metamorphNN != null)
          {
-            response = metamorphNN.respond(morphognostic);
+            // Lost hive?
+            if (!world.cells[x][y].hive && !checkMorphognosticEvent(morphognostic, 0, false))
+            {
+               // Use auto pilot response.
+               return;
+            }
+
+            // Check for hung nectar display.
+            if ((previousResponse >= DISPLAY_NECTAR_DISTANCE) && (previousResponse < WAIT))
+            {
+               if ((response >= DISPLAY_NECTAR_DISTANCE) && (response < WAIT))
+               {
+                  nectarX        = nectarY = -1;
+                  nectarDistance = -1;
+               }
+            }
          }
          else
          {
@@ -1026,17 +1102,19 @@ public class HoneyBee
    }
 
 
-   // Check for value presence in morphognostic.
-   public static boolean checkMorphognosticFeaturePresence(Morphognostic morphognostic, int valueIndex)
+   // Check for event in morphognostic.
+   public static boolean checkMorphognosticEvent(Morphognostic morphognostic, int valueIndex)
    {
-      return(checkMorphognosticFeaturePresence(morphognostic, valueIndex, false));
+      return(checkMorphognosticEvent(morphognostic, valueIndex, false));
    }
 
 
-   public static boolean checkMorphognosticFeaturePresence(Morphognostic morphognostic,
-                                                           int valueIndex, boolean verbose)
+   public static boolean checkMorphognosticEvent(Morphognostic morphognostic,
+                                                 int valueIndex, boolean verbose)
    {
       float c = 0.0f;
+
+      int centerXY = Parameters.NEIGHBORHOOD_INITIAL_DIMENSION / 2;
 
       for (int i = 0; i < morphognostic.NUM_NEIGHBORHOODS; i++)
       {
@@ -1045,7 +1123,7 @@ public class HoneyBee
          {
             for (int y = 0; y < n.sectors.length; y++)
             {
-               if ((x == 1) && (y == 1)) { continue; }
+               if ((x == centerXY) && (y == centerXY)) { continue; }
                Neighborhood.Sector s = n.sectors[x][y];
                c += s.typeDensities[valueIndex][0];
                if (verbose && (s.typeDensities[valueIndex][0] > 0.0f))

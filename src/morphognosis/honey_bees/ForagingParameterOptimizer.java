@@ -1322,7 +1322,6 @@ public class ForagingParameterOptimizer
          // Run with cooperative foraging.
          int   randomSeed = optimizer.Randomizer.nextInt();
          World world      = new World(randomSeed);
-         world.noLearning = true;
          for (int i = 0; i < steps; i++)
          {
             world.step();
@@ -1330,8 +1329,7 @@ public class ForagingParameterOptimizer
          int collectedNectar = world.collectedNectar;
 
          // Run without foraging cooperation.
-         world            = new World(randomSeed);
-         world.noLearning = true;
+         world = new World(randomSeed);
          for (int i = 0; i < steps; i++)
          {
             world.step();
