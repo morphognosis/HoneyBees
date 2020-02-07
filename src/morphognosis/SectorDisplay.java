@@ -160,20 +160,20 @@ public class SectorDisplay extends JFrame implements Runnable
 
       if (displayMode == DISPLAY_MODE.DENSITIES)
       {
-         // Draw type density histogram.
+         // Draw value density histogram.
          n = 0;
          for (d = 0; d < display.morphognostic.eventDimensions; d++)
          {
-            n += display.morphognostic.numEventTypes[d];
+            n += display.morphognostic.eventValueDimensions[d];
          }
          w = imageSize.width / n;
          i = x = 0;
          for (d = 0; d < display.morphognostic.eventDimensions; d++)
          {
-            for (j = 0; j < display.morphognostic.numEventTypes[d]; j++, i++, x += w)
+            for (j = 0; j < display.morphognostic.eventValueDimensions[d]; j++, i++, x += w)
             {
                imageGraphics.setColor(getEventColor(d, j));
-               h = (int)((float)imageSize.height * sector.getTypeDensity(d, j));
+               h = (int)((float)imageSize.height * sector.getValueDensity(d, j));
                imageGraphics.fillRect(x, imageSize.height - h, w + 1, h);
             }
          }
@@ -233,9 +233,9 @@ public class SectorDisplay extends JFrame implements Runnable
    public static int[]     graduatedColorMaximums = null;
 
    // Get event color.
-   public static Color getEventColor(int dimension, int eventType)
+   public static Color getEventColor(int dimension, int eventValue)
    {
-      switch (eventType)
+      switch (eventValue)
       {
       case -1:
          return(Color.GRAY);
@@ -247,7 +247,7 @@ public class SectorDisplay extends JFrame implements Runnable
          Random random = new Random();
          if ((graduatedColors == null) || !graduatedColors[dimension])
          {
-            random.setSeed(((dimension + 3) * 1000) + eventType);
+            random.setSeed(((dimension + 3) * 1000) + eventValue);
             float r = random.nextFloat();
             float g = random.nextFloat();
             float b = random.nextFloat();
@@ -256,7 +256,7 @@ public class SectorDisplay extends JFrame implements Runnable
          else
          {
             random.setSeed(dimension + 3);
-            float s = (float)eventType / (float)graduatedColorMaximums[dimension];
+            float s = (float)eventValue / (float)graduatedColorMaximums[dimension];
             int   r = 255 - (int)(255.0f * random.nextFloat() * s);
             int   g = 255 - (int)(255.0f * random.nextFloat() * s);
             int   b = 255 - (int)(255.0f * random.nextFloat() * s);

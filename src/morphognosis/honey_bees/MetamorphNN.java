@@ -43,10 +43,6 @@ public class MetamorphNN
       // Create metamorph training dataset.
       Morphognostic        morphognostic  = metamorphs.get(0).morphognostic;
       ArrayList<Attribute> attributeNames = new ArrayList<Attribute>();
-      for (int i = 0; i < morphognostic.numImmediateEvents; i++)
-      {
-         attributeNames.add(new Attribute(i + ""));
-      }
       for (int i = 0; i < morphognostic.NUM_NEIGHBORHOODS; i++)
       {
          int n = morphognostic.neighborhoods.get(i).sectors.length;
@@ -56,7 +52,7 @@ public class MetamorphNN
             {
                for (int d = 0; d < morphognostic.eventDimensions; d++)
                {
-                  for (int j = 0; j < morphognostic.numEventTypes[d]; j++)
+                  for (int j = 0; j < morphognostic.eventValueDimensions[d]; j++)
                   {
                      attributeNames.add(new Attribute(i + "-" + x + "-" + y + "-" + d + "-" + j));
                   }
@@ -117,11 +113,6 @@ public class MetamorphNN
    {
       double[]  attrValues = new double[numAttributes];
       int a = 0;
-      for (int i = 0; i < morphognostic.numImmediateEvents; i++)
-      {
-         attrValues[a] = morphognostic.immediateEvents[i];
-         a++;
-      }
       for (int i = 0; i < morphognostic.NUM_NEIGHBORHOODS; i++)
       {
          int n = morphognostic.neighborhoods.get(i).sectors.length;
@@ -132,9 +123,9 @@ public class MetamorphNN
                Morphognostic.Neighborhood.Sector s = morphognostic.neighborhoods.get(i).sectors[x][y];
                for (int d = 0; d < morphognostic.eventDimensions; d++)
                {
-                  for (int j = 0; j < s.typeDensities[d].length; j++)
+                  for (int j = 0; j < s.valueDensities[d].length; j++)
                   {
-                     attrValues[a] = s.typeDensities[d][j];
+                     attrValues[a] = s.valueDensities[d][j];
                      a++;
                   }
                }

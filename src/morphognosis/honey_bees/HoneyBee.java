@@ -143,28 +143,66 @@ public class HoneyBee
       response = WAIT;
 
       // Initialize Morphognostic.
-      int numImmediateEvents =
-         1 +                                          // <nectar presence>
-         Orientation.NUM_ORIENTATIONS +               // <nectar dance direction>
-         Parameters.BEE_NUM_DISTANCE_VALUES +         // <nectar dance distance>
-         Orientation.NUM_ORIENTATIONS +               // <orientation>
-         1;                                           // <nectar carry status>
-      int numEventTypes =
-         1 +                                          // <hive presence.
-         1;                                           // <surplus nectar presence>
-      int [] eventTypes = new int[numEventTypes];
-      for (int i = 0; i < eventTypes.length; i++)
+      int eventDimensions =
+         1 +                                       // <hive presence>
+         1 +                                       // <nectar presence>
+         1 +                                       // <surplus nectar presence>
+         Orientation.NUM_ORIENTATIONS +            // <nectar dance direction>
+         Parameters.BEE_NUM_DISTANCE_VALUES +      // <nectar dance distance>
+         Orientation.NUM_ORIENTATIONS +            // <orientation>
+         1;                                        // <nectar carry status>
+      int[] eventValueDimensions = new int[eventDimensions];
+      for (int i = 0; i < eventDimensions; i++)
       {
-         eventTypes[i] = 1;
+         eventValueDimensions[i] = 1;
       }
-      morphognostic = new Morphognostic(Orientation.NORTH, numImmediateEvents, eventTypes,
+      boolean[][] neighborhoodEventMap = new boolean[Parameters.NUM_NEIGHBORHOODS][eventDimensions];
+      for (int i = 0; i < Parameters.NUM_NEIGHBORHOODS; i++)
+      {
+         switch (i)
+         {
+         case 0:
+            for (int j = 0; j < eventDimensions; j++)
+            {
+               switch (j)
+               {
+               case 0:              // <hive presence>
+               case 2:              // <surplus nectar presence>
+                  neighborhoodEventMap[i][j] = false;
+                  break;
+
+               default:
+                  neighborhoodEventMap[i][j] = true;
+                  break;
+               }
+            }
+            break;
+
+         case 1:
+            for (int j = 0; j < eventDimensions; j++)
+            {
+               switch (j)
+               {
+               case 0:              // <hive presence>
+               case 2:              // <surplus nectar presence>
+                  neighborhoodEventMap[i][j] = true;
+                  break;
+
+               default:
+                  neighborhoodEventMap[i][j] = false;
+                  break;
+               }
+            }
+            break;
+         }
+      }
+      morphognostic = new Morphognostic(Orientation.NORTH,
+                                        eventValueDimensions,
+                                        neighborhoodEventMap,
                                         Parameters.WORLD_WIDTH, Parameters.WORLD_HEIGHT,
                                         Parameters.NUM_NEIGHBORHOODS,
-                                        Parameters.NEIGHBORHOOD_INITIAL_DIMENSION,
-                                        Parameters.NEIGHBORHOOD_DIMENSION_STRIDE,
-                                        Parameters.NEIGHBORHOOD_DIMENSION_MULTIPLIER,
-                                        Parameters.EPOCH_INTERVAL_STRIDE,
-                                        Parameters.EPOCH_INTERVAL_MULTIPLIER,
+                                        Parameters.NEIGHBORHOOD_DIMENSIONS,
+                                        Parameters.NEIGHBORHOOD_DURATIONS,
                                         Parameters.BINARY_VALUE_AGGREGATION);
 
       // Create metamorphs.
@@ -355,15 +393,15 @@ public class HoneyBee
       }
 
       // Update morphognostic.
-      int[] immediateEvents = new int[morphognostic.numImmediateEvents];
-      immediateEvents[0]    = 0;
-      int surplusNectar = 0;
+      int[] eventValues = new int[morphognostic.eventDimensions];
+      eventValues[0]    = (int)sensors[HIVE_PRESENCE_INDEX];
+      eventValues[1]    = eventValues[2] = 0;
       if (nectarCarry)
       {
          // Surplus nectar?
          if ((int)sensors[NECTAR_PRESENCE_INDEX] == 1.0f)
          {
-            surplusNectar = 1;
+            eventValues[2] = 1;
          }
       }
       else
@@ -371,26 +409,23 @@ public class HoneyBee
          // Nectar present?
          if ((int)sensors[NECTAR_PRESENCE_INDEX] == 1.0f)
          {
-            immediateEvents[0] = 1;
+            eventValues[1] = 1;
          }
       }
       if (sensors[NECTAR_DANCE_DIRECTION_INDEX] != -1)
       {
-         immediateEvents[1 + (int)sensors[NECTAR_DANCE_DIRECTION_INDEX]] = 1;
+         eventValues[3 + (int)sensors[NECTAR_DANCE_DIRECTION_INDEX]] = 1;
       }
       if (sensors[NECTAR_DANCE_DISTANCE_INDEX] != -1)
       {
-         immediateEvents[1 + Orientation.NUM_ORIENTATIONS + (int)sensors[NECTAR_DANCE_DISTANCE_INDEX]] = 1;
+         eventValues[3 + Orientation.NUM_ORIENTATIONS + (int)sensors[NECTAR_DANCE_DISTANCE_INDEX]] = 1;
       }
-      immediateEvents[1 + Orientation.NUM_ORIENTATIONS + Parameters.BEE_NUM_DISTANCE_VALUES + orientation] = 1;
+      eventValues[3 + Orientation.NUM_ORIENTATIONS + Parameters.BEE_NUM_DISTANCE_VALUES + orientation] = 1;
       if (nectarCarry)
       {
-         immediateEvents[1 + Orientation.NUM_ORIENTATIONS + Parameters.BEE_NUM_DISTANCE_VALUES + Orientation.NUM_ORIENTATIONS] = 1;
+         eventValues[3 + Orientation.NUM_ORIENTATIONS + Parameters.BEE_NUM_DISTANCE_VALUES + Orientation.NUM_ORIENTATIONS] = 1;
       }
-      int[] eventValues = new int[morphognostic.eventDimensions];
-      eventValues[0]    = (int)sensors[HIVE_PRESENCE_INDEX];
-      eventValues[1]    = surplusNectar;
-      morphognostic.update(immediateEvents, eventValues, x, y);
+      morphognostic.update(eventValues, x, y);
 
       // Respond.
       boolean validMetamorph = false;
@@ -965,13 +1000,13 @@ public class HoneyBee
       for (int i = 0; i < morphognostic.NUM_NEIGHBORHOODS; i++)
       {
          Neighborhood neighborhood = morphognostic.neighborhoods.get(i);
-         float[][][] densities = neighborhood.rectifySectorTypeDensities();
+         float[][][] densities = neighborhood.rectifySectorValueDensities();
          int n = neighborhood.sectors.length;
          for (int j = 0, j2 = n * n; j < j2; j++)
          {
             for (int d = dx, d2 = morphognostic.eventDimensions; d < d2; d++)
             {
-               for (int k = 0, k2 = morphognostic.numEventTypes[d]; k < k2; k++)
+               for (int k = 0, k2 = morphognostic.eventValueDimensions[d]; k < k2; k++)
                {
                   if (skipComma)
                   {
@@ -1114,23 +1149,24 @@ public class HoneyBee
    {
       float c = 0.0f;
 
-      int centerXY = Parameters.NEIGHBORHOOD_INITIAL_DIMENSION / 2;
-
       for (int i = 0; i < morphognostic.NUM_NEIGHBORHOODS; i++)
       {
-         Neighborhood n = morphognostic.neighborhoods.get(i);
+         int          centerXY = Parameters.NEIGHBORHOOD_DIMENSIONS[i][0] / 2;
+         Neighborhood n        = morphognostic.neighborhoods.get(i);
          for (int x = 0; x < n.sectors.length; x++)
          {
             for (int y = 0; y < n.sectors.length; y++)
             {
-               if ((x == centerXY) && (y == centerXY)) { continue; }
                Neighborhood.Sector s = n.sectors[x][y];
-               c += s.typeDensities[valueIndex][0];
-               if (verbose && (s.typeDensities[valueIndex][0] > 0.0f))
+               if ((x != centerXY) || (y != centerXY))
+               {
+                  c += s.valueDensities[valueIndex][0];
+               }
+               if (verbose && (s.valueDensities[valueIndex][0] > 0.0f))
                {
                   System.out.println("checkMorphognosticFeaturePresence, valueIndex=" + valueIndex +
                                      ",neighborhood=" + i + ",duration=" + n.duration + ",sector=" + x + "/" + y +
-                                     ",density=" + s.typeDensities[0][0]);
+                                     ",density=" + s.valueDensities[0][0]);
                }
             }
          }

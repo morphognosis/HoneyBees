@@ -7,8 +7,6 @@ package morphognosis.honey_bees;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-
-import morphognosis.Morphognostic;
 import morphognosis.Utility;
 
 public class Parameters
@@ -33,13 +31,10 @@ public class Parameters
    public static float BEE_DEADLOCK_PREVENTION_PROBABILITY = 0.0f;
 
    // Morphognosis parameters.
-   public static int     NUM_NEIGHBORHOODS = 1;
-   public static int     NEIGHBORHOOD_INITIAL_DIMENSION    = 3;
-   public static int     NEIGHBORHOOD_DIMENSION_STRIDE     = Morphognostic.DEFAULT_NEIGHBORHOOD_DIMENSION_STRIDE;
-   public static int     NEIGHBORHOOD_DIMENSION_MULTIPLIER = Morphognostic.DEFAULT_NEIGHBORHOOD_DIMENSION_MULTIPLIER;
-   public static int     EPOCH_INTERVAL_STRIDE             = 75;
-   public static int     EPOCH_INTERVAL_MULTIPLIER         = Morphognostic.DEFAULT_EPOCH_INTERVAL_MULTIPLIER;
-   public static boolean BINARY_VALUE_AGGREGATION          = true;
+   public static int     NUM_NEIGHBORHOODS        = 2;
+   public static int[][] NEIGHBORHOOD_DIMENSIONS  = { { 3, 1 }, { 3, 1 } };
+   public static int[]   NEIGHBORHOOD_DURATIONS   = { 1, 75 };
+   public static boolean BINARY_VALUE_AGGREGATION = true;
 
    // Metamorph neural network parameters.
    public static double NN_LEARNING_RATE = 0.1;
@@ -62,11 +57,15 @@ public class Parameters
       Utility.saveInt(writer, BEE_NUM_DISTANCE_VALUES);
       Utility.saveFloat(writer, BEE_DEADLOCK_PREVENTION_PROBABILITY);
       Utility.saveInt(writer, NUM_NEIGHBORHOODS);
-      Utility.saveInt(writer, NEIGHBORHOOD_INITIAL_DIMENSION);
-      Utility.saveInt(writer, NEIGHBORHOOD_DIMENSION_STRIDE);
-      Utility.saveInt(writer, NEIGHBORHOOD_DIMENSION_MULTIPLIER);
-      Utility.saveInt(writer, EPOCH_INTERVAL_STRIDE);
-      Utility.saveInt(writer, EPOCH_INTERVAL_MULTIPLIER);
+      for (int i = 0; i < NUM_NEIGHBORHOODS; i++)
+      {
+         Utility.saveInt(writer, NEIGHBORHOOD_DIMENSIONS[i][0]);
+         Utility.saveInt(writer, NEIGHBORHOOD_DIMENSIONS[i][1]);
+      }
+      for (int i = 0; i < NUM_NEIGHBORHOODS; i++)
+      {
+         Utility.saveInt(writer, NEIGHBORHOOD_DURATIONS[i]);
+      }
       int v = 0;
       if (BINARY_VALUE_AGGREGATION)
       {
@@ -95,12 +94,18 @@ public class Parameters
       BEE_RETURN_TO_HIVE_PROBABILITY_INCREMENT = Utility.loadFloat(reader);
       BEE_NUM_DISTANCE_VALUES             = Utility.loadInt(reader);
       BEE_DEADLOCK_PREVENTION_PROBABILITY = Utility.loadFloat(reader);
-      NUM_NEIGHBORHOODS = Utility.loadInt(reader);
-      NEIGHBORHOOD_INITIAL_DIMENSION    = Utility.loadInt(reader);
-      NEIGHBORHOOD_DIMENSION_STRIDE     = Utility.loadInt(reader);
-      NEIGHBORHOOD_DIMENSION_MULTIPLIER = Utility.loadInt(reader);
-      EPOCH_INTERVAL_STRIDE             = Utility.loadInt(reader);
-      EPOCH_INTERVAL_MULTIPLIER         = Utility.loadInt(reader);
+      NUM_NEIGHBORHOODS       = Utility.loadInt(reader);
+      NEIGHBORHOOD_DIMENSIONS = new int[NUM_NEIGHBORHOODS][2];
+      for (int i = 0; i < NUM_NEIGHBORHOODS; i++)
+      {
+         NEIGHBORHOOD_DIMENSIONS[i][0] = Utility.loadInt(reader);
+         NEIGHBORHOOD_DIMENSIONS[i][1] = Utility.loadInt(reader);
+      }
+      NEIGHBORHOOD_DURATIONS = new int[NUM_NEIGHBORHOODS];
+      for (int i = 0; i < NUM_NEIGHBORHOODS; i++)
+      {
+         NEIGHBORHOOD_DURATIONS[i] = Utility.loadInt(reader);
+      }
       int v = Utility.loadInt(reader);
       if (v == 1)
       {
@@ -132,11 +137,26 @@ public class Parameters
       System.out.println("BEE_NUM_DISTANCE_VALUES = " + BEE_NUM_DISTANCE_VALUES);
       System.out.println("BEE_DEADLOCK_PREVENTION_PROBABILITY = " + BEE_DEADLOCK_PREVENTION_PROBABILITY);
       System.out.println("NUM_NEIGHBORHOODS = " + NUM_NEIGHBORHOODS);
-      System.out.println("NEIGHBORHOOD_INITIAL_DIMENSION = " + NEIGHBORHOOD_INITIAL_DIMENSION);
-      System.out.println("NEIGHBORHOOD_DIMENSION_STRIDE = " + NEIGHBORHOOD_DIMENSION_STRIDE);
-      System.out.println("NEIGHBORHOOD_DIMENSION_MULTIPLIER = " + NEIGHBORHOOD_DIMENSION_MULTIPLIER);
-      System.out.println("EPOCH_INTERVAL_STRIDE = " + EPOCH_INTERVAL_STRIDE);
-      System.out.println("EPOCH_INTERVAL_MULTIPLIER = " + EPOCH_INTERVAL_MULTIPLIER);
+      System.out.print("NEIGHBORHOOD_DIMENSIONS (element: { <neighborhood dimension>, <sector dimension> })={");
+      for (int i = 0; i < NUM_NEIGHBORHOODS; i++)
+      {
+         System.out.print("{" + NEIGHBORHOOD_DIMENSIONS[i][0] + "," + NEIGHBORHOOD_DIMENSIONS[i][1] + "}");
+         if (i < NUM_NEIGHBORHOODS - 1)
+         {
+            System.out.print(",");
+         }
+      }
+      System.out.println("}");
+      System.out.print("NEIGHBORHOOD_DURATIONS={");
+      for (int i = 0; i < NUM_NEIGHBORHOODS; i++)
+      {
+         System.out.print(NEIGHBORHOOD_DURATIONS[i] + "");
+         if (i < NUM_NEIGHBORHOODS - 1)
+         {
+            System.out.print(",");
+         }
+      }
+      System.out.println("}");
       System.out.println("BINARY_VALUE_AGGREGATION = " + BINARY_VALUE_AGGREGATION);
       System.out.println("NN_LEARNING_RATE = " + NN_LEARNING_RATE);
       System.out.println("NN_MOMENTUM = " + NN_MOMENTUM);
