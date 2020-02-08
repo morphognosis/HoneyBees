@@ -19,9 +19,10 @@ public class Parameters
    // Note: probabilities are applied for each step.
 
    // Flower parameters.
-   public static float FLOWER_SPROUT_PROBABILITY            = .015f;
+   public static float FLOWER_SPROUT_PROBABILITY            = .02f;
    public static int   FLOWER_NECTAR_CAPACITY               = 2;
    public static float FLOWER_NECTAR_PRODUCTION_PROBABILITY = 0.0f;
+   public static int   FLOWER_RADIUS = 9;
 
    // Bee parameters.
    public static int   NUM_BEES             = 1;
@@ -31,9 +32,9 @@ public class Parameters
    public static float BEE_DEADLOCK_PREVENTION_PROBABILITY = 0.0f;
 
    // Morphognosis parameters.
-   public static int     NUM_NEIGHBORHOODS        = 2;
-   public static int[][] NEIGHBORHOOD_DIMENSIONS  = { { 3, 1 }, { 3, 1 } };
-   public static int[]   NEIGHBORHOOD_DURATIONS   = { 1, 75 };
+   public static int     NUM_NEIGHBORHOODS        = 3;
+   public static int[][] NEIGHBORHOOD_DIMENSIONS  = { { 3, 1 }, { 3, 1 }, { 3, 1 } };
+   public static int[]   NEIGHBORHOOD_DURATIONS   = { 1, FLOWER_RADIUS, 75 };
    public static boolean BINARY_VALUE_AGGREGATION = true;
 
    // Metamorph neural network parameters.

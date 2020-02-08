@@ -70,17 +70,21 @@ public class World
       {
          for (int y = 0; y < Parameters.WORLD_HEIGHT; y++)
          {
-            Cell cell = cells[x][y];
-            if (!cell.hive && (cell.bee == null))
+            if (Math.sqrt(((double)y - cy) * ((double)y - cy) + ((double)x - cx) * (
+                             (double)x - cx)) <= (double)Parameters.FLOWER_RADIUS)
             {
-               if (random.nextFloat() < Parameters.FLOWER_SPROUT_PROBABILITY)
+               Cell cell = cells[x][y];
+               if (!cell.hive && (cell.bee == null))
                {
-                  Flower flower = new Flower();
-                  cell.flower = flower;
-                  if ((Parameters.FLOWER_NECTAR_CAPACITY > 0) &&
-                      (random.nextFloat() < Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY))
+                  if (random.nextFloat() < Parameters.FLOWER_SPROUT_PROBABILITY)
                   {
-                     flower.nectar = 1;
+                     Flower flower = new Flower();
+                     cell.flower = flower;
+                     if ((Parameters.FLOWER_NECTAR_CAPACITY > 0) &&
+                         (random.nextFloat() < Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY))
+                     {
+                        flower.nectar = 1;
+                     }
                   }
                }
             }
@@ -123,21 +127,27 @@ public class World
             cells[x][y].clear();
          }
       }
+      double cx = Parameters.WORLD_WIDTH / 2.0;
+      double cy = Parameters.WORLD_HEIGHT / 2.0;
       for (int x = 0; x < Parameters.WORLD_WIDTH; x++)
       {
          for (int y = 0; y < Parameters.WORLD_HEIGHT; y++)
          {
-            Cell cell = cells[x][y];
-            if (!cell.hive && (cell.bee == null))
+            if (Math.sqrt(((double)y - cy) * ((double)y - cy) + ((double)x - cx) * (
+                             (double)x - cx)) <= (double)Parameters.FLOWER_RADIUS)
             {
-               if (random.nextFloat() < Parameters.FLOWER_SPROUT_PROBABILITY)
+               Cell cell = cells[x][y];
+               if (!cell.hive && (cell.bee == null))
                {
-                  Flower flower = new Flower();
-                  cell.flower = flower;
-                  if ((Parameters.FLOWER_NECTAR_CAPACITY > 0) &&
-                      (random.nextFloat() < Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY))
+                  if (random.nextFloat() < Parameters.FLOWER_SPROUT_PROBABILITY)
                   {
-                     flower.nectar = 1;
+                     Flower flower = new Flower();
+                     cell.flower = flower;
+                     if ((Parameters.FLOWER_NECTAR_CAPACITY > 0) &&
+                         (random.nextFloat() < Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY))
+                     {
+                        flower.nectar = 1;
+                     }
                   }
                }
             }

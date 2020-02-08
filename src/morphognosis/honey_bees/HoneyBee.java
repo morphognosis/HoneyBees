@@ -183,8 +183,23 @@ public class HoneyBee
             {
                switch (j)
                {
-               case 0:              // <hive presence>
                case 2:              // <surplus nectar presence>
+                  neighborhoodEventMap[i][j] = true;
+                  break;
+
+               default:
+                  neighborhoodEventMap[i][j] = false;
+                  break;
+               }
+            }
+            break;
+
+         case 2:
+            for (int j = 0; j < eventDimensions; j++)
+            {
+               switch (j)
+               {
+               case 0:               // <hive presence>
                   neighborhoodEventMap[i][j] = true;
                   break;
 
