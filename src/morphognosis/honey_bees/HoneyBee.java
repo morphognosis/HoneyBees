@@ -955,6 +955,9 @@ public class HoneyBee
                return;
             }
 
+            // Get NN response.
+            response = metamorphNN.respond(morphognostic);
+
             // Check for hung nectar display.
             if ((previousResponse >= DISPLAY_NECTAR_DISTANCE) && (previousResponse < WAIT))
             {
