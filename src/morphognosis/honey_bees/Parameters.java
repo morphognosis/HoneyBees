@@ -19,17 +19,17 @@ public class Parameters
    // Note: probabilities are applied for each step.
 
    // Flower parameters.
-   public static float FLOWER_SPROUT_PROBABILITY            = .02f;
+   public static float FLOWER_SPROUT_PROBABILITY            = .01f;
    public static int   FLOWER_NECTAR_CAPACITY               = 2;
    public static float FLOWER_NECTAR_PRODUCTION_PROBABILITY = 0.0f;
-   public static int   FLOWER_RADIUS = 9;
+   public static int   FLOWER_RADIUS = 10;
 
    // Bee parameters.
    public static int   NUM_BEES             = 1;
    public static float BEE_TURN_PROBABILITY = .2f;
    public static float BEE_RETURN_TO_HIVE_PROBABILITY_INCREMENT = .01f;
-   public static int   BEE_NUM_DISTANCE_VALUES             = 1;
-   public static float BEE_DEADLOCK_PREVENTION_PROBABILITY = 0.0f;
+   public static int   BEE_NUM_DISTANCE_VALUES = 1;
+   //public static float BEE_DEADLOCK_PREVENTION_PROBABILITY = 0.0f;
 
    // Morphognosis parameters.
    public static int     NUM_NEIGHBORHOODS        = 3;
@@ -40,8 +40,8 @@ public class Parameters
    // Metamorph neural network parameters.
    public static double NN_LEARNING_RATE = 0.1;
    public static double NN_MOMENTUM      = 0.2;
-   public static String NN_HIDDEN_LAYERS = "10";
-   public static int    NN_TRAINING_TIME = 10000;
+   public static String NN_HIDDEN_LAYERS = "15";
+   public static int    NN_TRAINING_TIME = 5000;
 
    // Save.
    public static void save(DataOutputStream writer) throws IOException
@@ -56,7 +56,6 @@ public class Parameters
       Utility.saveFloat(writer, BEE_TURN_PROBABILITY);
       Utility.saveFloat(writer, BEE_RETURN_TO_HIVE_PROBABILITY_INCREMENT);
       Utility.saveInt(writer, BEE_NUM_DISTANCE_VALUES);
-      Utility.saveFloat(writer, BEE_DEADLOCK_PREVENTION_PROBABILITY);
       Utility.saveInt(writer, NUM_NEIGHBORHOODS);
       for (int i = 0; i < NUM_NEIGHBORHOODS; i++)
       {
@@ -93,8 +92,7 @@ public class Parameters
       NUM_BEES             = Utility.loadInt(reader);
       BEE_TURN_PROBABILITY = Utility.loadFloat(reader);
       BEE_RETURN_TO_HIVE_PROBABILITY_INCREMENT = Utility.loadFloat(reader);
-      BEE_NUM_DISTANCE_VALUES             = Utility.loadInt(reader);
-      BEE_DEADLOCK_PREVENTION_PROBABILITY = Utility.loadFloat(reader);
+      BEE_NUM_DISTANCE_VALUES = Utility.loadInt(reader);
       NUM_NEIGHBORHOODS       = Utility.loadInt(reader);
       NEIGHBORHOOD_DIMENSIONS = new int[NUM_NEIGHBORHOODS][2];
       for (int i = 0; i < NUM_NEIGHBORHOODS; i++)
@@ -136,7 +134,6 @@ public class Parameters
       System.out.println("BEE_TURN_PROBABILITY = " + BEE_TURN_PROBABILITY);
       System.out.println("BEE_RETURN_TO_HIVE_PROBABILITY_INCREMENT = " + BEE_RETURN_TO_HIVE_PROBABILITY_INCREMENT);
       System.out.println("BEE_NUM_DISTANCE_VALUES = " + BEE_NUM_DISTANCE_VALUES);
-      System.out.println("BEE_DEADLOCK_PREVENTION_PROBABILITY = " + BEE_DEADLOCK_PREVENTION_PROBABILITY);
       System.out.println("NUM_NEIGHBORHOODS = " + NUM_NEIGHBORHOODS);
       System.out.print("NEIGHBORHOOD_DIMENSIONS (element: { <neighborhood dimension>, <sector dimension> })={");
       for (int i = 0; i < NUM_NEIGHBORHOODS; i++)
