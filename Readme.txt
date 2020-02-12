@@ -1,6 +1,6 @@
 Honey bees nectar foraging.
 
-Honey bees cooperatively forage using signals to communicate nectar location.
+Honey bees cooperatively forage using dancing behavior to communicate nectar direction and distance to other bees.
 This project simulates this social behavior in a cellular automaton using the Morphognosis model.
 
 World:
@@ -26,17 +26,17 @@ Setup:
 
 1. Clone or download and unzip the code from https://github.com/morphognosis/HoneyBees.
 2. Optional: Import Eclipse project.
-3. Optionally build (since it comes pre-built): click or run the build.bat/build.sh in the work folder to build the code.
+3. Optionally build (it comes pre-built): click or run the build.bat/build.sh in the work folder to build the code.
 
 Run: 
 1. Click on or run the honey_bees.bat/honey_bees.sh command in the work folder to bring up the display and dashboard.
-2. The dashboard is set to the "autopilot" driver, which guides the bees to forage while learning production rules.
+2. The dashboard is set to the "autopilot" driver, which guides the bees to forage while accumulating metamorph rules.
 3. Reset the environment.
-4. Change the driver to "metamorphRules" which will utilize the learned production rules.
+4. Change the driver to "metamorphDB" which will utilize the metamorphs.
 
 Neural network training:
-Construct the nest using autopilot, then write out the training dataset using the dashboard.
-The dataset can be used with your favorite machine learning tools, e.g. H2Oai (https://www.h2o.ai)
+Forage using the autopilot driver to creaete training dataset, then train using the dashboard.
+The dataset can also be written out and used with your favorite machine learning tools, e.g. H2Oai (https://www.h2o.ai)
 
 References:
 
@@ -55,5 +55,5 @@ Morphognosis: the shape of knowledge in space and time:
 Learning C. elegans locomotion and foraging with a hierarchical space-time cellular automaton:	
 	https://www.researchgate.net/publication/326832203_Learning_C_elegans_locomotion_and_foraging_with_a_hierarchical_space-time_cellular_automaton
 	
-Honey bee information:
+Honey bee dance information:
 https://askabiologist.asu.edu/bee-dance-game/introduction.html
