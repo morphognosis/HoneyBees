@@ -368,9 +368,14 @@ public class WorldDisplay extends JFrame
                   // Bee displaying distance to nectar?
                   if (bee.nectarDistanceDisplay != -1)
                   {
-                     int maxDist    = Math.max(Parameters.WORLD_WIDTH, Parameters.WORLD_HEIGHT) / 2;
-                     int unitDist   = maxDist / Parameters.BEE_NUM_DISTANCE_VALUES;
-                     int nectarDist = (bee.nectarDistanceDisplay * unitDist) + (unitDist / 2);
+                     int maxDist  = Math.max(Parameters.WORLD_WIDTH, Parameters.WORLD_HEIGHT) / 2;
+                     int unitDist = maxDist / 2;
+                     int d        = 0;
+                     if (bee.nectarDistanceDisplay == 0)
+                     {
+                        d = 1;
+                     }
+                     int nectarDist = (d * unitDist) + (unitDist / 2);
                      int toX        = bee.x;
                      int toY        = bee.y;
                      switch (bee.orientation)

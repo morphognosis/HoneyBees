@@ -28,20 +28,18 @@ public class Parameters
    public static int   NUM_BEES             = 1;
    public static float BEE_TURN_PROBABILITY = .2f;
    public static float BEE_RETURN_TO_HIVE_PROBABILITY_INCREMENT = .01f;
-   public static int   BEE_NUM_DISTANCE_VALUES = 1;
-   //public static float BEE_DEADLOCK_PREVENTION_PROBABILITY = 0.0f;
 
    // Morphognosis parameters.
-   public static int     NUM_NEIGHBORHOODS        = 3;
-   public static int[][] NEIGHBORHOOD_DIMENSIONS  = { { 3, 1 }, { 3, 1 }, { 3, 1 } };
-   public static int[]   NEIGHBORHOOD_DURATIONS   = { 1, FLOWER_RADIUS, 75 };
+   public static int     NUM_NEIGHBORHOODS        = 4;
+   public static int[][] NEIGHBORHOOD_DIMENSIONS  = { { 3, 1 }, { 3, 1 }, { 3, 1 }, { 3, 1 } };
+   public static int[]   NEIGHBORHOOD_DURATIONS   = { 1, (int)((float)FLOWER_RADIUS * .7f), FLOWER_RADIUS, 75 };
    public static boolean BINARY_VALUE_AGGREGATION = true;
 
    // Metamorph neural network parameters.
    public static double NN_LEARNING_RATE = 0.1;
    public static double NN_MOMENTUM      = 0.2;
-   public static String NN_HIDDEN_LAYERS = "15";
-   public static int    NN_TRAINING_TIME = 5000;
+   public static String NN_HIDDEN_LAYERS = "20,20";
+   public static int    NN_TRAINING_TIME = 10000;
 
    // Save.
    public static void save(DataOutputStream writer) throws IOException
@@ -55,7 +53,6 @@ public class Parameters
       Utility.saveInt(writer, NUM_BEES);
       Utility.saveFloat(writer, BEE_TURN_PROBABILITY);
       Utility.saveFloat(writer, BEE_RETURN_TO_HIVE_PROBABILITY_INCREMENT);
-      Utility.saveInt(writer, BEE_NUM_DISTANCE_VALUES);
       Utility.saveInt(writer, NUM_NEIGHBORHOODS);
       for (int i = 0; i < NUM_NEIGHBORHOODS; i++)
       {
@@ -92,7 +89,6 @@ public class Parameters
       NUM_BEES             = Utility.loadInt(reader);
       BEE_TURN_PROBABILITY = Utility.loadFloat(reader);
       BEE_RETURN_TO_HIVE_PROBABILITY_INCREMENT = Utility.loadFloat(reader);
-      BEE_NUM_DISTANCE_VALUES = Utility.loadInt(reader);
       NUM_NEIGHBORHOODS       = Utility.loadInt(reader);
       NEIGHBORHOOD_DIMENSIONS = new int[NUM_NEIGHBORHOODS][2];
       for (int i = 0; i < NUM_NEIGHBORHOODS; i++)
@@ -133,7 +129,6 @@ public class Parameters
       System.out.println("NUM_BEES = " + NUM_BEES);
       System.out.println("BEE_TURN_PROBABILITY = " + BEE_TURN_PROBABILITY);
       System.out.println("BEE_RETURN_TO_HIVE_PROBABILITY_INCREMENT = " + BEE_RETURN_TO_HIVE_PROBABILITY_INCREMENT);
-      System.out.println("BEE_NUM_DISTANCE_VALUES = " + BEE_NUM_DISTANCE_VALUES);
       System.out.println("NUM_NEIGHBORHOODS = " + NUM_NEIGHBORHOODS);
       System.out.print("NEIGHBORHOOD_DIMENSIONS (element: { <neighborhood dimension>, <sector dimension> })={");
       for (int i = 0; i < NUM_NEIGHBORHOODS; i++)

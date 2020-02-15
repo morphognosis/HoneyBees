@@ -48,13 +48,20 @@ public class HoneyBee
 
    // Response.
    // Initial responses are changing directions (see Orientation).
-   public static final int FORWARD                 = Orientation.NUM_ORIENTATIONS;
-   public static final int EXTRACT_NECTAR          = FORWARD + 1;
-   public static final int DEPOSIT_NECTAR          = EXTRACT_NECTAR + 1;
-   public static final int DISPLAY_NECTAR_DISTANCE = DEPOSIT_NECTAR + 1;
-   public static final int WAIT          = DISPLAY_NECTAR_DISTANCE + Parameters.BEE_NUM_DISTANCE_VALUES;
+   public static final int FORWARD        = Orientation.NUM_ORIENTATIONS;
+   public static final int EXTRACT_NECTAR = FORWARD + 1;
+   public static final int DEPOSIT_NECTAR = EXTRACT_NECTAR + 1;
+   public static final int DISPLAY_NECTAR_LONG_DISTANCE  = DEPOSIT_NECTAR + 1;
+   public static final int DISPLAY_NECTAR_SHORT_DISTANCE = DISPLAY_NECTAR_LONG_DISTANCE + 1;
+   public static final int WAIT          = DISPLAY_NECTAR_SHORT_DISTANCE + 1;
    public static final int NUM_RESPONSES = WAIT + 1;
    int response;
+
+   // Event symbols.
+   public static final int HIVE_PRESENCE_EVENT         = 0;
+   public static final int SURPLUS_NECTAR_EVENT        = 2;
+   public static final int NECTAR_LONG_DISTANCE_EVENT  = 11;
+   public static final int NECTAR_SHORT_DISTANCE_EVENT = 12;
 
    // Maximum distance between equivalent morphognostics.
    public static float EQUIVALENT_MORPHOGNOSTIC_DISTANCE = 0.0f;
@@ -144,7 +151,7 @@ public class HoneyBee
          1 +                                       // <nectar presence>
          1 +                                       // <surplus nectar presence>
          Orientation.NUM_ORIENTATIONS +            // <nectar dance direction>
-         Parameters.BEE_NUM_DISTANCE_VALUES +      // <nectar dance distance>
+         2 +                                       // <nectar dance distance>
          Orientation.NUM_ORIENTATIONS +            // <orientation>
          1;                                        // <nectar carry status>
       int[] eventValueDimensions = new int[eventDimensions];
@@ -162,9 +169,10 @@ public class HoneyBee
             {
                switch (j)
                {
-               case 0:              // <hive presence>
-               case 2:              // <surplus nectar presence>
-               case 11:             // <nectar dance distance>
+               case HIVE_PRESENCE_EVENT:
+               case SURPLUS_NECTAR_EVENT:
+               case NECTAR_LONG_DISTANCE_EVENT:
+               case NECTAR_SHORT_DISTANCE_EVENT:
                   neighborhoodEventMap[i][j] = false;
                   break;
 
@@ -180,8 +188,8 @@ public class HoneyBee
             {
                switch (j)
                {
-               case 2:              // <surplus nectar presence>
-               case 11:             // <nectar dance distance>
+               case SURPLUS_NECTAR_EVENT:
+               case NECTAR_SHORT_DISTANCE_EVENT:
                   neighborhoodEventMap[i][j] = true;
                   break;
 
@@ -197,7 +205,24 @@ public class HoneyBee
             {
                switch (j)
                {
-               case 0:               // <hive presence>
+               case SURPLUS_NECTAR_EVENT:
+               case NECTAR_LONG_DISTANCE_EVENT:
+                  neighborhoodEventMap[i][j] = true;
+                  break;
+
+               default:
+                  neighborhoodEventMap[i][j] = false;
+                  break;
+               }
+            }
+            break;
+
+         case 3:
+            for (int j = 0; j < eventDimensions; j++)
+            {
+               switch (j)
+               {
+               case HIVE_PRESENCE_EVENT:
                   neighborhoodEventMap[i][j] = true;
                   break;
 
@@ -407,21 +432,22 @@ public class HoneyBee
             {
                if (response == EXTRACT_NECTAR)
                {
-                  try {
+                  try
+                  {
                      Thread.sleep(5000);
                   }
-                  catch (InterruptedException e) {
-                     e.printStackTrace();
-                  }
+                  catch (InterruptedException e) {}
                }
-               int checkSurplus = locateMorphognosticEvent(morphognostic, 1, 2, false);
-               int checkDist    = locateMorphognosticEvent(morphognostic, 1, 11, false);
-               int i            = 3;
+               int checkLongSurplus  = locateMorphognosticEvent(morphognostic, 2, SURPLUS_NECTAR_EVENT, false);
+               int checkShortSurplus = locateMorphognosticEvent(morphognostic, 1, SURPLUS_NECTAR_EVENT, false);
+               int checkLongDist     = locateMorphognosticEvent(morphognostic, 2, NECTAR_LONG_DISTANCE_EVENT, false);
+               int checkShortDist    = locateMorphognosticEvent(morphognostic, 1, NECTAR_SHORT_DISTANCE_EVENT, false);
+               int i = 3;
                for ( ; i < 11; i++)
                {
                   if (locateMorphognosticEvent(morphognostic, 0, i, false) != -1) { break; }
                }
-               System.out.println("response=" + response + ",checkSurplus=" + checkSurplus + ",checkDist=" + checkDist + ",checko=" + i + ",distanceDisplay=" + nectarDistanceDisplay);
+               System.out.println("response=" + response + ",checkLongSurplus=" + checkLongSurplus + ",checkLongDist=" + checkLongDist + ",checkShortSurplus=" + checkShortSurplus + ",checkShortDist=" + checkShortDist + ",checko=" + (i - 3) + ",distanceDisplay=" + nectarDistanceDisplay);
             }
          }
          break;
@@ -486,10 +512,10 @@ public class HoneyBee
       {
          eventValues[3 + Orientation.NUM_ORIENTATIONS + (int)sensors[NECTAR_DANCE_DISTANCE_INDEX]] = 1;
       }
-      eventValues[3 + Orientation.NUM_ORIENTATIONS + Parameters.BEE_NUM_DISTANCE_VALUES + orientation] = 1;
+      eventValues[3 + Orientation.NUM_ORIENTATIONS + 2 + orientation] = 1;
       if (nectarCarry)
       {
-         eventValues[3 + Orientation.NUM_ORIENTATIONS + Parameters.BEE_NUM_DISTANCE_VALUES + Orientation.NUM_ORIENTATIONS] = 1;
+         eventValues[3 + Orientation.NUM_ORIENTATIONS + 2 + Orientation.NUM_ORIENTATIONS] = 1;
       }
       morphognostic.update(eventValues, x, y);
    }
@@ -504,8 +530,7 @@ public class HoneyBee
       boolean found = false;
       for (Metamorph m : metamorphs)
       {
-         if (m.morphognostic.compare(metamorph.morphognostic) <=
-             EQUIVALENT_MORPHOGNOSTIC_DISTANCE)
+         if (m.morphognostic.compare(metamorph.morphognostic) <= EQUIVALENT_MORPHOGNOSTIC_DISTANCE)
          {
             found = true;
             break;
@@ -591,7 +616,10 @@ public class HoneyBee
          response = (int)sensors[NECTAR_DANCE_DIRECTION_INDEX];
          return(true);
       }
-      else if (locateMorphognosticEvent(morphognostic, 1, 11, false) != -1)
+      else if ((locateMorphognosticEvent(
+                   morphognostic, 2, NECTAR_LONG_DISTANCE_EVENT, false) != -1) ||
+               (locateMorphognosticEvent(
+                   morphognostic, 1, NECTAR_SHORT_DISTANCE_EVENT, false) != -1))
       {
          // Move in direction of nectar.
          response = FORWARD;
@@ -601,8 +629,8 @@ public class HoneyBee
       // In hive?
       if (sensors[HIVE_PRESENCE_INDEX] == 1.0f)
       {
-         // Surplus nectar detected?
-         int o = locateMorphognosticEvent(morphognostic, 1, 2, false);
+         // Surplus nectar short distance detected?
+         int o = locateMorphognosticEvent(morphognostic, 1, SURPLUS_NECTAR_EVENT, false);
          if ((o != -1) && (o < Orientation.NUM_ORIENTATIONS))
          {
             // Orient toward nectar?
@@ -612,8 +640,24 @@ public class HoneyBee
                return(true);
             }
 
-            // Dance display of nectar direction and distance to bees in hive.
-            response = DISPLAY_NECTAR_DISTANCE;
+            // Dance display of nectar short distance to bees in hive.
+            response = DISPLAY_NECTAR_SHORT_DISTANCE;
+            return(true);
+         }
+
+         // Check for surplus long distance nectar.
+         o = locateMorphognosticEvent(morphognostic, 2, SURPLUS_NECTAR_EVENT, false);
+         if ((o != -1) && (o < Orientation.NUM_ORIENTATIONS))
+         {
+            // Orient toward nectar?
+            if (o != orientation)
+            {
+               response = o;
+               return(true);
+            }
+
+            // Dance display of nectar long distance to bees in hive.
+            response = DISPLAY_NECTAR_LONG_DISTANCE;
             return(true);
          }
       }
@@ -908,15 +952,14 @@ public class HoneyBee
          {
             if (response == EXTRACT_NECTAR)
             {
-               try {
+               try
+               {
                   Thread.sleep(5000);
                }
-               catch (InterruptedException e) {
-                  e.printStackTrace();
-               }
+               catch (InterruptedException e) {}
             }
-            int checkDist = locateMorphognosticEvent(morphognostic, 1, 11, false);
-            System.out.println("response=" + response + ",checkDist=" + checkDist);
+            int checkLongDist = locateMorphognosticEvent(morphognostic, 2, NECTAR_LONG_DISTANCE_EVENT, false);
+            System.out.println("response=" + response + ",checkLongDist=" + checkLongDist);
          }
       }
    }
@@ -931,7 +974,8 @@ public class HoneyBee
          if (metamorphNN != null)
          {
             // Lost hive?
-            if (!world.cells[x][y].hive && (locateMorphognosticEvent(morphognostic, 0, false) == -1))
+            if (!world.cells[x][y].hive &&
+                (locateMorphognosticEvent(morphognostic, 3, HIVE_PRESENCE_EVENT, false) == -1))
             {
                // Use autopilot response.
                return;
@@ -943,21 +987,22 @@ public class HoneyBee
             {
                if (response == EXTRACT_NECTAR)
                {
-                  try {
+                  try
+                  {
                      Thread.sleep(5000);
                   }
-                  catch (InterruptedException e) {
-                     e.printStackTrace();
-                  }
+                  catch (InterruptedException e) {}
                }
-               int checkSurplus = locateMorphognosticEvent(morphognostic, 1, 2, false);
-               int checkDist    = locateMorphognosticEvent(morphognostic, 1, 11, false);
-               int i            = 3;
+               int checkLongSurplus  = locateMorphognosticEvent(morphognostic, 2, SURPLUS_NECTAR_EVENT, false);
+               int checkShortSurplus = locateMorphognosticEvent(morphognostic, 1, SURPLUS_NECTAR_EVENT, false);
+               int checkLongDist     = locateMorphognosticEvent(morphognostic, 2, NECTAR_LONG_DISTANCE_EVENT, false);
+               int checkShortDist    = locateMorphognosticEvent(morphognostic, 1, NECTAR_SHORT_DISTANCE_EVENT, false);
+               int i = 3;
                for ( ; i < 11; i++)
                {
                   if (locateMorphognosticEvent(morphognostic, 0, i, false) != -1) { break; }
                }
-               System.out.println("response=" + response + ",checkSurplus=" + checkSurplus + ",checkDist=" + checkDist + ",checko=" + i + ",distanceDisplay=" + nectarDistanceDisplay);
+               System.out.println("response=" + response + ",checkLongSurplus=" + checkLongSurplus + ",checkLongDist=" + checkLongDist + ",checkShortSurplus=" + checkShortSurplus + ",checkShortDist=" + checkShortDist + ",checko=" + (i - 3) + ",distanceDisplay=" + nectarDistanceDisplay);
             }
          }
          else
@@ -1082,9 +1127,13 @@ public class HoneyBee
       {
          return(DEPOSIT_NECTAR);
       }
-      if (name.equals("display nectar distance"))
+      if (name.equals("display nectar long distance"))
       {
-         return(DISPLAY_NECTAR_DISTANCE);
+         return(DISPLAY_NECTAR_LONG_DISTANCE);
+      }
+      if (name.equals("display nectar short distance"))
+      {
+         return(DISPLAY_NECTAR_SHORT_DISTANCE);
       }
       if (name.equals("wait"))
       {
@@ -1131,15 +1180,14 @@ public class HoneyBee
 
       case DEPOSIT_NECTAR:
          return("deposit nectar");
-      }
 
-      if ((response >= DISPLAY_NECTAR_DISTANCE) && (response < WAIT))
-      {
-         return("display nectar distance " + (response - DISPLAY_NECTAR_DISTANCE));
-      }
+      case DISPLAY_NECTAR_LONG_DISTANCE:
+         return("display nectar long distance");
 
-      if (response == WAIT)
-      {
+      case DISPLAY_NECTAR_SHORT_DISTANCE:
+         return("display nectar short distance");
+
+      case WAIT:
          return("wait");
       }
 
@@ -1187,7 +1235,7 @@ public class HoneyBee
                {
                   if (verbose)
                   {
-                     System.out.println("checkMorphognosticFeaturePresence, valueIndex=" + valueIndex +
+                     System.out.println("locateMorphognosticEvent, valueIndex=" + valueIndex +
                                         ",neighborhood=" + neighborhood + ",duration=" + n.duration + ",sector=" + x + "/" + y +
                                         ",density=" + s.valueDensities[valueIndex][0]);
                   }
@@ -1241,7 +1289,7 @@ public class HoneyBee
       {
          if (verbose)
          {
-            System.out.println("checkMorphognosticFeaturePresence, valueIndex=" + valueIndex +
+            System.out.println("locateMorphognosticEvent, valueIndex=" + valueIndex +
                                ",neighborhood=" + neighborhood + ",duration=" + n.duration + ",sector=" + centerXY + "/" + centerXY +
                                ",density=" + s.valueDensities[valueIndex][0]);
          }

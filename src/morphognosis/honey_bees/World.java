@@ -334,9 +334,13 @@ public class World
                break;
             }
          }
-         if ((responses[n] >= HoneyBee.DISPLAY_NECTAR_DISTANCE) && (responses[n] < HoneyBee.WAIT))
+         if (responses[n] == HoneyBee.DISPLAY_NECTAR_LONG_DISTANCE)
          {
-            bee.nectarDistanceDisplay = responses[n] - HoneyBee.DISPLAY_NECTAR_DISTANCE;
+            bee.nectarDistanceDisplay = 0;
+         }
+         else if (responses[n] == HoneyBee.DISPLAY_NECTAR_SHORT_DISTANCE)
+         {
+            bee.nectarDistanceDisplay = 1;
          }
          else
          {
