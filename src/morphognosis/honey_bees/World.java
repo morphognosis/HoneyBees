@@ -355,6 +355,46 @@ public class World
    {
       float[] sensors = new float[HoneyBee.NUM_SENSORS];
 
+      // Get hive and nectar sensors.
+      if (cells[bee.x][bee.y].hive)
+      {
+         sensors[HoneyBee.HIVE_PRESENCE_INDEX] = 1.0f;
+      }
+      else
+      {
+         sensors[HoneyBee.HIVE_PRESENCE_INDEX] = 0.0f;
+      }
+      if ((cells[bee.x][bee.y].flower != null) && (cells[bee.x][bee.y].flower.nectar > 0))
+      {
+         sensors[HoneyBee.NECTAR_PRESENCE_INDEX] = 1.0f;
+      }
+      else
+      {
+         sensors[HoneyBee.NECTAR_PRESENCE_INDEX] = 0.0f;
+      }
+
+      // If in hive, check for dancing bee nectar direction and distance display.
+      sensors[HoneyBee.NECTAR_DANCE_DIRECTION_INDEX] = -1.0f;
+      sensors[HoneyBee.NECTAR_DANCE_DISTANCE_INDEX]  = -1.0f;
+      if (cells[bee.x][bee.y].hive && !bee.nectarCarry)
+      {
+         int i = 0;
+         for ( ; i < Parameters.NUM_BEES; i++)
+         {
+            if (bees[i] == bee) { break; }
+         }
+         for (int k = 0, j = i; k < Parameters.NUM_BEES; k++, j = (j + 1) % Parameters.NUM_BEES)
+         {
+            HoneyBee dancingBee = bees[j];
+            if (cells[dancingBee.x][dancingBee.y].hive && (dancingBee.nectarDistanceDisplay != -1))
+            {
+               sensors[HoneyBee.NECTAR_DANCE_DIRECTION_INDEX] = (float)dancingBee.orientation;
+               sensors[HoneyBee.NECTAR_DANCE_DISTANCE_INDEX]  = (float)dancingBee.nectarDistanceDisplay;
+               break;
+            }
+         }
+      }
+
       // Determine forward cell.
       int toX = bee.x;
       int toY = bee.y;
@@ -399,45 +439,6 @@ public class World
       bee.toX = toX;
       bee.toY = toY;
 
-      // Get hive and nectar sensors.
-      if (cells[bee.x][bee.y].hive)
-      {
-         sensors[HoneyBee.HIVE_PRESENCE_INDEX] = 1.0f;
-      }
-      else
-      {
-         sensors[HoneyBee.HIVE_PRESENCE_INDEX] = 0.0f;
-      }
-      if ((cells[bee.x][bee.y].flower != null) && (cells[bee.x][bee.y].flower.nectar > 0))
-      {
-         sensors[HoneyBee.NECTAR_PRESENCE_INDEX] = 1.0f;
-      }
-      else
-      {
-         sensors[HoneyBee.NECTAR_PRESENCE_INDEX] = 0.0f;
-      }
-
-      // If in hive, check for dancing bee nectar direction and distance display.
-      sensors[HoneyBee.NECTAR_DANCE_DIRECTION_INDEX] = -1.0f;
-      sensors[HoneyBee.NECTAR_DANCE_DISTANCE_INDEX]  = -1.0f;
-      if (cells[bee.x][bee.y].hive && !bee.nectarCarry)
-      {
-         int i = 0;
-         for ( ; i < Parameters.NUM_BEES; i++)
-         {
-            if (bees[i] == bee) { break; }
-         }
-         for (int k = 0, j = i; k < Parameters.NUM_BEES; k++, j = (j + 1) % Parameters.NUM_BEES)
-         {
-            HoneyBee dancingBee = bees[j];
-            if (cells[dancingBee.x][dancingBee.y].hive && (dancingBee.nectarDistanceDisplay != -1))
-            {
-               sensors[HoneyBee.NECTAR_DANCE_DIRECTION_INDEX] = (float)dancingBee.orientation;
-               sensors[HoneyBee.NECTAR_DANCE_DISTANCE_INDEX]  = (float)dancingBee.nectarDistanceDisplay;
-               break;
-            }
-         }
-      }
       return(sensors);
    }
 
@@ -471,7 +472,19 @@ public class World
       {
          for (Metamorph metamorph : bee.metamorphs)
          {
-            metamorphs.add(metamorph);
+            boolean found = false;
+            for (Metamorph m : metamorphs)
+            {
+               if (m.morphognostic.compare(metamorph.morphognostic) <= HoneyBee.EQUIVALENT_MORPHOGNOSTIC_DISTANCE)
+               {
+                  found = true;
+                  break;
+               }
+            }
+            if (!found)
+            {
+               metamorphs.add(metamorph);
+            }
          }
       }
 
@@ -494,6 +507,10 @@ public class World
       {
          metamorphNN.saveModel(filename);
       }
+      else
+      {
+         System.err.println("Cannot save null metamorph neural network to file " + filename);
+      }
    }
 
 
@@ -505,6 +522,12 @@ public class World
          metamorphNN = new MetamorphNN(random);
       }
       metamorphNN.loadModel(filename);
+
+      // Distribute model to bees.
+      for (HoneyBee bee : bees)
+      {
+         bee.metamorphNN = metamorphNN;
+      }
    }
 
 

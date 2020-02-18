@@ -845,6 +845,26 @@ public class Main
             System.out.println("Morphognosis version = " + Morphognosis.VERSION);
             System.exit(0);
          }
+         if (args[i].equals("-constantNectar"))
+         {
+            HoneyBee.constantNectar = true;
+            continue;
+         }
+         if (args[i].equals("-debugAutopilot"))
+         {
+            HoneyBee.debugAutopilot = true;
+            continue;
+         }
+         if (args[i].equals("-debugDB"))
+         {
+            HoneyBee.debugDB = true;
+            continue;
+         }
+         if (args[i].equals("-debugNN"))
+         {
+            HoneyBee.debugNN = true;
+            continue;
+         }
          System.err.println("Invalid option: " + args[i]);
          System.err.println(Usage);
          System.exit(1);
@@ -955,11 +975,8 @@ public class Main
       }
 
       // Save metamorph neural network?
-      if ((NNsavefile != null) && ((world.metamorphNN == null) || (world.metamorphNN.mlp == null)))
+      if (NNsavefile != null)
       {
-         System.out.print("Training metamorph neural network...");
-         world.trainMetamorphNN();
-         System.out.println("done");
          world.saveMetamorphNN(NNsavefile);
       }
 

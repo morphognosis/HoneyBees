@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Vector;
 
+import morphognosis.honey_bees.Parameters;
+
 /*
  * Morphognostic neighborhoods:
  * Neighborhoods are nested by increasing spatial and temporal distance from the present.
@@ -50,7 +52,13 @@ public class Morphognostic
       }
    }
    public ArrayList<Event> events;
-   public int              eventsWidth, eventsHeight;
+   public Event createEvent(int[] values, int x, int y, int time)
+   {
+      return(new Event(values, x, y, time));
+   }
+
+
+   public int eventsWidth, eventsHeight;
 
    // Event quantities.
    public int   eventDimensions;
@@ -658,6 +666,18 @@ public class Morphognostic
             }
          }
       }
+      Utility.saveInt(output, events.size());
+      for (Event event : events)
+      {
+         for (int value : event.values)
+         {
+            Utility.saveInt(output, value);
+         }
+         Utility.saveInt(output, event.x);
+         Utility.saveInt(output, event.y);
+         Utility.saveInt(output, event.time);
+      }
+      Utility.saveInt(output, eventTime);
       output.flush();
    }
 
@@ -740,6 +760,23 @@ public class Morphognostic
             }
          }
       }
+      m.events.clear();
+      int n = Utility.loadInt(input);
+      for (int i = 0; i < n; i++)
+      {
+         int[] values = new int[eventDimensions];
+         for (int j = 0; j < eventDimensions; j++)
+         {
+            values[j] = Utility.loadInt(input);
+         }
+         int   x     = Utility.loadInt(input);
+         int   y     = Utility.loadInt(input);
+         int   t     = Utility.loadInt(input);
+         Event event = m.createEvent(values, x, y, t);
+         m.events.add(m.events.size(), event);
+      }
+      m.eventTime = Utility.loadInt(input);
+
       return(m);
    }
 
@@ -790,7 +827,151 @@ public class Morphognostic
             }
          }
       }
+      m.events.clear();
+      for (int i = 0, j = events.size(); i < j; i++)
+      {
+         Event event = events.get(i);
+         int[] values = new int[eventDimensions];
+         for (int k = 0; k < eventDimensions; k++)
+         {
+            values[k] = event.values[k];
+         }
+         Event event2 = m.createEvent(values, event.x, event.y, event.time);
+         m.events.add(m.events.size(), event2);
+      }
+      m.eventTime = eventTime;
       return(m);
+   }
+
+
+   // Locate event.
+   // Return direction to event, NUM_ORIENTATIONS for center event, or -1 for not found.
+   public int locateEvent(int valueIndex)
+   {
+      return(locateEvent(valueIndex, false));
+   }
+
+
+   public int locateEvent(int valueIndex, boolean verbose)
+   {
+      for (int n = 0; n < NUM_NEIGHBORHOODS; n++)
+      {
+         int location = locateEvent(n, valueIndex, verbose);
+         if (location != -1)
+         {
+            return(location);
+         }
+      }
+      return(-1);
+   }
+
+
+   public int locateEvent(int neighborhood, int valueIndex, boolean verbose)
+   {
+      int          centerXY = Parameters.NEIGHBORHOOD_DIMENSIONS[neighborhood][0] / 2;
+      Neighborhood n        = neighborhoods.get(neighborhood);
+
+      for (int x = 0; x < n.sectors.length; x++)
+      {
+         for (int y = 0; y < n.sectors.length; y++)
+         {
+            Neighborhood.Sector s = n.sectors[x][y];
+            if ((x != centerXY) || (y != centerXY))
+            {
+               if (s.valueDensities[valueIndex][0] > 0.0f)
+               {
+                  if (verbose)
+                  {
+                     System.out.println("locateEvent, valueIndex=" + valueIndex +
+                                        ",neighborhood=" + neighborhood + ",duration=" + n.duration + ",sector=" + x + "/" + y +
+                                        ",density=" + s.valueDensities[valueIndex][0]);
+                  }
+                  if (x == 0)
+                  {
+                     if (y == 0)
+                     {
+                        return(Orientation.SOUTHWEST);
+                     }
+                     else if (y == n.sectors.length - 1)
+                     {
+                        return(Orientation.NORTHWEST);
+                     }
+                     else
+                     {
+                        return(Orientation.WEST);
+                     }
+                  }
+                  else if (x == n.sectors.length - 1)
+                  {
+                     if (y == 0)
+                     {
+                        return(Orientation.SOUTHEAST);
+                     }
+                     else if (y == n.sectors.length - 1)
+                     {
+                        return(Orientation.NORTHEAST);
+                     }
+                     else
+                     {
+                        return(Orientation.EAST);
+                     }
+                  }
+                  else
+                  {
+                     if (y == 0)
+                     {
+                        return(Orientation.SOUTH);
+                     }
+                     else
+                     {
+                        return(Orientation.NORTH);
+                     }
+                  }
+               }
+            }
+         }
+      }
+      Neighborhood.Sector s = n.sectors[centerXY][centerXY];
+      if (s.valueDensities[valueIndex][0] > 0.0f)
+      {
+         if (verbose)
+         {
+            System.out.println("locateEvent, valueIndex=" + valueIndex +
+                               ",neighborhood=" + neighborhood + ",duration=" + n.duration + ",sector=" + centerXY + "/" + centerXY +
+                               ",density=" + s.valueDensities[valueIndex][0]);
+         }
+         return(Orientation.NUM_ORIENTATIONS);
+      }
+      return(-1);
+   }
+
+
+   // Clear event.
+   public void clearEvent(int valueIndex)
+   {
+      for (int n = 0; n < NUM_NEIGHBORHOODS; n++)
+      {
+         clearEvent(n, valueIndex);
+      }
+   }
+
+
+   public void clearEvent(int neighborhood, int valueIndex)
+   {
+      Neighborhood n = neighborhoods.get(neighborhood);
+
+      for (int x = 0; x < n.sectors.length; x++)
+      {
+         for (int y = 0; y < n.sectors.length; y++)
+         {
+            Neighborhood.Sector s = n.sectors[x][y];
+            s.valueDensities[valueIndex][0] = 0.0f;
+         }
+      }
+      for (Event event : events)
+      {
+         event.values[valueIndex] = 0;
+      }
    }
 
 

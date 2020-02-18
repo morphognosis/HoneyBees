@@ -21,11 +21,11 @@ public class Parameters
    // Flower parameters.
    public static float FLOWER_SPROUT_PROBABILITY            = .01f;
    public static int   FLOWER_NECTAR_CAPACITY               = 2;
-   public static float FLOWER_NECTAR_PRODUCTION_PROBABILITY = 0.0f;
+   public static float FLOWER_NECTAR_PRODUCTION_PROBABILITY = 0.01f;
    public static int   FLOWER_RADIUS = 10;
 
    // Bee parameters.
-   public static int   NUM_BEES             = 1;
+   public static int   NUM_BEES             = 3;
    public static float BEE_TURN_PROBABILITY = .2f;
    public static float BEE_RETURN_TO_HIVE_PROBABILITY_INCREMENT = .01f;
 
@@ -38,8 +38,8 @@ public class Parameters
    // Metamorph neural network parameters.
    public static double NN_LEARNING_RATE = 0.1;
    public static double NN_MOMENTUM      = 0.2;
-   public static String NN_HIDDEN_LAYERS = "20,20";
-   public static int    NN_TRAINING_TIME = 10000;
+   public static String NN_HIDDEN_LAYERS = "100";
+   public static int    NN_TRAINING_TIME = 5000;
 
    // Save.
    public static void save(DataOutputStream writer) throws IOException

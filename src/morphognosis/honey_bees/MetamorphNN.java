@@ -30,7 +30,8 @@ public class MetamorphNN
    // Constructor.
    public MetamorphNN(SecureRandom random)
    {
-      this.random = random;
+      this.random   = random;
+      numAttributes = -1;
    }
 
 
@@ -41,7 +42,11 @@ public class MetamorphNN
       if (metamorphs.size() == 0) { return; }
 
       // Create metamorph training dataset.
-      Morphognostic        morphognostic  = metamorphs.get(0).morphognostic;
+      Morphognostic morphognostic = metamorphs.get(0).morphognostic;
+      if (numAttributes == -1)
+      {
+         setNumAttributes(morphognostic);
+      }
       ArrayList<Attribute> attributeNames = new ArrayList<Attribute>();
       for (int i = 0; i < morphognostic.NUM_NEIGHBORHOODS; i++)
       {
@@ -67,7 +72,6 @@ public class MetamorphNN
       }
       attributeNames.add(new Attribute("response", responseVals));
       Instances metamorphInstances = new Instances("metamorphs", attributeNames, 0);
-      numAttributes = attributeNames.size();
       for (Metamorph metamorph : metamorphs)
       {
          metamorphInstances.add(createInstance(metamorph.morphognostic, metamorph.response));
@@ -111,6 +115,10 @@ public class MetamorphNN
    // Create instance.
    public Instance createInstance(Morphognostic morphognostic, int response)
    {
+      if (numAttributes == -1)
+      {
+         setNumAttributes(morphognostic);
+      }
       double[]  attrValues = new double[numAttributes];
       int a = 0;
       for (int i = 0; i < morphognostic.NUM_NEIGHBORHOODS; i++)
@@ -135,6 +143,32 @@ public class MetamorphNN
       attrValues[a] = (double)response;
       a++;
       return(new DenseInstance(1.0, attrValues));
+   }
+
+
+   // Set number of attributes.
+   public void setNumAttributes(Morphognostic morphognostic)
+   {
+      numAttributes = 0;
+      for (int i = 0; i < morphognostic.NUM_NEIGHBORHOODS; i++)
+      {
+         int n = morphognostic.neighborhoods.get(i).sectors.length;
+         for (int x = 0; x < n; x++)
+         {
+            for (int y = 0; y < n; y++)
+            {
+               Morphognostic.Neighborhood.Sector s = morphognostic.neighborhoods.get(i).sectors[x][y];
+               for (int d = 0; d < morphognostic.eventDimensions; d++)
+               {
+                  for (int j = 0; j < s.valueDensities[d].length; j++)
+                  {
+                     numAttributes++;
+                  }
+               }
+            }
+         }
+      }
+      numAttributes++;
    }
 
 

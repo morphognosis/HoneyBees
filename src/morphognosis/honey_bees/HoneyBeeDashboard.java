@@ -234,9 +234,13 @@ public class HoneyBeeDashboard extends JFrame
          {
             nectarDanceDirectionText.setText("NA");
          }
-         if (sensors[HoneyBee.NECTAR_DANCE_DISTANCE_INDEX] >= 0.0f)
+         if (sensors[HoneyBee.NECTAR_DANCE_DISTANCE_INDEX] == 0.0f)
          {
-            nectarDanceDistanceText.setText((int)sensors[HoneyBee.NECTAR_DANCE_DISTANCE_INDEX] + "");
+            nectarDanceDistanceText.setText("long");
+         }
+         else if (sensors[HoneyBee.NECTAR_DANCE_DISTANCE_INDEX] == 1.0f)
+         {
+            nectarDanceDistanceText.setText("short");
          }
          else
          {

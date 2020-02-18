@@ -100,10 +100,10 @@ public class HoneyBee
    public boolean[][] landmarkMap;
 
    // Debugging.
-   public boolean constantNectar = true;
-   public boolean debugAutopilot = false;
-   public boolean debugDB        = false;
-   public boolean debugNN        = false;
+   public static boolean constantNectar = false;
+   public static boolean debugAutopilot = false;
+   public static boolean debugDB        = false;
+   public static boolean debugNN        = false;
 
    // Constructor.
    public HoneyBee(int id, World world, SecureRandom random)
@@ -434,20 +434,20 @@ public class HoneyBee
                {
                   try
                   {
-                     Thread.sleep(5000);
+                     Thread.sleep(3000);
                   }
                   catch (InterruptedException e) {}
                }
-               int checkLongSurplus  = locateMorphognosticEvent(morphognostic, 2, SURPLUS_NECTAR_EVENT, false);
-               int checkShortSurplus = locateMorphognosticEvent(morphognostic, 1, SURPLUS_NECTAR_EVENT, false);
-               int checkLongDist     = locateMorphognosticEvent(morphognostic, 2, NECTAR_LONG_DISTANCE_EVENT, false);
-               int checkShortDist    = locateMorphognosticEvent(morphognostic, 1, NECTAR_SHORT_DISTANCE_EVENT, false);
+               int checkLongSurplus  = morphognostic.locateEvent(2, SURPLUS_NECTAR_EVENT, false);
+               int checkShortSurplus = morphognostic.locateEvent(1, SURPLUS_NECTAR_EVENT, false);
+               int checkLongDist     = morphognostic.locateEvent(2, NECTAR_LONG_DISTANCE_EVENT, false);
+               int checkShortDist    = morphognostic.locateEvent(1, NECTAR_SHORT_DISTANCE_EVENT, false);
                int i = 3;
                for ( ; i < 11; i++)
                {
-                  if (locateMorphognosticEvent(morphognostic, 0, i, false) != -1) { break; }
+                  if (morphognostic.locateEvent(0, i, false) != -1) { break; }
                }
-               System.out.println("response=" + response + ",checkLongSurplus=" + checkLongSurplus + ",checkLongDist=" + checkLongDist + ",checkShortSurplus=" + checkShortSurplus + ",checkShortDist=" + checkShortDist + ",checko=" + (i - 3) + ",distanceDisplay=" + nectarDistanceDisplay);
+               System.out.println("bee=" + id + ",response=" + response + ",checkLongSurplus=" + checkLongSurplus + ",checkLongDist=" + checkLongDist + ",checkShortSurplus=" + checkShortSurplus + ",checkShortDist=" + checkShortDist + ",checko=" + (i - 3) + ",distanceDisplay=" + nectarDistanceDisplay);
             }
          }
          break;
@@ -616,10 +616,8 @@ public class HoneyBee
          response = (int)sensors[NECTAR_DANCE_DIRECTION_INDEX];
          return(true);
       }
-      else if ((locateMorphognosticEvent(
-                   morphognostic, 2, NECTAR_LONG_DISTANCE_EVENT, false) != -1) ||
-               (locateMorphognosticEvent(
-                   morphognostic, 1, NECTAR_SHORT_DISTANCE_EVENT, false) != -1))
+      else if ((morphognostic.locateEvent(2, NECTAR_LONG_DISTANCE_EVENT, false) != -1) ||
+               (morphognostic.locateEvent(1, NECTAR_SHORT_DISTANCE_EVENT, false) != -1))
       {
          // Move in direction of nectar.
          response = FORWARD;
@@ -630,7 +628,7 @@ public class HoneyBee
       if (sensors[HIVE_PRESENCE_INDEX] == 1.0f)
       {
          // Surplus nectar short distance detected?
-         int o = locateMorphognosticEvent(morphognostic, 1, SURPLUS_NECTAR_EVENT, false);
+         int o = morphognostic.locateEvent(1, SURPLUS_NECTAR_EVENT, false);
          if ((o != -1) && (o < Orientation.NUM_ORIENTATIONS))
          {
             // Orient toward nectar?
@@ -646,7 +644,7 @@ public class HoneyBee
          }
 
          // Check for surplus long distance nectar.
-         o = locateMorphognosticEvent(morphognostic, 2, SURPLUS_NECTAR_EVENT, false);
+         o = morphognostic.locateEvent(2, SURPLUS_NECTAR_EVENT, false);
          if ((o != -1) && (o < Orientation.NUM_ORIENTATIONS))
          {
             // Orient toward nectar?
@@ -954,12 +952,12 @@ public class HoneyBee
             {
                try
                {
-                  Thread.sleep(5000);
+                  Thread.sleep(3000);
                }
                catch (InterruptedException e) {}
             }
-            int checkLongDist = locateMorphognosticEvent(morphognostic, 2, NECTAR_LONG_DISTANCE_EVENT, false);
-            System.out.println("response=" + response + ",checkLongDist=" + checkLongDist);
+            int checkLongDist = morphognostic.locateEvent(2, NECTAR_LONG_DISTANCE_EVENT, false);
+            System.out.println("bee=" + id + ",response=" + response + ",checkLongDist=" + checkLongDist);
          }
       }
    }
@@ -975,7 +973,7 @@ public class HoneyBee
          {
             // Lost hive?
             if (!world.cells[x][y].hive &&
-                (locateMorphognosticEvent(morphognostic, 3, HIVE_PRESENCE_EVENT, false) == -1))
+                (morphognostic.locateEvent(3, HIVE_PRESENCE_EVENT, false) == -1))
             {
                // Use autopilot response.
                return;
@@ -989,20 +987,20 @@ public class HoneyBee
                {
                   try
                   {
-                     Thread.sleep(5000);
+                     Thread.sleep(3000);
                   }
                   catch (InterruptedException e) {}
                }
-               int checkLongSurplus  = locateMorphognosticEvent(morphognostic, 2, SURPLUS_NECTAR_EVENT, false);
-               int checkShortSurplus = locateMorphognosticEvent(morphognostic, 1, SURPLUS_NECTAR_EVENT, false);
-               int checkLongDist     = locateMorphognosticEvent(morphognostic, 2, NECTAR_LONG_DISTANCE_EVENT, false);
-               int checkShortDist    = locateMorphognosticEvent(morphognostic, 1, NECTAR_SHORT_DISTANCE_EVENT, false);
+               int checkLongSurplus  = morphognostic.locateEvent(2, SURPLUS_NECTAR_EVENT, false);
+               int checkShortSurplus = morphognostic.locateEvent(1, SURPLUS_NECTAR_EVENT, false);
+               int checkLongDist     = morphognostic.locateEvent(2, NECTAR_LONG_DISTANCE_EVENT, false);
+               int checkShortDist    = morphognostic.locateEvent(1, NECTAR_SHORT_DISTANCE_EVENT, false);
                int i = 3;
                for ( ; i < 11; i++)
                {
-                  if (locateMorphognosticEvent(morphognostic, 0, i, false) != -1) { break; }
+                  if (morphognostic.locateEvent(0, i, false) != -1) { break; }
                }
-               System.out.println("response=" + response + ",checkLongSurplus=" + checkLongSurplus + ",checkLongDist=" + checkLongDist + ",checkShortSurplus=" + checkShortSurplus + ",checkShortDist=" + checkShortDist + ",checko=" + (i - 3) + ",distanceDisplay=" + nectarDistanceDisplay);
+               System.out.println("bee=" + id + ",response=" + response + ",checkLongSurplus=" + checkLongSurplus + ",checkLongDist=" + checkLongDist + ",checkShortSurplus=" + checkShortSurplus + ",checkShortDist=" + checkShortDist + ",checko=" + (i - 3) + ",distanceDisplay=" + nectarDistanceDisplay);
             }
          }
          else
@@ -1036,6 +1034,24 @@ public class HoneyBee
          throw new IOException("Cannot open output file " + filename + ":" + e.getMessage());
       }
       PrintWriter writer = new PrintWriter(new BufferedWriter(new OutputStreamWriter(output)));
+      for (int i = 0; i < morphognostic.NUM_NEIGHBORHOODS; i++)
+      {
+         int n = morphognostic.neighborhoods.get(i).sectors.length;
+         for (int x = 0; x < n; x++)
+         {
+            for (int y = 0; y < n; y++)
+            {
+               for (int d = 0; d < morphognostic.eventDimensions; d++)
+               {
+                  for (int j = 0; j < morphognostic.eventValueDimensions[d]; j++)
+                  {
+                     writer.print(i + "-" + x + "-" + y + "-" + d + "-" + j + ",");
+                  }
+               }
+            }
+         }
+      }
+      writer.println("response");
       for (Metamorph m : metamorphs)
       {
          writer.println(morphognostic2csv(m.morphognostic) + "," + m.response);
@@ -1192,109 +1208,5 @@ public class HoneyBee
       }
 
       return("unknown");
-   }
-
-
-   // Locate event in morphognostic.
-   // Return direction to event, NUM_ORIENTATIONS for center event, or -1 for not found.
-   public static int locateMorphognosticEvent(Morphognostic morphognostic, int valueIndex)
-   {
-      return(locateMorphognosticEvent(morphognostic, valueIndex, false));
-   }
-
-
-   public static int locateMorphognosticEvent(Morphognostic morphognostic,
-                                              int valueIndex, boolean verbose)
-   {
-      for (int n = 0; n < morphognostic.NUM_NEIGHBORHOODS; n++)
-      {
-         int location = locateMorphognosticEvent(morphognostic, n, valueIndex, verbose);
-         if (location != -1)
-         {
-            return(location);
-         }
-      }
-      return(-1);
-   }
-
-
-   public static int locateMorphognosticEvent(Morphognostic morphognostic, int neighborhood,
-                                              int valueIndex, boolean verbose)
-   {
-      int          centerXY = Parameters.NEIGHBORHOOD_DIMENSIONS[neighborhood][0] / 2;
-      Neighborhood n        = morphognostic.neighborhoods.get(neighborhood);
-
-      for (int x = 0; x < n.sectors.length; x++)
-      {
-         for (int y = 0; y < n.sectors.length; y++)
-         {
-            Neighborhood.Sector s = n.sectors[x][y];
-            if ((x != centerXY) || (y != centerXY))
-            {
-               if (s.valueDensities[valueIndex][0] > 0.0f)
-               {
-                  if (verbose)
-                  {
-                     System.out.println("locateMorphognosticEvent, valueIndex=" + valueIndex +
-                                        ",neighborhood=" + neighborhood + ",duration=" + n.duration + ",sector=" + x + "/" + y +
-                                        ",density=" + s.valueDensities[valueIndex][0]);
-                  }
-                  if (x == 0)
-                  {
-                     if (y == 0)
-                     {
-                        return(Orientation.SOUTHWEST);
-                     }
-                     else if (y == n.sectors.length - 1)
-                     {
-                        return(Orientation.NORTHWEST);
-                     }
-                     else
-                     {
-                        return(Orientation.WEST);
-                     }
-                  }
-                  else if (x == n.sectors.length - 1)
-                  {
-                     if (y == 0)
-                     {
-                        return(Orientation.SOUTHEAST);
-                     }
-                     else if (y == n.sectors.length - 1)
-                     {
-                        return(Orientation.NORTHEAST);
-                     }
-                     else
-                     {
-                        return(Orientation.EAST);
-                     }
-                  }
-                  else
-                  {
-                     if (y == 0)
-                     {
-                        return(Orientation.SOUTH);
-                     }
-                     else
-                     {
-                        return(Orientation.NORTH);
-                     }
-                  }
-               }
-            }
-         }
-      }
-      Neighborhood.Sector s = n.sectors[centerXY][centerXY];
-      if (s.valueDensities[valueIndex][0] > 0.0f)
-      {
-         if (verbose)
-         {
-            System.out.println("locateMorphognosticEvent, valueIndex=" + valueIndex +
-                               ",neighborhood=" + neighborhood + ",duration=" + n.duration + ",sector=" + centerXY + "/" + centerXY +
-                               ",density=" + s.valueDensities[valueIndex][0]);
-         }
-         return(Orientation.NUM_ORIENTATIONS);
-      }
-      return(-1);
    }
 }
