@@ -384,7 +384,7 @@ public class HoneyBeeDashboard extends JFrame
             }
             catch (Exception e)
             {
-               worldDisplay.controls.messageText.setText("Cannot write metamorph dataset to file " + bee.metamorphDatasetFilename + ": " + e.getMessage());
+               worldDisplay.setMessage("Cannot write metamorph dataset to file " + bee.metamorphDatasetFilename + ": " + e.getMessage());
             }
             return;
          }
@@ -402,14 +402,14 @@ public class HoneyBeeDashboard extends JFrame
             {
                try
                {
-                  worldDisplay.controls.messageText.setText("Training metamorph neural network...");
+                  worldDisplay.setMessage("Training metamorph neural network...");
                   paint(getGraphics());
                   bee.trainMetamorphNN();
-                  worldDisplay.controls.messageText.setText("");
+                  worldDisplay.setMessage(null);
                }
                catch (Exception e)
                {
-                  worldDisplay.controls.messageText.setText("Cannot train metamorph neural network: " + e.getMessage());
+                  worldDisplay.setMessage("Cannot train metamorph neural network: " + e.getMessage());
                }
                trainNNcheck.setState(false);
             }

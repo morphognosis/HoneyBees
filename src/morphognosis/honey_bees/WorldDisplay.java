@@ -44,7 +44,6 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
-import javax.swing.JTextField;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -58,7 +57,7 @@ public class WorldDisplay extends JFrame
    public World world;
 
    // Dimensions.
-   public static final Dimension DISPLAY_SIZE = new Dimension(575, 775);
+   public static final Dimension DISPLAY_SIZE = new Dimension(550, 750);
 
    // World display.
    public WorldDisplay worldDisplay;
@@ -73,9 +72,9 @@ public class WorldDisplay extends JFrame
    public HoneyBeeDashboard beeDashboard;
 
    // Step frequency (ms).
-   static final int MIN_STEP_DELAY = 0;
-   static final int MAX_STEP_DELAY = 1000;
-   int              stepDelay      = MAX_STEP_DELAY;
+   public static final int MIN_STEP_DELAY = 0;
+   public static final int MAX_STEP_DELAY = 150;
+   public int              stepDelay      = MAX_STEP_DELAY;
 
    // Quit.
    public boolean quit;
@@ -118,7 +117,7 @@ public class WorldDisplay extends JFrame
    }
 
 
-   void setLocation()
+   public void setLocation()
    {
       Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
       int       w   = getSize().width;
@@ -131,7 +130,7 @@ public class WorldDisplay extends JFrame
 
 
    // Close.
-   void close()
+   public void close()
    {
       if (beeDashboard != null)
       {
@@ -198,14 +197,14 @@ public class WorldDisplay extends JFrame
 
 
    // Set step delay.
-   void setStepDelay(int delay)
+   public void setStepDelay(int delay)
    {
       stepDelay = timer = delay;
    }
 
 
    // Step.
-   void step()
+   public void step()
    {
       setStepDelay(MAX_STEP_DELAY);
       controls.speedSlider.setValue(MAX_STEP_DELAY);
@@ -214,16 +213,9 @@ public class WorldDisplay extends JFrame
 
 
    // Set message
-   void setMessage(String message)
+   public void setMessage(String message)
    {
-      if (message == null)
-      {
-         controls.messageText.setText("");
-      }
-      else
-      {
-         controls.messageText.setText(message);
-      }
+      display.messageText = message;
    }
 
 
@@ -252,10 +244,13 @@ public class WorldDisplay extends JFrame
 
       // Sound.
       public static final String BEE_SOUND_FILENAME = "bees.wav";
-      Clip beeSound;
+      public Clip                beeSound;
 
       // Font.
-      Font font;
+      public Font font;
+
+      // Message.
+      public String messageText;
 
       // Sizes.
       Dimension canvasSize;
@@ -270,6 +265,9 @@ public class WorldDisplay extends JFrame
          setBounds(0, 0, canvasSize.width, canvasSize.height);
          addMouseListener(new CanvasMouseListener());
          addMouseMotionListener(new CanvasMouseMotionListener());
+
+         // Set initial message.
+         messageText = "Click bee for dashboard";
 
          // Compute sizes.
          width      = Parameters.WORLD_WIDTH;
@@ -455,6 +453,17 @@ public class WorldDisplay extends JFrame
             canvasGraphics.drawLine(0, y2, x2, y2);
          }
 
+         // Draw message?
+         if (messageText != null)
+         {
+            int w = canvasGraphics.getFontMetrics().stringWidth(messageText);
+            canvasGraphics.setColor(Color.WHITE);
+            canvasGraphics.fillRect(0, 5, w, 20);
+            canvasGraphics.setColor(Color.BLACK);
+            canvasGraphics.drawString(messageText, 0, 20);
+            canvasGraphics.setColor(Color.BLACK);
+         }
+
          // Refresh display.
          graphics.drawImage(canvasImage, 0, 0, this);
       }
@@ -506,7 +515,7 @@ public class WorldDisplay extends JFrame
          }
 
          // Set font.
-         font = new Font("Serif", Font.PLAIN, 12);
+         font = new Font("Serif", Font.BOLD, 16);
          canvasGraphics.setFont(font);
 
          // Create oriented bee images.
@@ -666,17 +675,16 @@ public class WorldDisplay extends JFrame
       private static final long serialVersionUID = 0L;
 
       // Components.
-      JButton    resetButton;
-      JLabel     stepCounter;
-      JSlider    speedSlider;
-      JButton    stepButton;
-      Choice     driverChoice;
-      JCheckBox  muteCheck;
-      JTextField messageText;
-      JLabel     nectarCounter;
-      JButton    clearMetamorphsButton;
-      JButton    writeMetamorphDatasetButton;
-      Checkbox   trainNNcheck;
+      JButton   resetButton;
+      JLabel    stepCounter;
+      JSlider   speedSlider;
+      JButton   stepButton;
+      Choice    driverChoice;
+      JCheckBox muteCheck;
+      JLabel    nectarCounter;
+      JButton   clearMetamorphsButton;
+      JButton   writeMetamorphDatasetButton;
+      Checkbox  trainNNcheck;
 
       // Constructor.
       Controls()
@@ -684,10 +692,11 @@ public class WorldDisplay extends JFrame
          setLayout(new BorderLayout());
          setBorder(BorderFactory.createRaisedBevelBorder());
 
+         JPanel controlsPanel = new JPanel();
+         controlsPanel.setLayout(new BorderLayout());
+         controlsPanel.setBorder(BorderFactory.createTitledBorder(
+                                    BorderFactory.createLineBorder(Color.black), "Controls"));
          JPanel panel = new JPanel();
-         resetButton = new JButton("Reset");
-         resetButton.addActionListener(this);
-         panel.add(resetButton);
          panel.add(new JLabel("Speed:   Fast", Label.RIGHT));
          speedSlider = new JSlider(JSlider.HORIZONTAL, MIN_STEP_DELAY,
                                    MAX_STEP_DELAY, MAX_STEP_DELAY);
@@ -699,7 +708,7 @@ public class WorldDisplay extends JFrame
          panel.add(stepButton);
          stepCounter = new JLabel("");
          panel.add(stepCounter);
-         add(panel, BorderLayout.NORTH);
+         controlsPanel.add(panel, BorderLayout.NORTH);
          panel = new JPanel();
          panel.add(new JLabel("Driver:"));
          driverChoice = new Choice();
@@ -710,15 +719,16 @@ public class WorldDisplay extends JFrame
          driverChoice.add("local override");
          driverChoice.select(world.driver);
          driverChoice.addItemListener(this);
+         resetButton = new JButton("Reset");
+         resetButton.addActionListener(this);
+         panel.add(resetButton);
          muteCheck = new JCheckBox("Mute", true);
          panel.add(muteCheck);
          muteCheck.addItemListener(this);
-         messageText = new JTextField("Click bee for dashboard", 14);
-         messageText.setEditable(false);
-         panel.add(messageText);
          nectarCounter = new JLabel("Collected nectar: 0");
          panel.add(nectarCounter);
-         add(panel, BorderLayout.CENTER);
+         controlsPanel.add(panel, BorderLayout.SOUTH);
+         add(controlsPanel, BorderLayout.NORTH);
          panel = new JPanel();
          panel.setBorder(BorderFactory.createTitledBorder(
                             BorderFactory.createLineBorder(Color.black), "Metamorph operations"));
@@ -767,7 +777,7 @@ public class WorldDisplay extends JFrame
       // Speed slider listener.
       public void stateChanged(ChangeEvent evt)
       {
-         messageText.setText("");
+         setMessage(null);
          setStepDelay(speedSlider.getValue());
       }
 
@@ -775,7 +785,7 @@ public class WorldDisplay extends JFrame
       // Button listener.
       public void actionPerformed(ActionEvent evt)
       {
-         messageText.setText("");
+         setMessage(null);
 
          // Reset?
          if (evt.getSource() == (Object)resetButton)
@@ -815,7 +825,7 @@ public class WorldDisplay extends JFrame
             }
             catch (Exception e)
             {
-               controls.messageText.setText("Cannot write metamorph dataset to file " + filename + ": " + e.getMessage());
+               setMessage("Cannot write metamorph dataset to file " + filename + ": " + e.getMessage());
             }
             return;
          }
@@ -861,14 +871,14 @@ public class WorldDisplay extends JFrame
             {
                try
                {
-                  controls.messageText.setText("Training metamorph neural network...");
+                  setMessage("Training metamorph neural network...");
                   paint(getGraphics());
                   world.trainMetamorphNN();
-                  controls.messageText.setText("");
+                  setMessage(null);
                }
                catch (Exception e)
                {
-                  controls.messageText.setText("Cannot train metamorph neural network: " + e.getMessage());
+                  setMessage("Cannot train metamorph neural network: " + e.getMessage());
                }
                trainNNcheck.setState(false);
             }
