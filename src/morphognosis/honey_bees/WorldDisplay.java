@@ -58,7 +58,7 @@ public class WorldDisplay extends JFrame
    public World world;
 
    // Dimensions.
-   public static final Dimension DISPLAY_SIZE = new Dimension(550, 750);
+   public static final Dimension DISPLAY_SIZE = new Dimension(575, 775);
 
    // World display.
    public WorldDisplay worldDisplay;
