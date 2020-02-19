@@ -515,7 +515,7 @@ public class WorldDisplay extends JFrame
          }
 
          // Set font.
-         font = new Font("Serif", Font.BOLD, 16);
+         font = new Font("Ariel", Font.BOLD, 12);
          canvasGraphics.setFont(font);
 
          // Create oriented bee images.
