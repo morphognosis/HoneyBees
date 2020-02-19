@@ -58,7 +58,7 @@ public class WorldDisplay extends JFrame
    public World world;
 
    // Dimensions.
-   public static final Dimension DISPLAY_SIZE = new Dimension(600, 800);
+   public static final Dimension DISPLAY_SIZE = new Dimension(550, 750);
 
    // World display.
    public WorldDisplay worldDisplay;
@@ -720,13 +720,15 @@ public class WorldDisplay extends JFrame
          panel.add(nectarCounter);
          add(panel, BorderLayout.CENTER);
          panel = new JPanel();
-         clearMetamorphsButton = new JButton("Clear metamorphs");
+         panel.setBorder(BorderFactory.createTitledBorder(
+                            BorderFactory.createLineBorder(Color.black), "Metamorph operations"));
+         clearMetamorphsButton = new JButton("Clear");
          clearMetamorphsButton.addActionListener(this);
          panel.add(clearMetamorphsButton);
-         writeMetamorphDatasetButton = new JButton("Write metamorphs to " + HoneyBee.METAMORPH_DATASET_FILE_BASENAME + ".csv");
+         writeMetamorphDatasetButton = new JButton("Write to " + HoneyBee.METAMORPH_DATASET_FILE_BASENAME + ".csv");
          writeMetamorphDatasetButton.addActionListener(this);
          panel.add(writeMetamorphDatasetButton);
-         panel.add(new JLabel("Train metamorph neural network:"));
+         panel.add(new JLabel("Train neural network:"));
          trainNNcheck = new Checkbox();
          trainNNcheck.setState(false);
          trainNNcheck.addItemListener(this);

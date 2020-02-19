@@ -26,7 +26,7 @@ Setup:
 
 1. Clone or download and unzip the code from https://github.com/morphognosis/HoneyBees.
 2. Optional: Import Eclipse project.
-3. Optionally build (it comes pre-built): click or run the build.bat/build.sh in the work folder to build the code.
+3. Build: click or run the build.bat/build.sh in the work folder to build the code.
 
 Run: 
 1. Click on or run the honey_bees.bat/honey_bees.sh command in the work folder to bring up the display and dashboard.
@@ -35,9 +35,56 @@ Run:
 4. Change the driver to "metamorphDB" which will utilize the metamorphs.
 
 Neural network training:
-Forage using the autopilot driver to creaete training dataset, then train using the dashboard.
-The dataset can also be written out and used with your favorite machine learning tools, e.g. H2Oai (https://www.h2o.ai)
+Forage using the autopilot driver to create training dataset, then train using the dashboard.
+The dataset can also be written out and used with your favorite machine learning tools.
 
+Usage:
+  New run:
+    java morphognosis.honey_bees.Main
+      [-steps <steps> | -display <true | false> (default=true)]
+      World parameters:
+        [-worldDimensions <width> <height> (default=21 21)]
+        [-hiveRadius <radius> (default=3)]
+      Flower parameters:
+        [-flowerSproutProbability <probability> (default=0.01)]
+        [-flowerNectarCapacity <quantity> (default=2)]
+        [-flowerNectarProductionProbability <probability> (default=0.01)]
+      Honey bee parameters:
+        [-numBees <quantity> (default=3)]
+        [-beeTurnProbability <probability> (default=0.2)]
+        [-beeReturnToHiveProbabilityIncrement <probability> (default=0.01)]
+      Metamorph Weka neural network parameters:
+        [-NNlearningRate <quantity> (default=0.1)]
+        [-NNmomentum <quantity> (default=0.2)]
+        [-NNhiddenLayers <quantity> (default="100")]
+        [-NNtrainingTime <quantity> (default=5000)]
+     [-driver <autopilot | metamorphDB | metamorphNN | local_override> (honey bees driver: default=autopilot)]
+     [-randomSeed <random number seed> (default=4517)]
+     [-printCollectedNectar]
+     [-save <file name>]
+     [-saveNN <metamorph neural network model file name>]
+     [-loadNN <metamorph neural network model file name>]
+     [-writeMetamorphDataset [<file name>] (write metamorph dataset file, default=metamorphs.csv)]
+  Resume run:
+    java morphognosis.honey_bees.Main
+      -load <file name>
+     [-steps <steps> | -display (default)]
+     [-driver autopilot | metamorphDB | metamorphNN | local_override>
+        (default=autopilot)]
+     [-randomSeed <random number seed>]
+     [-printCollectedNectar]
+     [-save <file name>]
+     [-saveNN <metamorph neural network model file name>]
+     [-loadNN <metamorph neural network model file name>]
+     [-writeMetamorphDataset [<file name>] (write metamorph dataset file, default=metamorphs.csv)]
+  Print parameters:
+    java morphognosis.honey_bees.Main -printParameters
+  Version:
+    java morphognosis.honey_bees.Main -version
+Exit codes:
+  0=success
+  1=error
+  
 References:
 
 Morphognostic honey bees communicating food location through dance movements:

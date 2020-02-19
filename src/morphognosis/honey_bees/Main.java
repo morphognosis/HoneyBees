@@ -894,7 +894,7 @@ public class Main
       // Set look and feel.
       try
       {
-         UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+         UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
       }
       catch (Exception e)
       {
