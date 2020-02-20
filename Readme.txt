@@ -22,6 +22,10 @@ Carrying nectar.
 
 Responses: wait, forward, turn N, NE, E, SE, S, SW, W, NW, extract nectar, deposit nectar, display nectar distance.
 
+Requires:
+
+Java 1.8 or later.
+
 Setup:
 
 1. Clone or download and unzip the code from https://github.com/morphognosis/HoneyBees.
@@ -29,13 +33,13 @@ Setup:
 3. Build: click or run the build.bat/build.sh in the work folder to build the code.
 
 Run: 
-1. Click on or run the honey_bees.bat/honey_bees.sh command in the work folder to bring up the display and dashboard.
-2. The dashboard is set to the "autopilot" driver, which guides the bees to forage while accumulating metamorph rules.
+1. Click on or run the honey_bees.bat/honey_bees.sh command in the work folder to bring up the display.
+2. The driver is set to "autopilot", which guides the bees to forage while accumulating metamorph rules.
 3. Reset the environment.
 4. Change the driver to "metamorphDB" which will utilize the metamorphs.
 
 Neural network training:
-Forage using the autopilot driver to create training dataset, then train using the dashboard.
+Forage using the autopilot driver to create training dataset, then train using the controls.
 The dataset can also be written out and used with your favorite machine learning tools.
 
 Usage:
