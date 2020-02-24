@@ -210,7 +210,7 @@ public class ForagingRNN
       //
       // build network.
       //
-      Net net    = LSTM(9, NUM_HIDDEN_NEURONS, NUM_HIDDEN_LAYERS, 8);
+      Net net    = LSTM(9, NUM_HIDDEN_NEURONS, NUM_HIDDEN_LAYERS, 9);
       int length = Math.max(trainset.maxSequenceLength(), testset.maxSequenceLength());
 
       net.rebuffer(length);
