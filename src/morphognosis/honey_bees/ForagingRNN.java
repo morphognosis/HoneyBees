@@ -28,12 +28,28 @@ public class ForagingRNN
    public static int    NUM_HIDDEN_NEURONS  = 5;
    public static int    NUM_HIDDEN_LAYERS   = 1;
    public static float  TURN_PROBABILITY    = 0.5f;
-   public static int    NUM_TRAIN           = 5;
+   public static int    NUM_TRAIN           = 1;
    public static int    NUM_TEST            = 1;
    public static int    MIN_SEQUENCE_LENGTH = 5;
    public static int    MAX_SEQUENCE_LENGTH = 15;
    public static int    EPOCHS      = 200;
    public static int    RANDOM_SEED = 4517;
+
+   // Usage.
+   public static final String Usage =
+      "Usage:\n" +
+      "    java morphognosis.honey_bees.ForagingRNN\n" +
+      "     [-learningRate <float> (default=" + LEARNING_RATE + ")]\n" +
+      "     [-momentum <float> (default=" + MOMENTUM + ")]\n" +
+      "     [-numHiddenNeurons <quantity> (default=" + NUM_HIDDEN_NEURONS + ")]\n" +
+      "     [-numHiddenLayers <quantity> (default=" + NUM_HIDDEN_LAYERS + ")]\n" +
+      "     [-turnProbability <probability> (default=" + TURN_PROBABILITY + ")]\n" +
+      "     [-numTrain <quantity> (default=" + NUM_TRAIN + ")]\n" +
+      "     [-numTest <quantity> (default=" + NUM_TEST + ")]\n" +
+      "     [-minSequenceLength <quantity> (default=" + MIN_SEQUENCE_LENGTH + ")]\n" +
+      "     [-maxSequenceLength <quantity> (default=" + MAX_SEQUENCE_LENGTH + ")]\n" +
+      "     [-epochs <quantity> (default=" + EPOCHS + ")]\n" +
+      "     [-randomSeed <random number seed> (default=" + RANDOM_SEED + ")]";
 
    private static TimeCounter TC  = new TimeCounter();
    private static Random      rnd = new Random(RANDOM_SEED);
@@ -202,11 +218,310 @@ public class ForagingRNN
 
    public static void main(String[] args) throws IOException
    {
+      for (int i = 0; i < args.length; i++)
+      {
+         if (args[i].equals("-learningRate"))
+         {
+            i++;
+            if (i >= args.length)
+            {
+               System.err.println("Invalid learningRate option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            try
+            {
+               LEARNING_RATE = Double.parseDouble(args[i]);
+            }
+            catch (NumberFormatException e) {
+               System.err.println("Invalid learningRate option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            if ((LEARNING_RATE < 0.0) || (LEARNING_RATE > 1.0))
+            {
+               System.err.println("Invalid learningRate option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            continue;
+         }
+         if (args[i].equals("-momentum"))
+         {
+            i++;
+            if (i >= args.length)
+            {
+               System.err.println("Invalid momentum option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            try
+            {
+               MOMENTUM = Double.parseDouble(args[i]);
+            }
+            catch (NumberFormatException e) {
+               System.err.println("Invalid momentum option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            if (MOMENTUM < 0.0)
+            {
+               System.err.println("Invalid momentum option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            continue;
+         }
+         if (args[i].equals("-numHiddenNeurons"))
+         {
+            i++;
+            if (i >= args.length)
+            {
+               System.err.println("Invalid numHiddenNeurons option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            try
+            {
+               NUM_HIDDEN_NEURONS = Integer.parseInt(args[i]);
+            }
+            catch (NumberFormatException e) {
+               System.err.println("Invalid numHiddenNeurons option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            if (NUM_HIDDEN_NEURONS < 0)
+            {
+               System.err.println("Invalid numHiddenNeurons option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            continue;
+         }
+         if (args[i].equals("-numHiddenLayers"))
+         {
+            i++;
+            if (i >= args.length)
+            {
+               System.err.println("Invalid numHiddenLayers option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            try
+            {
+               NUM_HIDDEN_LAYERS = Integer.parseInt(args[i]);
+            }
+            catch (NumberFormatException e) {
+               System.err.println("Invalid numHiddenLayers option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            if (NUM_HIDDEN_LAYERS < 0)
+            {
+               System.err.println("Invalid numHiddenLayers option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            continue;
+         }
+         if (args[i].equals("-turnProbability"))
+         {
+            i++;
+            if (i >= args.length)
+            {
+               System.err.println("Invalid turnProbability option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            try
+            {
+               TURN_PROBABILITY = Float.parseFloat(args[i]);
+            }
+            catch (NumberFormatException e) {
+               System.err.println("Invalid turnProbability option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            if ((TURN_PROBABILITY < 0.0) || (TURN_PROBABILITY > 1.0))
+            {
+               System.err.println("Invalid turnProbability option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            continue;
+         }
+         if (args[i].equals("-numTrain"))
+         {
+            i++;
+            if (i >= args.length)
+            {
+               System.err.println("Invalid numTrain option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            try
+            {
+               NUM_TRAIN = Integer.parseInt(args[i]);
+            }
+            catch (NumberFormatException e) {
+               System.err.println("Invalid numTrain option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            if (NUM_TRAIN < 0)
+            {
+               System.err.println("Invalid numTrain option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            continue;
+         }
+         if (args[i].equals("-numTest"))
+         {
+            i++;
+            if (i >= args.length)
+            {
+               System.err.println("Invalid numTest option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            try
+            {
+               NUM_TEST = Integer.parseInt(args[i]);
+            }
+            catch (NumberFormatException e) {
+               System.err.println("Invalid numTest option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            if (NUM_TEST < 0)
+            {
+               System.err.println("Invalid numTest option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            continue;
+         }
+         if (args[i].equals("-minSequenceLength"))
+         {
+            i++;
+            if (i >= args.length)
+            {
+               System.err.println("Invalid minSequenceLength option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            try
+            {
+               MIN_SEQUENCE_LENGTH = Integer.parseInt(args[i]);
+            }
+            catch (NumberFormatException e) {
+               System.err.println("Invalid minSequenceLength option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            if (MIN_SEQUENCE_LENGTH < 0)
+            {
+               System.err.println("Invalid minSequenceLength option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            continue;
+         }
+         if (args[i].equals("-maxSequenceLength"))
+         {
+            i++;
+            if (i >= args.length)
+            {
+               System.err.println("Invalid maxSequenceLength option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            try
+            {
+               MAX_SEQUENCE_LENGTH = Integer.parseInt(args[i]);
+            }
+            catch (NumberFormatException e) {
+               System.err.println("Invalid maxSequenceLength option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            if (MAX_SEQUENCE_LENGTH < 0)
+            {
+               System.err.println("Invalid maxSequenceLength option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            continue;
+         }
+         if (args[i].equals("-epochs"))
+         {
+            i++;
+            if (i >= args.length)
+            {
+               System.err.println("Invalid epochs option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            try
+            {
+               EPOCHS = Integer.parseInt(args[i]);
+            }
+            catch (NumberFormatException e) {
+               System.err.println("Invalid epochs option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            if (EPOCHS < 0)
+            {
+               System.err.println("Invalid epochs option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            continue;
+         }
+         if (args[i].equals("-randomSeed"))
+         {
+            i++;
+            if (i >= args.length)
+            {
+               System.err.println("Invalid randomSeed option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            try
+            {
+               RANDOM_SEED = Integer.parseInt(args[i]);
+            }
+            catch (NumberFormatException e) {
+               System.err.println("Invalid randomSeed option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            continue;
+         }
+         if (args[i].equals("-help") || args[i].equals("-h") || args[i].equals("-?"))
+         {
+            System.out.println(Usage);
+            System.exit(0);
+         }
+         System.err.println("Invalid option: " + args[i]);
+         System.err.println(Usage);
+         System.exit(1);
+      }
+      if (MIN_SEQUENCE_LENGTH > MAX_SEQUENCE_LENGTH)
+      {
+         System.err.println("minSequenceLength cannot be greater than maxSequenceLength");
+         System.exit(1);
+      }
+
       //
       // generate train and test data.
       //
+      System.out.println("Training samples:");
       SampleSet trainset = generate(NUM_TRAIN);
-      SampleSet testset  = generate(NUM_TEST);
+      System.out.println("Testing samples:");
+      SampleSet testset = generate(NUM_TEST);
       //
       // build network.
       //
@@ -247,35 +562,71 @@ public class ForagingRNN
       //
       // evaluate learning success.
       //
-      double              thres = 0.04;
-      RegressionValidator v     = new RegressionValidator(net, thres);
-      for (Sample s : trainset)
-      {
-         v.apply(s);
-      }
-      System.out.println("regression validation trainset result: " + (v.ratio() * 100) + "%.");
-      v = new RegressionValidator(net, thres);
-      for (Sample s : testset)
-      {
-         v.apply(s);
-      }
-      System.out.println("regression validator testset result: " + (v.ratio() * 100) + "%.");
-      thres = 0.1;
-      ClassificationValidator f = new ClassificationValidator(net, thres);
-      for (int i = 0; i < trainset.size(); i++)
+      ClassificationValidator f = new ClassificationValidator(net);
+      int correct = 0;
+      int setSize = trainset.size();
+      for (int i = 0; i < setSize; i++)
       {
          Sample s = trainset.get(i);
-         f.apply(s);
+         double[] results = f.apply(s);
+         int    maxidx = -1;
+         double maxval = -1.0;
+         for (int j = 0; j < results.length; j++)
+         {
+            if ((maxidx == -1) || (maxval < results[j]))
+            {
+               maxidx = j;
+               maxval = results[j];
+            }
+         }
+         double[] t = s.getTarget();
+         int targetidx = 0;
+         for ( ; targetidx < t.length; targetidx++)
+         {
+            if (t[targetidx] == 1.0) { break; }
+         }
+         if (targetidx == maxidx) { correct++; }
       }
-      double ratio = f.ratio();
-      System.out.println("classification validator trainset result: " + ratio * 100.0 + "%.");
-      f = new ClassificationValidator(net, thres);
-      for (int i = 0; i < testset.size(); i++)
+      System.out.print("trainset results: correct/size=" + correct + "/" + setSize);
+      if (setSize > 0)
+      {
+         System.out.print(" (" + ((double)correct / (double)setSize) * 100.0 + "%)");
+      }
+      System.out.println();
+      //double ratio = f.ratio();
+      //System.out.println("trainset classification result: " + ratio * 100.0 + "%.");
+      f       = new ClassificationValidator(net);
+      correct = 0;
+      setSize = testset.size();
+      for (int i = 0; i < setSize; i++)
       {
          Sample s = testset.get(i);
-         f.apply(s);
+         double[] results = f.apply(s);
+         int    maxidx = -1;
+         double maxval = -1.0;
+         for (int j = 0; j < results.length; j++)
+         {
+            if ((maxidx == -1) || (maxval < results[j]))
+            {
+               maxidx = j;
+               maxval = results[j];
+            }
+         }
+         double[] t = s.getTarget();
+         int targetidx = 0;
+         for ( ; targetidx < t.length; targetidx++)
+         {
+            if (t[targetidx] == 1.0) { break; }
+         }
+         if (targetidx == maxidx) { correct++; }
       }
-      ratio = f.ratio();
-      System.out.println("classification validator testset result: " + ratio * 100.0 + "%.");
+      System.out.print("testset results: correct/size=" + correct + "/" + setSize);
+      if (setSize > 0)
+      {
+         System.out.print(" (" + ((double)correct / (double)setSize) * 100.0 + "%)");
+      }
+      System.out.println();
+      //ratio = f.ratio();
+      //System.out.println("testset classification result: " + ratio * 100.0 + "%.");
    }
 }

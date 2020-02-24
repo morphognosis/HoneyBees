@@ -57,7 +57,7 @@ public class Main
       "        [-worldDimensions <width> <height> (default=" + Parameters.WORLD_WIDTH + " " + Parameters.WORLD_HEIGHT + ")]\n" +
       "        [-hiveRadius <radius> (default=" + Parameters.HIVE_RADIUS + ")]\n" +
       "      Flower parameters:\n" +
-      "        [-flowerSproutProbability <probability> (default=" + Parameters.FLOWER_SPROUT_PROBABILITY + ")]\n" +
+      "        [-numFlowers <quantity> (default=" + Parameters.NUM_FLOWERS + ")]\n" +
       "        [-flowerNectarCapacity <quantity> (default=" + Parameters.FLOWER_NECTAR_CAPACITY + ")]\n" +
       "        [-flowerNectarProductionProbability <probability> (default=" + Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY + ")]\n" +
       "      Honey bee parameters:\n" +
@@ -445,28 +445,27 @@ public class Main
             }
             continue;
          }
-         if (args[i].equals("-flowerSproutProbability"))
+         if (args[i].equals("-numFlowers"))
          {
             i++;
             if (i >= args.length)
             {
-               System.err.println("Invalid flowerSproutProbability option");
+               System.err.println("Invalid numFlowers option");
                System.err.println(Usage);
                System.exit(1);
             }
             try
             {
-               Parameters.FLOWER_SPROUT_PROBABILITY = Float.parseFloat(args[i]);
+               Parameters.NUM_FLOWERS = Integer.parseInt(args[i]);
             }
             catch (NumberFormatException e) {
-               System.err.println("Invalid flowerSproutProbability option");
+               System.err.println("Invalid numFlowers option");
                System.err.println(Usage);
                System.exit(1);
             }
-            if ((Parameters.FLOWER_SPROUT_PROBABILITY < 0.0f) ||
-                (Parameters.FLOWER_SPROUT_PROBABILITY > 1.0f))
+            if (Parameters.NUM_FLOWERS < 0)
             {
-               System.err.println("Invalid flowerSproutProbability option");
+               System.err.println("Invalid numFlowers option");
                System.err.println(Usage);
                System.exit(1);
             }

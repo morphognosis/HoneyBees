@@ -66,26 +66,26 @@ public class World
       }
 
       // Create flowers.
-      for (int x = 0; x < Parameters.WORLD_WIDTH; x++)
+      for (int i = 0; i < Parameters.NUM_FLOWERS; i++)
       {
-         for (int y = 0; y < Parameters.WORLD_HEIGHT; y++)
+         for (int j = 0; j < 100; j++)
          {
+            int x = random.nextInt(Parameters.WORLD_WIDTH);
+            int y = random.nextInt(Parameters.WORLD_HEIGHT);
             if (Math.sqrt(((double)y - cy) * ((double)y - cy) + ((double)x - cx) * (
-                             (double)x - cx)) <= (double)Parameters.FLOWER_RADIUS)
+                             (double)x - cx)) <= (double)Parameters.FLOWER_RANGE)
             {
                Cell cell = cells[x][y];
                if (!cell.hive && (cell.bee == null))
                {
-                  if (random.nextFloat() < Parameters.FLOWER_SPROUT_PROBABILITY)
+                  Flower flower = new Flower();
+                  cell.flower = flower;
+                  if ((Parameters.FLOWER_NECTAR_CAPACITY > 0) &&
+                      (random.nextFloat() < Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY))
                   {
-                     Flower flower = new Flower();
-                     cell.flower = flower;
-                     if ((Parameters.FLOWER_NECTAR_CAPACITY > 0) &&
-                         (random.nextFloat() < Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY))
-                     {
-                        flower.nectar = 1;
-                     }
+                     flower.nectar = 1;
                   }
+                  break;
                }
             }
          }
@@ -129,26 +129,26 @@ public class World
       }
       double cx = Parameters.WORLD_WIDTH / 2.0;
       double cy = Parameters.WORLD_HEIGHT / 2.0;
-      for (int x = 0; x < Parameters.WORLD_WIDTH; x++)
+      for (int i = 0; i < Parameters.NUM_FLOWERS; i++)
       {
-         for (int y = 0; y < Parameters.WORLD_HEIGHT; y++)
+         for (int j = 0; j < 100; j++)
          {
+            int x = random.nextInt(Parameters.WORLD_WIDTH);
+            int y = random.nextInt(Parameters.WORLD_HEIGHT);
             if (Math.sqrt(((double)y - cy) * ((double)y - cy) + ((double)x - cx) * (
-                             (double)x - cx)) <= (double)Parameters.FLOWER_RADIUS)
+                             (double)x - cx)) <= (double)Parameters.FLOWER_RANGE)
             {
                Cell cell = cells[x][y];
                if (!cell.hive && (cell.bee == null))
                {
-                  if (random.nextFloat() < Parameters.FLOWER_SPROUT_PROBABILITY)
+                  Flower flower = new Flower();
+                  cell.flower = flower;
+                  if ((Parameters.FLOWER_NECTAR_CAPACITY > 0) &&
+                      (random.nextFloat() < Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY))
                   {
-                     Flower flower = new Flower();
-                     cell.flower = flower;
-                     if ((Parameters.FLOWER_NECTAR_CAPACITY > 0) &&
-                         (random.nextFloat() < Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY))
-                     {
-                        flower.nectar = 1;
-                     }
+                     flower.nectar = 1;
                   }
+                  break;
                }
             }
          }
