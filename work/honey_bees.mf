@@ -1,3 +1,3 @@
 Manifest-Version: 1.0
-Class-Path: ../lib/morphognosis.jar ../lib/weka.jar
+Class-Path: ../lib/weka.jar ../lib/jannlab-0.10-alpha.jar 
 Main-Class: morphognosis.honey_bees.Main
