@@ -18,7 +18,6 @@ import de.jannlab.generator.LSTMGenerator;
 import de.jannlab.training.GradientDescent;
 import de.jannlab.misc.TimeCounter;
 import de.jannlab.tools.ClassificationValidator;
-import de.jannlab.tools.RegressionValidator;
 
 public class ForagingRNN
 {
