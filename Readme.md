@@ -13,13 +13,13 @@ This project simulates this social behavior in a cellular automaton using the Mo
 ## Bee capabilities.
 
 Senses:
-Hive presence.
-Nectar presence.
-In hive bee nectar signal: Orientation and distance to nectar.
+* Hive presence.
+* Nectar presence.
+* In-hive bee nectar signal: Orientation and distance to nectar.
 
 Internal state:
-Orientation.
-Carrying nectar.
+* Orientation.
+* Carrying nectar.
 
 Responses: wait, forward, turn N, NE, E, SE, S, SW, W, NW, extract nectar, deposit nectar, display nectar distance.
 
@@ -40,7 +40,7 @@ Java 1.8 or later.
 3. Reset the environment.
 4. Change the driver to "metamorphDB" which will utilize the metamorphs.
 
-Usage:
+`Usage:
   New run:
     java morphognosis.honey_bees.Main
       [-steps <steps> | -display <true | false> (default=true)]
@@ -85,7 +85,7 @@ Usage:
     java morphognosis.honey_bees.Main -version
 Exit codes:
   0=success
-  1=error
+  1=error`
 
 ## Other commands in work folder.
 
