@@ -33,6 +33,7 @@ public class SectorDisplay extends JFrame implements Runnable
    // Neighborhood and sector.
    int neighborhoodIndex;
    int sectorXindex, sectorYindex;
+   Morphognostic.Neighborhood        neighborhood;
    Morphognostic.Neighborhood.Sector sector;
 
    // Display.
@@ -56,9 +57,10 @@ public class SectorDisplay extends JFrame implements Runnable
       this.neighborhoodIndex = neighborhoodIndex;
       this.sectorXindex      = sectorXindex;
       this.sectorYindex      = sectorYindex;
-      sector = display.morphognostic.neighborhoods.get(neighborhoodIndex).sectors[sectorXindex][sectorYindex];
+      neighborhood           = display.morphognostic.neighborhoods.get(neighborhoodIndex);
+      sector = neighborhood.sectors[sectorXindex][sectorYindex];
 
-      setTitle("ID=" + display.id + " N=" + neighborhoodIndex +
+      setTitle("N=" + neighborhoodIndex + " D=" + neighborhood.duration +
                " S=[" + sectorXindex + "," + sectorYindex + "]");
       addWindowListener(new WindowAdapter()
                         {
@@ -153,7 +155,8 @@ public class SectorDisplay extends JFrame implements Runnable
    // Update display.
    public void updateDisplay()
    {
-      int d, i, j, n, w, h, x, x2, y, y2;
+      int   d, i, j, n, w, h, x, x2, y, y2;
+      float fx, fw;
 
       imageGraphics.setColor(Color.gray);
       imageGraphics.fillRect(0, 0, imageSize.width, imageSize.height);
@@ -166,21 +169,23 @@ public class SectorDisplay extends JFrame implements Runnable
          {
             n += display.morphognostic.eventValueDimensions[d];
          }
-         w = imageSize.width / n;
-         i = x = 0;
-         for (d = 0; d < display.morphognostic.eventDimensions; d++)
+         fw = (float)imageSize.width / (float)n;
+         fx = 0.0f;
+         for (i = d = 0; d < display.morphognostic.eventDimensions; d++)
          {
-            for (j = 0; j < display.morphognostic.eventValueDimensions[d]; j++, i++, x += w)
+            for (j = 0; j < display.morphognostic.eventValueDimensions[d]; j++, i++, fx += fw)
             {
                imageGraphics.setColor(getEventColor(d, j));
                h = (int)((float)imageSize.height * sector.getValueDensity(d, j));
-               imageGraphics.fillRect(x, imageSize.height - h, w + 1, h);
+               imageGraphics.fillRect((int)fx, imageSize.height - h, (int)(fw + 1.0), h);
             }
          }
          imageGraphics.setColor(Color.black);
-         for (i = 0, j = n - 1, x = w; i < j; i++, x += w)
+         imageGraphics.drawLine(0, 0, imageSize.width, 0);
+         imageGraphics.drawLine(0, imageSize.height - 1, imageSize.width, imageSize.height - 1);
+         for (i = 0, j = n - 1, fx = fw; i < j; i++, fx += fw)
          {
-            imageGraphics.drawLine(x, 0, x, imageSize.height);
+            imageGraphics.drawLine((int)fx, 0, (int)fx, imageSize.height);
          }
       }
       else
@@ -239,9 +244,6 @@ public class SectorDisplay extends JFrame implements Runnable
       {
       case -1:
          return(Color.GRAY);
-
-      case EMPTY_CELL_VALUE:
-         return(EMPTY_CELL_COLOR);
 
       default:
          Random random = new Random();
