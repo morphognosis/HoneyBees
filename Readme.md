@@ -1,15 +1,16 @@
-Honey bees nectar foraging.
+# Honey bees nectar foraging.
 
 Honey bees cooperatively forage using dancing behavior to communicate nectar direction and distance to other bees.
 This project simulates this social behavior in a cellular automaton using the Morphognosis model.
 
-World:
+## World.
+
 1. A hive is centrally located.
 2. Flowers are randomly scattered about the vicinity of the hive.
 3. Flowers randomly produce nectar.
 4. Multiple bees forage for nectar which they bring back to the hive.
 
-Bee capabilities:
+## Bee capabilities.
 
 Senses:
 Hive presence.
@@ -22,25 +23,22 @@ Carrying nectar.
 
 Responses: wait, forward, turn N, NE, E, SE, S, SW, W, NW, extract nectar, deposit nectar, display nectar distance.
 
-Requires:
+## Requirements.
 
 Java 1.8 or later.
 
-Setup:
+## Setup.
 
 1. Clone or download and unzip the code from https://github.com/morphognosis/HoneyBees.
 2. Optional: Import Eclipse project.
 3. Build: click or run the build.bat/build.sh in the work folder to build the code.
 
-Run: 
+## Run.
+
 1. Click on or run the honey_bees.bat/honey_bees.sh command in the work folder to bring up the display.
 2. The driver is set to "autopilot", which guides the bees to forage while accumulating metamorph rules.
 3. Reset the environment.
 4. Change the driver to "metamorphDB" which will utilize the metamorphs.
-
-Neural network training:
-Forage using the autopilot driver to create training dataset, then train using the controls.
-The dataset can also be written out and used with your favorite machine learning tools.
 
 Usage:
   New run:
@@ -50,7 +48,7 @@ Usage:
         [-worldDimensions <width> <height> (default=21 21)]
         [-hiveRadius <radius> (default=3)]
       Flower parameters:
-        [-flowerSproutProbability <probability> (default=0.01)]
+        [-numFlowers <quantity> (default=3)]
         [-flowerNectarCapacity <quantity> (default=2)]
         [-flowerNectarProductionProbability <probability> (default=0.01)]
       Honey bee parameters:
@@ -88,8 +86,18 @@ Usage:
 Exit codes:
   0=success
   1=error
-  
-References:
+
+## Other commands in work folder.
+
+1. foraging_parameter_optimize.bat/.sh: Optimize parameters to favor foraging cooperation.
+2. foraging_rnn.bat/.sh: Test the ability of an RNN to track relative location, a skill necessary to return to hive.  
+
+## Neural network training.
+
+Forage using the autopilot driver to create training dataset, then train using the controls.
+The dataset can also be written out and used with your favorite machine learning tools.
+
+## References
 
 Morphognostic honey bees communicating food location through dance movements:
 	Paper: http://tom.portegys.com/research.html#honey_bees

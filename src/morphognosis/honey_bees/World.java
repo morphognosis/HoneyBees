@@ -88,6 +88,11 @@ public class World
                   break;
                }
             }
+            if (j == 99)
+            {
+               System.err.println("Cannot place flower in world");
+               System.exit(1);
+            }
          }
       }
 

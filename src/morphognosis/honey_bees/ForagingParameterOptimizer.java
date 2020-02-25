@@ -73,7 +73,7 @@ public class ForagingParameterOptimizer
    public static final String Usage =
       "Usage:\n" +
       "  New run:\n" +
-      "    java ForagingParameterOptimizer\n" +
+      "    java morphognosis.honey_bees.ForagingParameterOptimizer\n" +
       "      -generations <generations>\n" +
       "      -steps <world steps>\n" +
       "      -output <output file name>\n" +
@@ -85,18 +85,18 @@ public class ForagingParameterOptimizer
       "     [-randomSeed <random seed> (default=" + DEFAULT_RANDOM_SEED + ")]\n" +
       "     [-logfile <log file name>]\n" +
       "  Resume run:\n" +
-      "    java ForagingParameterOptimizer\n" +
+      "    java morphognosis.honey_bees.ForagingParameterOptimizer\n" +
       "      -generations <generations>\n" +
       "      -steps <world steps>\n" +
       "      -input <input file name>\n" +
       "      -output <output file name>\n" +
       "     [-logfile <log file name>]\n" +
       "  Print population properties:\n" +
-      "    java ForagingParameterOptimizer\n" +
+      "    java morphognosis.honey_bees.ForagingParameterOptimizer\n" +
       "      -properties\n" +
       "      -input <input file name>\n" +
       "  Print optimization statistics:\n" +
-      "    java ForagingParameterOptimizer\n" +
+      "    java morphognosis.honey_bees.ForagingParameterOptimizer\n" +
       "      -statistics\n" +
       "      -input <input file name>";
 

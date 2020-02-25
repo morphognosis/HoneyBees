@@ -116,7 +116,7 @@ public class HoneyBee
       this.random = random;
 
       // Initialize bee.
-      for (int i = 0; i < 20; i++)
+      for (int i = 0; i < 100; i++)
       {
          int dx = random.nextInt(Parameters.HIVE_RADIUS);
          if (random.nextBoolean()) { dx = -dx; }
@@ -129,7 +129,7 @@ public class HoneyBee
             world.cells[x][y].bee = this;
             break;
          }
-         if (i == 19)
+         if (i == 99)
          {
             System.err.println("Cannot place bee in world");
             System.exit(1);

@@ -86,6 +86,10 @@ public class ForagingRNN
          }
          sequence.add(v);
       }
+      if (verbose)
+      {
+         System.out.println("sequence length=" + sequence.size());
+      }
       double[] data = new double[sequence.size() * 9];
       int i = 0;
       for (double[] d : sequence)
@@ -142,6 +146,11 @@ public class ForagingRNN
                   }
                   break;
                }
+            }
+            if (j == 99)
+            {
+               System.err.println("Cannot place flower in world");
+               System.exit(1);
             }
          }
       }
@@ -637,7 +646,7 @@ public class ForagingRNN
       }
       if (genHoneyBeeData && gotParm)
       {
-         System.err.println("unnecessary options used with genHoneyBeeData option");
+         System.err.println("Unnecessary options used with genHoneyBeeData option");
          System.exit(1);
       }
       if (MIN_SEQUENCE_LENGTH > MAX_SEQUENCE_LENGTH)
