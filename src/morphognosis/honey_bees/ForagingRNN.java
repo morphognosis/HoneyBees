@@ -8,6 +8,7 @@
 package morphognosis.honey_bees;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Random;
 
 import de.jannlab.Net;
@@ -16,6 +17,7 @@ import de.jannlab.data.Sample;
 import de.jannlab.data.SampleSet;
 import de.jannlab.generator.LSTMGenerator;
 import de.jannlab.training.GradientDescent;
+import morphognosis.Orientation;
 import de.jannlab.misc.TimeCounter;
 import de.jannlab.tools.ClassificationValidator;
 
@@ -42,11 +44,12 @@ public class ForagingRNN
       "     [-momentum <float> (default=" + MOMENTUM + ")]\n" +
       "     [-numHiddenNeurons <quantity> (default=" + NUM_HIDDEN_NEURONS + ")]\n" +
       "     [-numHiddenLayers <quantity> (default=" + NUM_HIDDEN_LAYERS + ")]\n" +
-      "     [-turnProbability <probability> (default=" + TURN_PROBABILITY + ")]\n" +
+      "     [-genHoneyBeeData (generate data from honey bee foraging)]\n" +
       "     [-numTrain <quantity> (default=" + NUM_TRAIN + ")]\n" +
       "     [-numTest <quantity> (default=" + NUM_TEST + ")]\n" +
       "     [-minSequenceLength <quantity> (default=" + MIN_SEQUENCE_LENGTH + ")]\n" +
       "     [-maxSequenceLength <quantity> (default=" + MAX_SEQUENCE_LENGTH + ")]\n" +
+      "     [-turnProbability <probability> (default=" + TURN_PROBABILITY + ")]\n" +
       "     [-epochs <quantity> (default=" + EPOCHS + ")]\n" +
       "     [-randomSeed <random number seed> (default=" + RANDOM_SEED + ")]";
 
@@ -54,6 +57,97 @@ public class ForagingRNN
    private static Random      rnd = new Random(RANDOM_SEED);
 
    // Sample is a sequence of responses, where each response is an orientation (x8) or a forward movement.
+   public static Sample generateSample(World world, boolean verbose)
+   {
+      HoneyBee bee = world.bees[0];
+
+      while (bee.response != HoneyBee.DEPOSIT_NECTAR)
+      {
+         world.step();
+      }
+      bee.orientation = Orientation.NORTH;
+      int cx = bee.x;
+      int cy = bee.y;
+      relocateFlower(world);
+      ArrayList<double[]> sequence = new ArrayList<double[]>();
+      while (true)
+      {
+         world.step();
+         if (bee.response == HoneyBee.EXTRACT_NECTAR) { break; }
+         double[] v      = new double[9];
+         v[bee.response] = 1.0;
+         if (verbose)
+         {
+            for (int j = 0; j < 9; j++)
+            {
+               System.out.print(v[j] + " ");
+            }
+            System.out.println();
+         }
+         sequence.add(v);
+      }
+      double[] data = new double[sequence.size() * 9];
+      int i = 0;
+      for (double[] d : sequence)
+      {
+         for (int j = 0; j < 9; j++)
+         {
+            data[i] = d[j];
+            i++;
+         }
+      }
+      double[] target = getTarget(bee.x - cx, bee.y - cy);
+      if (verbose)
+      {
+         System.out.println("target:");
+         for (int j = 0; j < 9; j++)
+         {
+            System.out.print(target[j] + " ");
+         }
+         System.out.println();
+      }
+      return(new Sample(data, target, 9, sequence.size(), 9, 1));
+   }
+
+
+   public static void relocateFlower(World world)
+   {
+      for (int x = 0; x < Parameters.WORLD_WIDTH; x++)
+      {
+         for (int y = 0; y < Parameters.WORLD_HEIGHT; y++)
+         {
+            world.cells[x][y].flower = null;
+         }
+      }
+      double cx = Parameters.WORLD_WIDTH / 2.0;
+      double cy = Parameters.WORLD_HEIGHT / 2.0;
+      for (int i = 0; i < Parameters.NUM_FLOWERS; i++)
+      {
+         for (int j = 0; j < 100; j++)
+         {
+            int x = rnd.nextInt(Parameters.WORLD_WIDTH);
+            int y = rnd.nextInt(Parameters.WORLD_HEIGHT);
+            if (Math.sqrt(((double)y - cy) * ((double)y - cy) + ((double)x - cx) * (
+                             (double)x - cx)) <= (double)Parameters.FLOWER_RANGE)
+            {
+               Cell cell = world.cells[x][y];
+               if (!cell.hive && (cell.bee == null))
+               {
+                  Flower flower = new Flower();
+                  cell.flower = flower;
+                  if ((Parameters.FLOWER_NECTAR_CAPACITY > 0) &&
+                      (rnd.nextFloat() < Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY))
+                  {
+                     flower.nectar = 1;
+                  }
+                  break;
+               }
+            }
+         }
+      }
+   }
+
+
    public static Sample generateSample(final int length, boolean verbose)
    {
       double[] data = new double[length * 9];
@@ -125,6 +219,23 @@ public class ForagingRNN
          }
       }
       //
+      double[] target = getTarget(x, y);
+      if (verbose)
+      {
+         System.out.println("target:");
+         for (int j = 0; j < 9; j++)
+         {
+            System.out.print(target[j] + " ");
+         }
+         System.out.println();
+      }
+      return(new Sample(data, target, 9, length, 9, 1));
+   }
+
+
+   // Generate target from position.
+   public static double[] getTarget(int x, int y)
+   {
       double[] target = new double[9];
       if (x > 0)
       {
@@ -171,16 +282,21 @@ public class ForagingRNN
             target[8] = 1.0;
          }
       }
-      if (verbose)
+      return(target);
+   }
+
+
+   public static SampleSet generate(int n, World world)
+   {
+      SampleSet set = new SampleSet();
+
+      //
+      for (int i = 0; i < n; i++)
       {
-         System.out.println("target:");
-         for (int j = 0; j < 9; j++)
-         {
-            System.out.print(target[j] + " ");
-         }
-         System.out.println();
+         set.add(generateSample(world, true));
       }
-      return(new Sample(data, target, 9, length, 9, 1));
+      //
+      return(set);
    }
 
 
@@ -217,6 +333,9 @@ public class ForagingRNN
 
    public static void main(String[] args) throws IOException
    {
+      boolean genHoneyBeeData = false;
+      boolean gotParm         = false;
+
       for (int i = 0; i < args.length; i++)
       {
          if (args[i].equals("-learningRate"))
@@ -323,30 +442,9 @@ public class ForagingRNN
             }
             continue;
          }
-         if (args[i].equals("-turnProbability"))
+         if (args[i].equals("-genHoneyBeeData"))
          {
-            i++;
-            if (i >= args.length)
-            {
-               System.err.println("Invalid turnProbability option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            try
-            {
-               TURN_PROBABILITY = Float.parseFloat(args[i]);
-            }
-            catch (NumberFormatException e) {
-               System.err.println("Invalid turnProbability option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            if ((TURN_PROBABILITY < 0.0) || (TURN_PROBABILITY > 1.0))
-            {
-               System.err.println("Invalid turnProbability option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
+            genHoneyBeeData = true;
             continue;
          }
          if (args[i].equals("-numTrain"))
@@ -425,6 +523,7 @@ public class ForagingRNN
                System.err.println(Usage);
                System.exit(1);
             }
+            gotParm = true;
             continue;
          }
          if (args[i].equals("-maxSequenceLength"))
@@ -451,6 +550,34 @@ public class ForagingRNN
                System.err.println(Usage);
                System.exit(1);
             }
+            gotParm = true;
+            continue;
+         }
+         if (args[i].equals("-turnProbability"))
+         {
+            i++;
+            if (i >= args.length)
+            {
+               System.err.println("Invalid turnProbability option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            try
+            {
+               TURN_PROBABILITY = Float.parseFloat(args[i]);
+            }
+            catch (NumberFormatException e) {
+               System.err.println("Invalid turnProbability option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            if ((TURN_PROBABILITY < 0.0) || (TURN_PROBABILITY > 1.0))
+            {
+               System.err.println("Invalid turnProbability option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            gotParm = true;
             continue;
          }
          if (args[i].equals("-epochs"))
@@ -508,6 +635,11 @@ public class ForagingRNN
          System.err.println(Usage);
          System.exit(1);
       }
+      if (genHoneyBeeData && gotParm)
+      {
+         System.err.println("unnecessary options used with genHoneyBeeData option");
+         System.exit(1);
+      }
       if (MIN_SEQUENCE_LENGTH > MAX_SEQUENCE_LENGTH)
       {
          System.err.println("minSequenceLength cannot be greater than maxSequenceLength");
@@ -517,10 +649,37 @@ public class ForagingRNN
       //
       // generate train and test data.
       //
-      System.out.println("Training samples:");
-      SampleSet trainset = generate(NUM_TRAIN);
-      System.out.println("Testing samples:");
-      SampleSet testset = generate(NUM_TEST);
+      Parameters.NUM_FLOWERS     = 1;
+      Parameters.NUM_BEES        = 1;
+      HoneyBee.constantNectar    = true;
+      HoneyBee.minConstantNectar = 1;
+      HoneyBee.maxConstantNectar = 1;
+      World world = null;
+      try
+      {
+         world = new World(RANDOM_SEED);
+      }
+      catch (Exception e)
+      {
+         System.err.println("Cannot initialize world: " + e.getMessage());
+         System.exit(1);
+      }
+      SampleSet trainset;
+      SampleSet testset;
+      if (genHoneyBeeData)
+      {
+         System.out.println("Training samples:");
+         trainset = generate(NUM_TRAIN, world);
+         System.out.println("Testing samples:");
+         testset = generate(NUM_TEST, world);
+      }
+      else
+      {
+         System.out.println("Training samples:");
+         trainset = generate(NUM_TRAIN);
+         System.out.println("Testing samples:");
+         testset = generate(NUM_TEST);
+      }
       //
       // build network.
       //

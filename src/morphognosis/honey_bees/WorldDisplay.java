@@ -620,6 +620,7 @@ public class WorldDisplay extends JFrame
          // Mouse pressed.
          public void mousePressed(MouseEvent evt)
          {
+            setMessage(null);
             int x = (int)((double)evt.getX() / cellWidth);
             int y = height - (int)((double)evt.getY() / cellHeight) - 1;
 

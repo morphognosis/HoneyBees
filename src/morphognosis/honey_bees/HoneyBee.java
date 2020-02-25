@@ -100,10 +100,12 @@ public class HoneyBee
    public boolean[][] landmarkMap;
 
    // Debugging.
-   public static boolean constantNectar = false;
-   public static boolean debugAutopilot = false;
-   public static boolean debugDB        = false;
-   public static boolean debugNN        = false;
+   public static boolean constantNectar    = false;
+   public static int     minConstantNectar = 1;
+   public static int     maxConstantNectar = 2;
+   public static boolean debugAutopilot    = false;
+   public static boolean debugDB           = false;
+   public static boolean debugNN           = false;
 
    // Constructor.
    public HoneyBee(int id, World world, SecureRandom random)
@@ -592,15 +594,17 @@ public class HoneyBee
       {
          if (world.cells[x][y].flower != null)
          {
-            if (random.nextBoolean())
+            world.cells[x][y].flower.nectar =
+               random.nextInt(maxConstantNectar - minConstantNectar + 1) +
+               minConstantNectar;
+            if (world.cells[x][y].flower.nectar > 0)
             {
-               world.cells[x][y].flower.nectar = 2;
+               sensors[NECTAR_PRESENCE_INDEX] = 1.0f;
             }
             else
             {
-               world.cells[x][y].flower.nectar = 1;
+               sensors[NECTAR_PRESENCE_INDEX] = 0.0f;
             }
-            sensors[NECTAR_PRESENCE_INDEX] = 1.0f;
          }
       }
       if (sensors[NECTAR_PRESENCE_INDEX] == 1.0f)

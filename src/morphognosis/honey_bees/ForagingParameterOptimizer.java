@@ -1212,6 +1212,10 @@ public class ForagingParameterOptimizer
          super(MUTATION_RATE, RANDOM_MUTATION_RATE, randomizer.nextInt());
 
          genes.add(
+            new Gene("HIVE_RADIUS", 3, 2, 3, 1,
+                     MUTATION_RATE, RANDOM_MUTATION_RATE, randomizer.nextInt()));
+
+         genes.add(
             new Gene("NUM_FLOWERS", 3, 1, 6, 1,
                      MUTATION_RATE, RANDOM_MUTATION_RATE, randomizer.nextInt()));
 
@@ -1307,6 +1311,7 @@ public class ForagingParameterOptimizer
 
          // Set parameters.
          Map<String, Object> parameters = parmGenome.getKeyValues();
+         Parameters.HIVE_RADIUS            = (Integer)parameters.get("HIVE_RADIUS");
          Parameters.NUM_FLOWERS            = (Integer)parameters.get("NUM_FLOWERS");
          Parameters.FLOWER_NECTAR_CAPACITY = (Integer)parameters.get("FLOWER_NECTAR_CAPACITY");
          Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY = (Float)parameters.get("FLOWER_NECTAR_PRODUCTION_PROBABILITY");
