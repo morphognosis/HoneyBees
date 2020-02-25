@@ -3,7 +3,8 @@
 Honey bees cooperatively forage using dancing behavior to communicate nectar direction and distance to other bees.
 This project simulates this social behavior in a cellular automaton using the Morphognosis model.
 
-![Honey bee dance](http://tom.portegys.com/research/morphognosis/waggledance.jpg)
+<img src="http://tom.portegys.com/research/morphognosis/waggledance.jpg" width="200" height="200" />
+Honey bee dance
 
 ## World.
 
