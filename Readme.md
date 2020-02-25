@@ -40,8 +40,9 @@ Java 1.8 or later.
 3. Reset the environment.
 4. Change the driver to "metamorphDB" which will utilize the metamorphs.
 
-`Usage:`
-`  New run:`
+<pre>
+Usage:
+  New run:
     java morphognosis.honey_bees.Main
       [-steps <steps> | -display <true | false> (default=true)]
       World parameters:
@@ -86,6 +87,7 @@ Java 1.8 or later.
 Exit codes:
   0=success
   1=error
+</pre>
 
 ## Other commands in work folder.
 
