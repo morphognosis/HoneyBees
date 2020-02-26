@@ -230,19 +230,19 @@ public class SectorDisplay extends JFrame implements Runnable
                   if (name != null)
                   {
                      imageGraphics.drawString(name, 0, y);
-                     int x = canvasGraphics.getFontMetrics().stringWidth(name);
-                     for (j = 0; j < morphognostic.eventValueDimensions[i]; j++)
-                     {
-                        imageGraphics.setColor(colors[i][j]);
-                        imageGraphics.fillRect(x, y - 5, 5, 5);
-                        x += 8;
-                     }
-                     imageGraphics.setColor(Color.white);
                   }
                   else
                   {
-                     imageGraphics.drawString("unknown", 0, y);
+                     imageGraphics.drawString("unnamed", 0, y);
                   }
+                  int x = canvasGraphics.getFontMetrics().stringWidth(name);
+                  for (j = 0; j < morphognostic.eventValueDimensions[i]; j++)
+                  {
+                     imageGraphics.setColor(colors[i][j]);
+                     imageGraphics.fillRect(x, y - 5, 5, 5);
+                     x += 8;
+                  }
+                  imageGraphics.setColor(Color.white);
                   y += 9;
                }
             }

@@ -171,7 +171,6 @@ public class HoneyBee
             {
                switch (j)
                {
-               case HIVE_PRESENCE_EVENT:
                case SURPLUS_NECTAR_EVENT:
                case NECTAR_LONG_DISTANCE_EVENT:
                case NECTAR_SHORT_DISTANCE_EVENT:
@@ -190,6 +189,7 @@ public class HoneyBee
             {
                switch (j)
                {
+               case HIVE_PRESENCE_EVENT:
                case SURPLUS_NECTAR_EVENT:
                case NECTAR_SHORT_DISTANCE_EVENT:
                   neighborhoodEventMap[i][j] = true;
@@ -207,6 +207,7 @@ public class HoneyBee
             {
                switch (j)
                {
+               case HIVE_PRESENCE_EVENT:
                case SURPLUS_NECTAR_EVENT:
                case NECTAR_LONG_DISTANCE_EVENT:
                   neighborhoodEventMap[i][j] = true;
@@ -548,6 +549,7 @@ public class HoneyBee
    }
 
 
+   int mcnt = 0;
    // Update metamorphs.
    public boolean updateMetamorphs()
    {
