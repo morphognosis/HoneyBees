@@ -65,6 +65,7 @@ public class Morphognostic
    public int[] eventValueDimensions;
    public int   maxEventAge;
    public int   eventTime;
+   public       String[] eventNames;
 
    // Neighborhood.
    public class Neighborhood
@@ -78,7 +79,6 @@ public class Morphognostic
       {
          public int       dx, dy, dimension;
          public float[][] valueDensities;
-         public int[][][] events;
 
          public Sector(int dx, int dy, int dimension)
          {
@@ -92,17 +92,6 @@ public class Morphognostic
                for (int i = 0; i < eventValueDimensions[d]; i++)
                {
                   valueDensities[d][i] = 0.0f;
-               }
-            }
-            events = new int[dimension][dimension][eventDimensions];
-            for (int x = 0; x < dimension; x++)
-            {
-               for (int y = 0; y < dimension; y++)
-               {
-                  for (int d = 0; d < eventDimensions; d++)
-                  {
-                     events[x][y][d] = -1;
-                  }
                }
             }
          }
@@ -189,16 +178,6 @@ public class Morphognostic
                      s.valueDensities[i][j] = 0.0f;
                   }
                }
-               for (int x = 0; x < s.dimension; x++)
-               {
-                  for (int y = 0; y < s.dimension; y++)
-                  {
-                     for (int d = 0; d < eventDimensions; d++)
-                     {
-                        s.events[x][y][d] = -1;
-                     }
-                  }
-               }
             }
          }
 
@@ -235,8 +214,6 @@ public class Morphognostic
                }
 
                // Accumulate values.
-               int ex2 = ex - (sx - (s.dimension / 2));
-               int ey2 = ey - (sy - (s.dimension / 2));
                for (int d = 0; d < eventDimensions; d++)
                {
                   // Event dimension mapped to neighborhood?
@@ -252,11 +229,6 @@ public class Morphognostic
                         else
                         {
                            s.valueDensities[d][v] += 1.0f;
-                        }
-                        if ((ex2 >= 0) && (ex2 < s.dimension) &&
-                            (ey2 >= 0) && (ey2 < s.dimension))
-                        {
-                           s.events[ex2][ey2][d] = v;
                         }
                      }
                   }
@@ -525,8 +497,16 @@ public class Morphognostic
       {
          maxEventAge = 0;
       }
-      events    = new ArrayList<Event>();
-      eventTime = 0;
+      events     = new ArrayList<Event>();
+      eventTime  = 0;
+      eventNames = null;
+   }
+
+
+   // Name events.
+   public void nameEvents(String[] eventNames)
+   {
+      this.eventNames = eventNames;
    }
 
 
@@ -583,13 +563,6 @@ public class Morphognostic
                   for (int i = 0; i < eventValueDimensions[d]; i++)
                   {
                      s.valueDensities[d][i] = 0.0f;
-                  }
-                  for (int x2 = 0; x2 < s.events.length; x2++)
-                  {
-                     for (int y2 = 0; y2 < s.events[0].length; y2++)
-                     {
-                        s.events[x2][y2][d] = -1;
-                     }
                   }
                }
             }
@@ -654,13 +627,6 @@ public class Morphognostic
                   for (int i = 0; i < eventValueDimensions[d]; i++)
                   {
                      Utility.saveFloat(output, s.valueDensities[d][i]);
-                  }
-                  for (int x2 = 0; x2 < s.events.length; x2++)
-                  {
-                     for (int y2 = 0; y2 < s.events[0].length; y2++)
-                     {
-                        Utility.saveInt(output, s.events[x2][y2][d]);
-                     }
                   }
                }
             }
@@ -749,13 +715,6 @@ public class Morphognostic
                   {
                      s.valueDensities[d][i] = Utility.loadFloat(input);
                   }
-                  for (int x2 = 0; x2 < s.events.length; x2++)
-                  {
-                     for (int y2 = 0; y2 < s.events[0].length; y2++)
-                     {
-                        s.events[x2][y2][d] = Utility.loadInt(input);
-                     }
-                  }
                }
             }
          }
@@ -816,13 +775,6 @@ public class Morphognostic
                   {
                      s1.valueDensities[d][j] = s2.valueDensities[d][j];
                   }
-                  for (int x2 = 0; x2 < s1.events.length; x2++)
-                  {
-                     for (int y2 = 0; y2 < s1.events[0].length; y2++)
-                     {
-                        s1.events[x2][y2][d] = s2.events[x2][y2][d];
-                     }
-                  }
                }
             }
          }
@@ -839,7 +791,8 @@ public class Morphognostic
          Event event2 = m.createEvent(values, event.x, event.y, event.time);
          m.events.add(m.events.size(), event2);
       }
-      m.eventTime = eventTime;
+      m.eventTime  = eventTime;
+      m.eventNames = eventNames;
       return(m);
    }
 
@@ -1012,23 +965,19 @@ public class Morphognostic
                System.out.println("\t\tdx/dy=" + s.dx + "/" + s.dy);
                for (int d = 0; d < eventDimensions; d++)
                {
-                  System.out.print("\t\tdensities[" + d + "]:");
-                  for (int j = 0; j < eventValueDimensions[d]; j++)
+                  if (n.eventDimensionMap[d])
                   {
-                     System.out.print(" " + s.valueDensities[d][j]);
-                  }
-                  System.out.println("");
-                  System.out.println("\t\tevents[" + d + "]:");
-                  for (int x2 = 0; x2 < s.events.length; x2++)
-                  {
-                     System.out.print("\t\t\t");
-                     for (int y2 = 0; y2 < s.events[0].length; y2++)
+                     if ((eventNames == null) || (eventNames[d] == null))
                      {
-                        if (s.events[x2][y2][d] >= 0)
-                        {
-                           System.out.print(" ");
-                        }
-                        System.out.print(s.events[x2][y2][d] + " ");
+                        System.out.print("\t\tdensities[" + d + "] = ");
+                     }
+                     else
+                     {
+                        System.out.print("\t\tdensities[" + d + "] (" + eventNames[d] + ") =");
+                     }
+                     for (int j = 0; j < eventValueDimensions[d]; j++)
+                     {
+                        System.out.print(" " + s.valueDensities[d][j]);
                      }
                      System.out.println("");
                   }

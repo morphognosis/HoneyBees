@@ -7,6 +7,7 @@ import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
@@ -23,16 +24,13 @@ public class SectorDisplay extends JFrame implements Runnable
 {
    private static final long serialVersionUID = 0L;
 
-   // Empty cell.
-   public static final int   EMPTY_CELL_VALUE = 0;
-   public static final Color EMPTY_CELL_COLOR = Color.WHITE;
-
    // Display.
    MorphognosticDisplay display;
 
    // Neighborhood and sector.
-   int neighborhoodIndex;
-   int sectorXindex, sectorYindex;
+   int                               neighborhoodIndex;
+   int                               sectorXindex, sectorYindex;
+   Morphognostic                     morphognostic;
    Morphognostic.Neighborhood        neighborhood;
    Morphognostic.Neighborhood.Sector sector;
 
@@ -45,8 +43,9 @@ public class SectorDisplay extends JFrame implements Runnable
    Image     image;
    Graphics  imageGraphics;
    Dimension imageSize;
+   Font      imageFont;
    Thread    displayThread;
-   enum DISPLAY_MODE { DENSITIES, LANDMARKS };
+   enum DISPLAY_MODE { DENSITIES, NAMES };
    DISPLAY_MODE displayMode;
 
    // Constructor.
@@ -57,7 +56,8 @@ public class SectorDisplay extends JFrame implements Runnable
       this.neighborhoodIndex = neighborhoodIndex;
       this.sectorXindex      = sectorXindex;
       this.sectorYindex      = sectorYindex;
-      neighborhood           = display.morphognostic.neighborhoods.get(neighborhoodIndex);
+      morphognostic          = display.morphognostic;
+      neighborhood           = morphognostic.neighborhoods.get(neighborhoodIndex);
       sector = neighborhood.sectors[sectorXindex][sectorYindex];
 
       setTitle("N=" + neighborhoodIndex + " D=" + neighborhood.duration +
@@ -86,21 +86,21 @@ public class SectorDisplay extends JFrame implements Runnable
                                      }
                                   }
                                   );
-      JRadioButton landmarks = new JRadioButton("Landmarks");
-      landmarks.addActionListener(new ActionListener()
-                                  {
-                                     @Override
-                                     public void actionPerformed(ActionEvent e)
-                                     {
-                                        displayMode = DISPLAY_MODE.LANDMARKS;
-                                     }
-                                  }
-                                  );
+      JRadioButton names = new JRadioButton("Names");
+      names.addActionListener(new ActionListener()
+                              {
+                                 @Override
+                                 public void actionPerformed(ActionEvent e)
+                                 {
+                                    displayMode = DISPLAY_MODE.NAMES;
+                                 }
+                              }
+                              );
       ButtonGroup modeGroup = new ButtonGroup();
       modeGroup.add(densities);
-      modeGroup.add(landmarks);
+      modeGroup.add(names);
       modePanel.add(densities);
-      modePanel.add(landmarks);
+      modePanel.add(names);
       pack();
       setVisible(false);
 
@@ -109,6 +109,8 @@ public class SectorDisplay extends JFrame implements Runnable
       image          = createImage(canvasSize.width, canvasSize.height);
       imageGraphics  = image.getGraphics();
       imageSize      = canvasSize;
+      imageFont      = new Font("Ariel", Font.PLAIN, 10);
+      imageGraphics.setFont(imageFont);
 
       // Create display thread.
       displayThread = new Thread(this);
@@ -155,29 +157,47 @@ public class SectorDisplay extends JFrame implements Runnable
    // Update display.
    public void updateDisplay()
    {
-      int   d, i, j, n, w, h, x, x2, y, y2;
+      int   d, i, j, n, h;
       float fx, fw;
 
-      imageGraphics.setColor(Color.gray);
-      imageGraphics.fillRect(0, 0, imageSize.width, imageSize.height);
+      // Get colors
+      Color[][] colors = new Color[morphognostic.eventDimensions][];
+      for (d = 0; d < morphognostic.eventDimensions; d++)
+      {
+         colors[d] = new Color[morphognostic.eventValueDimensions[d]];
+         for (i = 0; i < morphognostic.eventValueDimensions[d]; i++)
+         {
+            colors[d][i] = getEventColor(d, i);
+         }
+      }
 
       if (displayMode == DISPLAY_MODE.DENSITIES)
       {
+         // Draw dimension value densities.
+         imageGraphics.setColor(Color.gray);
+         imageGraphics.fillRect(0, 0, imageSize.width, imageSize.height);
+
          // Draw value density histogram.
          n = 0;
-         for (d = 0; d < display.morphognostic.eventDimensions; d++)
+         for (d = 0; d < morphognostic.eventDimensions; d++)
          {
-            n += display.morphognostic.eventValueDimensions[d];
+            if (neighborhood.eventDimensionMap[d])
+            {
+               n += morphognostic.eventValueDimensions[d];
+            }
          }
          fw = (float)imageSize.width / (float)n;
          fx = 0.0f;
-         for (i = d = 0; d < display.morphognostic.eventDimensions; d++)
+         for (i = d = 0; d < morphognostic.eventDimensions; d++)
          {
-            for (j = 0; j < display.morphognostic.eventValueDimensions[d]; j++, i++, fx += fw)
+            if (neighborhood.eventDimensionMap[d])
             {
-               imageGraphics.setColor(getEventColor(d, j));
-               h = (int)((float)imageSize.height * sector.getValueDensity(d, j));
-               imageGraphics.fillRect((int)fx, imageSize.height - h, (int)(fw + 1.0), h);
+               for (j = 0; j < morphognostic.eventValueDimensions[d]; j++, i++, fx += fw)
+               {
+                  imageGraphics.setColor(colors[d][j]);
+                  h = (int)((float)imageSize.height * sector.getValueDensity(d, j));
+                  imageGraphics.fillRect((int)fx, imageSize.height - h, (int)(fw + 1.0), h);
+               }
             }
          }
          imageGraphics.setColor(Color.black);
@@ -190,43 +210,42 @@ public class SectorDisplay extends JFrame implements Runnable
       }
       else
       {
-         // Draw landmarks.
-         float cellWidth  = (float)imageSize.width / (float)sector.events.length;
-         float cellHeight = (float)imageSize.height / (float)sector.events[0].length;
-         for (x = 0, x2 = 0; x < sector.events.length;
-              x++, x2 = (int)(cellWidth * (double)x))
-         {
-            for (y = 0, y2 = imageSize.height - (int)cellHeight;
-                 y < sector.events[0].length;
-                 y++, y2 = (int)(cellHeight * (double)(sector.events[0].length - (y + 1))))
-            {
-               Color color = getEventColor(0, sector.events[x][y][0]);
-               for (d = 0; d < display.morphognostic.eventDimensions; d++)
-               {
-                  if ((sector.events[x][y][d] != -1) &&
-                      (sector.events[x][y][d] != EMPTY_CELL_VALUE))
-                  {
-                     color = getEventColor(d, sector.events[x][y][d]);
-                     break;
-                  }
-               }
-               imageGraphics.setColor(color);
-               imageGraphics.fillRect(x2, y2, (int)cellWidth + 1,
-                                      (int)cellHeight + 1);
-            }
-         }
+         // Draw dimension names.
          imageGraphics.setColor(Color.black);
-         h = imageSize.height;
-         for (x = 1, x2 = (int)cellWidth; x < sector.events.length;
-              x++, x2 = (int)(cellWidth * (double)x))
+         imageGraphics.fillRect(0, 0, imageSize.width, imageSize.height);
+
+         imageGraphics.setColor(Color.white);
+         if (morphognostic.eventNames == null)
          {
-            imageGraphics.drawLine(x2, 0, x2, h);
+            imageGraphics.drawString("event names unavailable", 0, 5);
          }
-         w = imageSize.width;
-         for (y = 1, y2 = (int)cellHeight; y < sector.events[0].length;
-              y++, y2 = (int)(cellHeight * (double)y))
+         else
          {
-            imageGraphics.drawLine(0, y2, w, y2);
+            int y = 9;
+            for (i = 0; i < morphognostic.eventNames.length; i++)
+            {
+               if (neighborhood.eventDimensionMap[i])
+               {
+                  String name = morphognostic.eventNames[i];
+                  if (name != null)
+                  {
+                     imageGraphics.drawString(name, 0, y);
+                     int x = canvasGraphics.getFontMetrics().stringWidth(name);
+                     for (j = 0; j < morphognostic.eventValueDimensions[i]; j++)
+                     {
+                        imageGraphics.setColor(colors[i][j]);
+                        imageGraphics.fillRect(x, y - 5, 5, 5);
+                        x += 8;
+                     }
+                     imageGraphics.setColor(Color.white);
+                  }
+                  else
+                  {
+                     imageGraphics.drawString("unknown", 0, y);
+                  }
+                  y += 9;
+               }
+            }
          }
       }
       canvasGraphics.drawImage(image, 0, 0, this);

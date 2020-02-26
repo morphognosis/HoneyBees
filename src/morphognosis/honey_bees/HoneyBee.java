@@ -245,6 +245,31 @@ public class HoneyBee
                                         Parameters.NEIGHBORHOOD_DURATIONS,
                                         Parameters.BINARY_VALUE_AGGREGATION);
 
+      String[] eventNames = new String[eventDimensions];
+      eventNames[0]       = "hive presence";
+      eventNames[1]       = "nectar presence";
+      eventNames[2]       = "surplus nectar presence";
+      eventNames[3]       = "nectar dance direction north";
+      eventNames[4]       = "nectar dance direction northeast";
+      eventNames[5]       = "nectar dance direction east";
+      eventNames[6]       = "nectar dance direction southeast";
+      eventNames[7]       = "nectar dance direction south";
+      eventNames[8]       = "nectar dance direction southwest";
+      eventNames[9]       = "nectar dance direction west";
+      eventNames[10]      = "nectar dance direction northwest";
+      eventNames[11]      = "nectar dance distance long";
+      eventNames[12]      = "nectar dance distance short";
+      eventNames[13]      = "orientation north";
+      eventNames[14]      = "orientation northeast";
+      eventNames[15]      = "orientation east";
+      eventNames[16]      = "orientation southeast";
+      eventNames[17]      = "orientation south";
+      eventNames[18]      = "orientation southwest";
+      eventNames[19]      = "orientation west";
+      eventNames[20]      = "orientation northwest";
+      eventNames[21]      = "nectar carry";
+      morphognostic.nameEvents(eventNames);
+
       // Create metamorphs.
       metamorphs = new ArrayList<Metamorph>();
 

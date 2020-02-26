@@ -50,16 +50,20 @@ public class MetamorphNN
       ArrayList<Attribute> attributeNames = new ArrayList<Attribute>();
       for (int i = 0; i < morphognostic.NUM_NEIGHBORHOODS; i++)
       {
-         int n = morphognostic.neighborhoods.get(i).sectors.length;
+         Morphognostic.Neighborhood neighborhood = morphognostic.neighborhoods.get(i);
+         int n = neighborhood.sectors.length;
          for (int x = 0; x < n; x++)
          {
             for (int y = 0; y < n; y++)
             {
                for (int d = 0; d < morphognostic.eventDimensions; d++)
                {
-                  for (int j = 0; j < morphognostic.eventValueDimensions[d]; j++)
+                  if (neighborhood.eventDimensionMap[d])
                   {
-                     attributeNames.add(new Attribute(i + "-" + x + "-" + y + "-" + d + "-" + j));
+                     for (int j = 0; j < morphognostic.eventValueDimensions[d]; j++)
+                     {
+                        attributeNames.add(new Attribute(i + "-" + x + "-" + y + "-" + d + "-" + j));
+                     }
                   }
                }
             }
@@ -123,18 +127,22 @@ public class MetamorphNN
       int a = 0;
       for (int i = 0; i < morphognostic.NUM_NEIGHBORHOODS; i++)
       {
-         int n = morphognostic.neighborhoods.get(i).sectors.length;
+         Morphognostic.Neighborhood neighborhood = morphognostic.neighborhoods.get(i);
+         int n = neighborhood.sectors.length;
          for (int x = 0; x < n; x++)
          {
             for (int y = 0; y < n; y++)
             {
-               Morphognostic.Neighborhood.Sector s = morphognostic.neighborhoods.get(i).sectors[x][y];
+               Morphognostic.Neighborhood.Sector s = neighborhood.sectors[x][y];
                for (int d = 0; d < morphognostic.eventDimensions; d++)
                {
-                  for (int j = 0; j < s.valueDensities[d].length; j++)
+                  if (neighborhood.eventDimensionMap[d])
                   {
-                     attrValues[a] = s.valueDensities[d][j];
-                     a++;
+                     for (int j = 0; j < s.valueDensities[d].length; j++)
+                     {
+                        attrValues[a] = s.valueDensities[d][j];
+                        a++;
+                     }
                   }
                }
             }
@@ -152,17 +160,21 @@ public class MetamorphNN
       numAttributes = 0;
       for (int i = 0; i < morphognostic.NUM_NEIGHBORHOODS; i++)
       {
-         int n = morphognostic.neighborhoods.get(i).sectors.length;
+         Morphognostic.Neighborhood neighborhood = morphognostic.neighborhoods.get(i);
+         int n = neighborhood.sectors.length;
          for (int x = 0; x < n; x++)
          {
             for (int y = 0; y < n; y++)
             {
-               Morphognostic.Neighborhood.Sector s = morphognostic.neighborhoods.get(i).sectors[x][y];
+               Morphognostic.Neighborhood.Sector s = neighborhood.sectors[x][y];
                for (int d = 0; d < morphognostic.eventDimensions; d++)
                {
-                  for (int j = 0; j < s.valueDensities[d].length; j++)
+                  if (neighborhood.eventDimensionMap[d])
                   {
-                     numAttributes++;
+                     for (int j = 0; j < s.valueDensities[d].length; j++)
+                     {
+                        numAttributes++;
+                     }
                   }
                }
             }
