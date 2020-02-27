@@ -1014,7 +1014,7 @@ public class Morphognostic
       }
       System.out.println("}");
       System.out.println("BINARY_VALUE_AGGREGATION=" + BINARY_VALUE_AGGREGATION);
-      System.out.println("orientation=" + orientation);
+      System.out.println("orientation=" + orientation + " (" + Orientation.toName(orientation) + ")");
       System.out.println("eventDimensions=" + eventDimensions);
       System.out.print("eventValueDimensions={");
       for (int i = 0; i < eventDimensions; i++)
