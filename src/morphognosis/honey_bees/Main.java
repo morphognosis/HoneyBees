@@ -935,16 +935,6 @@ public class Main
       {
          world.loadMetamorphNN(NNloadfile);
       }
-      else
-      {
-         // Train metamorph neural network?
-         if (driver == Driver.METAMORPH_NN)
-         {
-            System.out.print("Training metamorph neural network...");
-            world.trainMetamorphNN();
-            System.out.println("done");
-         }
-      }
 
       // Create display?
       if (display)
@@ -976,6 +966,12 @@ public class Main
       // Save metamorph neural network?
       if (NNsavefile != null)
       {
+         if (world.metamorphNN == null)
+         {
+            System.out.print("Training metamorph neural network...");
+            world.trainMetamorphNN();
+            System.out.println("done");
+         }
          world.saveMetamorphNN(NNsavefile);
       }
 
