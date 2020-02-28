@@ -58,6 +58,7 @@ public class Main
       "        [-hiveRadius <radius> (default=" + Parameters.HIVE_RADIUS + ")]\n" +
       "      Flower parameters:\n" +
       "        [-numFlowers <quantity> (default=" + Parameters.NUM_FLOWERS + ")]\n" +
+      "        [-flowerNectarRegenerationTime <steps> (default=" + Parameters.FLOWER_NECTAR_REGENERATION_TIME + ")]\n" +
       "        [-flowerSurplusNectarProbability <probability> (default=" + Parameters.FLOWER_SURPLUS_NECTAR_PROBABILITY + ")]\n" +
       "      Honey bee parameters:\n" +
       "        [-numBees <quantity> (default=" + Parameters.NUM_BEES + ")]\n" +
@@ -465,6 +466,33 @@ public class Main
             if (Parameters.NUM_FLOWERS < 0)
             {
                System.err.println("Invalid numFlowers option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            gotParm = true;
+            continue;
+         }
+         if (args[i].equals("-flowerNectarRegenerationTime"))
+         {
+            i++;
+            if (i >= args.length)
+            {
+               System.err.println("Invalid flowerNectarRegenerationTime option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            try
+            {
+               Parameters.FLOWER_NECTAR_REGENERATION_TIME = Integer.parseInt(args[i]);
+            }
+            catch (NumberFormatException e) {
+               System.err.println("Invalid flowerNectarRegenerationTime option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            if (Parameters.FLOWER_NECTAR_REGENERATION_TIME < 0)
+            {
+               System.err.println("Invalid flowerNectarRegenerationTime option");
                System.err.println(Usage);
                System.exit(1);
             }
