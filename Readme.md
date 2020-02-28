@@ -53,8 +53,7 @@ Usage:
         [-hiveRadius <radius> (default=3)]
       Flower parameters:
         [-numFlowers <quantity> (default=3)]
-        [-flowerNectarCapacity <quantity> (default=2)]
-        [-flowerNectarProductionProbability <probability> (default=0.01)]
+        [-flowerSurplusNectarProbability <probability> (default=0.5)]
       Honey bee parameters:
         [-numBees <quantity> (default=3)]
         [-beeTurnProbability <probability> (default=0.2)]

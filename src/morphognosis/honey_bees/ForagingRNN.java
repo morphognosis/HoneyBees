@@ -139,11 +139,6 @@ public class ForagingRNN
                {
                   Flower flower = new Flower();
                   cell.flower = flower;
-                  if ((Parameters.FLOWER_NECTAR_CAPACITY > 0) &&
-                      (rnd.nextFloat() < Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY))
-                  {
-                     flower.nectar = 1;
-                  }
                   break;
                }
             }
@@ -658,11 +653,8 @@ public class ForagingRNN
       //
       // generate train and test data.
       //
-      Parameters.NUM_FLOWERS     = 1;
-      Parameters.NUM_BEES        = 1;
-      HoneyBee.constantNectar    = true;
-      HoneyBee.minConstantNectar = 1;
-      HoneyBee.maxConstantNectar = 1;
+      Parameters.NUM_FLOWERS = 1;
+      Parameters.NUM_BEES    = 1;
       World world = null;
       try
       {

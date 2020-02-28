@@ -80,11 +80,6 @@ public class World
                {
                   Flower flower = new Flower();
                   cell.flower = flower;
-                  if ((Parameters.FLOWER_NECTAR_CAPACITY > 0) &&
-                      (random.nextFloat() < Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY))
-                  {
-                     flower.nectar = 1;
-                  }
                   break;
                }
             }
@@ -148,11 +143,6 @@ public class World
                {
                   Flower flower = new Flower();
                   cell.flower = flower;
-                  if ((Parameters.FLOWER_NECTAR_CAPACITY > 0) &&
-                      (random.nextFloat() < Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY))
-                  {
-                     flower.nectar = 1;
-                  }
                   break;
                }
             }
@@ -244,34 +234,6 @@ public class World
 
    // Step world.
    public void step()
-   {
-      stepFlowers();
-      stepBees();
-   }
-
-
-   // Step flowers.
-   public void stepFlowers()
-   {
-      for (int x = 0; x < Parameters.WORLD_WIDTH; x++)
-      {
-         for (int y = 0; y < Parameters.WORLD_HEIGHT; y++)
-         {
-            if ((cells[x][y].flower != null) && (cells[x][y].bee == null))
-            {
-               if ((cells[x][y].flower.nectar < Parameters.FLOWER_NECTAR_CAPACITY) &&
-                   (random.nextFloat() < Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY))
-               {
-                  cells[x][y].flower.nectar++;
-               }
-            }
-         }
-      }
-   }
-
-
-   // Step bees.
-   public void stepBees()
    {
       int width  = Parameters.WORLD_WIDTH;
       int height = Parameters.WORLD_HEIGHT;

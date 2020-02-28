@@ -1220,14 +1220,6 @@ public class ForagingParameterOptimizer
                      MUTATION_RATE, RANDOM_MUTATION_RATE, randomizer.nextInt()));
 
          genes.add(
-            new Gene("FLOWER_NECTAR_CAPACITY", 3, 1, 5, 1,
-                     MUTATION_RATE, RANDOM_MUTATION_RATE, randomizer.nextInt()));
-
-         genes.add(
-            new Gene("FLOWER_NECTAR_PRODUCTION_PROBABILITY", .05f, .01f, .5f, .01f,
-                     MUTATION_RATE, RANDOM_MUTATION_RATE, randomizer.nextInt()));
-
-         genes.add(
             new Gene("NUM_BEES", 5, 1, 10, 1,
                      MUTATION_RATE, RANDOM_MUTATION_RATE, randomizer.nextInt()));
 
@@ -1311,10 +1303,8 @@ public class ForagingParameterOptimizer
 
          // Set parameters.
          Map<String, Object> parameters = parmGenome.getKeyValues();
-         Parameters.HIVE_RADIUS            = (Integer)parameters.get("HIVE_RADIUS");
-         Parameters.NUM_FLOWERS            = (Integer)parameters.get("NUM_FLOWERS");
-         Parameters.FLOWER_NECTAR_CAPACITY = (Integer)parameters.get("FLOWER_NECTAR_CAPACITY");
-         Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY = (Float)parameters.get("FLOWER_NECTAR_PRODUCTION_PROBABILITY");
+         Parameters.HIVE_RADIUS          = (Integer)parameters.get("HIVE_RADIUS");
+         Parameters.NUM_FLOWERS          = (Integer)parameters.get("NUM_FLOWERS");
          Parameters.NUM_BEES             = (Integer)parameters.get("NUM_BEES");
          Parameters.BEE_TURN_PROBABILITY = (Float)parameters.get("BEE_TURN_PROBABILITY");
          Parameters.BEE_RETURN_TO_HIVE_PROBABILITY_INCREMENT = (Float)parameters.get("BEE_RETURN_TO_HIVE_PROBABILITY_INCREMENT");

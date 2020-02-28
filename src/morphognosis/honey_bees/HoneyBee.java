@@ -100,12 +100,9 @@ public class HoneyBee
    public boolean[][] landmarkMap;
 
    // Debugging.
-   public static boolean constantNectar    = false;
-   public static int     minConstantNectar = 1;
-   public static int     maxConstantNectar = 2;
-   public static boolean debugAutopilot    = false;
-   public static boolean debugDB           = false;
-   public static boolean debugNN           = false;
+   public static boolean debugAutopilot = false;
+   public static boolean debugDB        = false;
+   public static boolean debugNN        = false;
 
    // Constructor.
    public HoneyBee(int id, World world, SecureRandom random)
@@ -617,25 +614,16 @@ public class HoneyBee
       // Not carrying nectar.
 
       // Found nectar to extract?
-      if (constantNectar)
+      if (world.cells[x][y].flower != null)
       {
-         if (world.cells[x][y].flower != null)
+         if (random.nextFloat() < Parameters.FLOWER_SURPLUS_NECTAR_PROBABILITY)
          {
-            world.cells[x][y].flower.nectar =
-               random.nextInt(maxConstantNectar - minConstantNectar + 1) +
-               minConstantNectar;
-            if (world.cells[x][y].flower.nectar > 0)
-            {
-               sensors[NECTAR_PRESENCE_INDEX] = 1.0f;
-            }
-            else
-            {
-               sensors[NECTAR_PRESENCE_INDEX] = 0.0f;
-            }
+            world.cells[x][y].flower.nectar = 2;
          }
-      }
-      if (sensors[NECTAR_PRESENCE_INDEX] == 1.0f)
-      {
+         else
+         {
+            world.cells[x][y].flower.nectar = 1;
+         }
          response = EXTRACT_NECTAR;
          return(true);
       }

@@ -58,8 +58,7 @@ public class Main
       "        [-hiveRadius <radius> (default=" + Parameters.HIVE_RADIUS + ")]\n" +
       "      Flower parameters:\n" +
       "        [-numFlowers <quantity> (default=" + Parameters.NUM_FLOWERS + ")]\n" +
-      "        [-flowerNectarCapacity <quantity> (default=" + Parameters.FLOWER_NECTAR_CAPACITY + ")]\n" +
-      "        [-flowerNectarProductionProbability <probability> (default=" + Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY + ")]\n" +
+      "        [-flowerSurplusNectarProbability <probability> (default=" + Parameters.FLOWER_SURPLUS_NECTAR_PROBABILITY + ")]\n" +
       "      Honey bee parameters:\n" +
       "        [-numBees <quantity> (default=" + Parameters.NUM_BEES + ")]\n" +
       "        [-beeTurnProbability <probability> (default=" + Parameters.BEE_TURN_PROBABILITY + ")]\n" +
@@ -472,55 +471,28 @@ public class Main
             gotParm = true;
             continue;
          }
-         if (args[i].equals("-flowerNectarCapacity"))
+         if (args[i].equals("-flowerSurplusNectarProbability"))
          {
             i++;
             if (i >= args.length)
             {
-               System.err.println("Invalid flowerNectarCapacity option");
+               System.err.println("Invalid flowerSurplusNectarProbability option");
                System.err.println(Usage);
                System.exit(1);
             }
             try
             {
-               Parameters.FLOWER_NECTAR_CAPACITY = Integer.parseInt(args[i]);
+               Parameters.FLOWER_SURPLUS_NECTAR_PROBABILITY = Float.parseFloat(args[i]);
             }
             catch (NumberFormatException e) {
-               System.err.println("Invalid flowerNectarCapacity option");
+               System.err.println("Invalid flowerSurplusNectarProbability option");
                System.err.println(Usage);
                System.exit(1);
             }
-            if (Parameters.FLOWER_NECTAR_CAPACITY < 0)
+            if ((Parameters.FLOWER_SURPLUS_NECTAR_PROBABILITY < 0.0f) ||
+                (Parameters.FLOWER_SURPLUS_NECTAR_PROBABILITY > 1.0f))
             {
-               System.err.println("Invalid flowerNectarCapacity option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            gotParm = true;
-            continue;
-         }
-         if (args[i].equals("-flowerNectarProductionProbability"))
-         {
-            i++;
-            if (i >= args.length)
-            {
-               System.err.println("Invalid flowerNectarProductionProbability option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            try
-            {
-               Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY = Float.parseFloat(args[i]);
-            }
-            catch (NumberFormatException e) {
-               System.err.println("Invalid flowerNectarProductionProbability option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            if ((Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY < 0.0f) ||
-                (Parameters.FLOWER_NECTAR_PRODUCTION_PROBABILITY > 1.0f))
-            {
-               System.err.println("Invalid flowerNectarProductionProbability option");
+               System.err.println("Invalid flowerSurplusNectarProbability option");
                System.err.println(Usage);
                System.exit(1);
             }
@@ -843,11 +815,6 @@ public class Main
             System.out.println("HoneyBees version = " + VERSION);
             System.out.println("Morphognosis version = " + Morphognosis.VERSION);
             System.exit(0);
-         }
-         if (args[i].equals("-constantNectar"))
-         {
-            HoneyBee.constantNectar = true;
-            continue;
          }
          if (args[i].equals("-debugAutopilot"))
          {
