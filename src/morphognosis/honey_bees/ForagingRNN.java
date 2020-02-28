@@ -8,9 +8,8 @@
 package morphognosis.honey_bees;
 
 import java.io.IOException;
+import java.security.SecureRandom;
 import java.util.ArrayList;
-import java.util.Random;
-
 import de.jannlab.Net;
 import de.jannlab.core.CellType;
 import de.jannlab.data.Sample;
@@ -53,8 +52,8 @@ public class ForagingRNN
       "     [-epochs <quantity> (default=" + EPOCHS + ")]\n" +
       "     [-randomSeed <random number seed> (default=" + RANDOM_SEED + ")]";
 
-   private static TimeCounter TC  = new TimeCounter();
-   private static Random      rnd = new Random(RANDOM_SEED);
+   private static TimeCounter  TC  = new TimeCounter();
+   private static SecureRandom rnd = new SecureRandom();
 
    // Sample is a sequence of responses, where each response is an orientation (x8) or a forward movement.
    public static Sample generateSample(World world, boolean verbose)
@@ -70,9 +69,18 @@ public class ForagingRNN
       int cy = bee.y;
       relocateFlower(world);
       ArrayList<double[]> sequence = new ArrayList<double[]>();
+      boolean             first    = true;
       while (true)
       {
-         world.step();
+         if (first)
+         {
+            first           = false;
+            bee.orientation = bee.response = rnd.nextInt(Orientation.NUM_ORIENTATIONS);
+         }
+         else
+         {
+            world.step();
+         }
          if (bee.response == HoneyBee.EXTRACT_NECTAR) { break; }
          double[] v      = new double[9];
          v[bee.response] = 1.0;
@@ -137,7 +145,7 @@ public class ForagingRNN
                Cell cell = world.cells[x][y];
                if (!cell.hive && (cell.bee == null))
                {
-                  Flower flower = new Flower();
+                  Flower flower = new Flower(true, rnd);
                   cell.flower = flower;
                   break;
                }
@@ -656,6 +664,7 @@ public class ForagingRNN
       Parameters.NUM_FLOWERS = 1;
       Parameters.NUM_BEES    = 1;
       Parameters.FLOWER_SURPLUS_NECTAR_PROBABILITY = 0.0f;
+      rnd.setSeed(RANDOM_SEED);
       World world = null;
       try
       {

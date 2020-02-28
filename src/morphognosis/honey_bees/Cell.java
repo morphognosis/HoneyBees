@@ -7,22 +7,25 @@ package morphognosis.honey_bees;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.security.SecureRandom;
 
 import morphognosis.Utility;
 
 public class Cell
 {
    // Properties.
-   public boolean  hive;
-   public Flower   flower;
-   public HoneyBee bee;
+   public boolean      hive;
+   public Flower       flower;
+   public HoneyBee     bee;
+   public SecureRandom random;
 
    // Constructor.
-   public Cell()
+   public Cell(SecureRandom random)
    {
-      hive   = false;
-      flower = null;
-      bee    = null;
+      this.random = random;
+      hive        = false;
+      flower      = null;
+      bee         = null;
    }
 
 
@@ -69,7 +72,7 @@ public class Cell
       }
       if (Utility.loadInt(reader) == 1)
       {
-         flower = new Flower();
+         flower = new Flower(false, random);
          flower.load(reader);
       }
    }

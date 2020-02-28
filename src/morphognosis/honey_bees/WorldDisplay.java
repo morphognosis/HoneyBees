@@ -342,7 +342,7 @@ public class WorldDisplay extends JFrame
                {
                   canvasGraphics.drawImage(flowerImage, x2, y2,
                                            (int)cellWidth + 1, (int)cellHeight + 1, null);
-                  if (flower.nectar > 0)
+                  if (flower.nectar)
                   {
                      canvasGraphics.drawImage(nectarImage, x2, y2 + nectarYoff,
                                               (int)(cellWidth / 2.0f), (int)(cellHeight / 2.0f), null);

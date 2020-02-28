@@ -614,16 +614,8 @@ public class HoneyBee
       // Not carrying nectar.
 
       // Found nectar to extract?
-      if (world.cells[x][y].flower != null)
+      if (sensors[NECTAR_PRESENCE_INDEX] == 1.0f)
       {
-         if (random.nextFloat() < Parameters.FLOWER_SURPLUS_NECTAR_PROBABILITY)
-         {
-            world.cells[x][y].flower.nectar = 2;
-         }
-         else
-         {
-            world.cells[x][y].flower.nectar = 1;
-         }
          response = EXTRACT_NECTAR;
          return(true);
       }

@@ -56,7 +56,7 @@ public class World
       {
          for (int y = 0; y < Parameters.WORLD_HEIGHT; y++)
          {
-            cells[x][y] = new Cell();
+            cells[x][y] = new Cell(random);
             if (Math.sqrt(((double)y - cy) * ((double)y - cy) + ((double)x - cx) * (
                              (double)x - cx)) <= (double)Parameters.HIVE_RADIUS)
             {
@@ -78,7 +78,7 @@ public class World
                Cell cell = cells[x][y];
                if (!cell.hive && (cell.bee == null))
                {
-                  Flower flower = new Flower();
+                  Flower flower = new Flower(true, random);
                   cell.flower = flower;
                   break;
                }
@@ -141,7 +141,7 @@ public class World
                Cell cell = cells[x][y];
                if (!cell.hive && (cell.bee == null))
                {
-                  Flower flower = new Flower();
+                  Flower flower = new Flower(true, random);
                   cell.flower = flower;
                   break;
                }
@@ -235,6 +235,30 @@ public class World
    // Step world.
    public void step()
    {
+      stepFlowers();
+      stepBees();
+   }
+
+
+   // Step flowers.
+   public void stepFlowers()
+   {
+      for (int x = 0; x < Parameters.WORLD_WIDTH; x++)
+      {
+         for (int y = 0; y < Parameters.WORLD_HEIGHT; y++)
+         {
+            if (cells[x][y].flower != null)
+            {
+               cells[x][y].flower.regenerateNectar();
+            }
+         }
+      }
+   }
+
+
+   // Step bees.
+   public void stepBees()
+   {
       int width  = Parameters.WORLD_WIDTH;
       int height = Parameters.WORLD_HEIGHT;
 
@@ -284,11 +308,10 @@ public class World
                break;
 
             case HoneyBee.EXTRACT_NECTAR:
-               if ((cells[bee.x][bee.y].flower != null) &&
-                   (cells[bee.x][bee.y].flower.nectar > 0))
+               if ((cells[bee.x][bee.y].flower != null) && (cells[bee.x][bee.y].flower.nectar))
                {
                   bee.nectarCarry = true;
-                  cells[bee.x][bee.y].flower.nectar--;
+                  cells[bee.x][bee.y].flower.extractNectar();
                }
                break;
 
@@ -331,7 +354,7 @@ public class World
       {
          sensors[HoneyBee.HIVE_PRESENCE_INDEX] = 0.0f;
       }
-      if ((cells[bee.x][bee.y].flower != null) && (cells[bee.x][bee.y].flower.nectar > 0))
+      if ((cells[bee.x][bee.y].flower != null) && (cells[bee.x][bee.y].flower.nectar))
       {
          sensors[HoneyBee.NECTAR_PRESENCE_INDEX] = 1.0f;
       }

@@ -20,6 +20,7 @@ public class Parameters
 
    // Flower parameters.
    public static int   NUM_FLOWERS = 3;
+   public static int   FLOWER_NECTAR_REGENERATION_TIME   = 10;
    public static float FLOWER_SURPLUS_NECTAR_PROBABILITY = 0.5f;
    public static int   FLOWER_RANGE = Math.min(WORLD_WIDTH, WORLD_HEIGHT) / 2;
 
@@ -47,6 +48,7 @@ public class Parameters
       Utility.saveInt(writer, WORLD_HEIGHT);
       Utility.saveInt(writer, HIVE_RADIUS);
       Utility.saveInt(writer, NUM_FLOWERS);
+      Utility.saveInt(writer, FLOWER_NECTAR_REGENERATION_TIME);
       Utility.saveFloat(writer, FLOWER_SURPLUS_NECTAR_PROBABILITY);
       Utility.saveInt(writer, NUM_BEES);
       Utility.saveFloat(writer, BEE_TURN_PROBABILITY);
@@ -82,6 +84,7 @@ public class Parameters
       WORLD_HEIGHT = Utility.loadInt(reader);
       HIVE_RADIUS  = Utility.loadInt(reader);
       NUM_FLOWERS  = Utility.loadInt(reader);
+      FLOWER_NECTAR_REGENERATION_TIME   = Utility.loadInt(reader);
       FLOWER_SURPLUS_NECTAR_PROBABILITY = Utility.loadFloat(reader);
       NUM_BEES             = Utility.loadInt(reader);
       BEE_TURN_PROBABILITY = Utility.loadFloat(reader);
@@ -121,6 +124,7 @@ public class Parameters
       System.out.println("WORLD_HEIGHT = " + WORLD_HEIGHT);
       System.out.println("HIVE_RADIUS = " + HIVE_RADIUS);
       System.out.println("NUM_FLOWERS = " + NUM_FLOWERS);
+      System.out.println("FLOWER_NECTAR_REGENERATION_TIME = " + FLOWER_NECTAR_REGENERATION_TIME);
       System.out.println("FLOWER_SURPLUS_NECTAR_PROBABILITY = " + FLOWER_SURPLUS_NECTAR_PROBABILITY);
       System.out.println("NUM_BEES = " + NUM_BEES);
       System.out.println("BEE_TURN_PROBABILITY = " + BEE_TURN_PROBABILITY);
