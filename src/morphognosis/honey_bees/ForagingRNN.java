@@ -655,6 +655,7 @@ public class ForagingRNN
       //
       Parameters.NUM_FLOWERS = 1;
       Parameters.NUM_BEES    = 1;
+      Parameters.FLOWER_SURPLUS_NECTAR_PROBABILITY = 0.0f;
       World world = null;
       try
       {
