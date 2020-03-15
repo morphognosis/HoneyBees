@@ -986,7 +986,8 @@ public class HoneyBee
             if (!world.cells[x][y].hive &&
                 (morphognostic.locateEvent(3, HIVE_PRESENCE_EVENT, false) == -1))
             {
-               // Use autopilot response.
+               // Drop nectar and use autopilot response.
+               nectarCarry = false;
                return;
             }
 
