@@ -586,6 +586,18 @@ public class HoneyBee
       {
          returnToHiveProbability = 0.0f;
       }
+      else
+      {
+         // Cannot locate hive?
+         if (morphognostic.locateEvent(3, HIVE_PRESENCE_EVENT, false) == -1)
+         {
+            // Drop and ignore nectar and return to hive.
+            sensors[NECTAR_PRESENCE_INDEX] = 0.0f;
+            nectarCarry = false;
+            morphognostic.clearEvent(SURPLUS_NECTAR_EVENT);
+            returnToHiveProbability = 1.0f;
+         }
+      }
 
       // Turn at edge of world.
       if ((toX < 0) || (toX >= width) || (toY < 0) || (toY >= height))
@@ -982,12 +994,16 @@ public class HoneyBee
       {
          if (metamorphNN != null)
          {
-            // Lost hive?
+            // Cannot locate hive?
             if (!world.cells[x][y].hive &&
                 (morphognostic.locateEvent(3, HIVE_PRESENCE_EVENT, false) == -1))
             {
-               // Drop nectar and use autopilot response.
-               nectarCarry = false;
+               // Drop nectar and force return to hive.
+               handlingNectar = false;
+               nectarCarry    = false;
+               morphognostic.clearEvent(SURPLUS_NECTAR_EVENT);
+               returnToHiveProbability = 1.0f;
+               response = moveTo(Parameters.WORLD_WIDTH / 2, Parameters.WORLD_HEIGHT / 2);
                return;
             }
 
