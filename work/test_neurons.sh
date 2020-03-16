@@ -6,14 +6,16 @@ hiddenNeurons="25"
 echo test hiddenNeurons = $hiddenNeurons
 for (( i=0; i< $trials; ++i)); do
     echo trial = $i
-    ./honey_bees.sh -randomSeed $i -saveNN nn.dat -steps 20000 -display false -printCollectedNectar -NNhiddenLayers $hiddenNeurons
-    ./honey_bees.sh -randomSeed $i -driver metamorphNN -loadNN nn.dat -steps 20000 -display false -printCollectedNectar -NNhiddenLayers $hiddenNeurons
+    randomSeed=`expr $i + 1`
+    ./honey_bees.sh -randomSeed $randomSeed -saveNN nn.dat -steps 20000 -display false -printCollectedNectar -NNhiddenLayers $hiddenNeurons
+    ./honey_bees.sh -randomSeed $randomSeed -driver metamorphNN -loadNN nn.dat -steps 20000 -display false -printCollectedNectar -NNhiddenLayers $hiddenNeurons
 done
 hiddenNeurons="100"
 echo test hiddenNeurons = $hiddenNeurons
 for (( i=0; i< $trials; ++i)); do
     echo trial = $i
-    ./honey_bees.sh -randomSeed $i -saveNN nn.dat -steps 20000 -display false -printCollectedNectar -NNhiddenLayers $hiddenNeurons
-    ./honey_bees.sh -randomSeed $i -driver metamorphNN -loadNN nn.dat -steps 20000 -display false -printCollectedNectar -NNhiddenLayers $hiddenNeurons
+    randomSeed=`expr $i + 1`    
+    ./honey_bees.sh -randomSeed $randomSeed -saveNN nn.dat -steps 20000 -display false -printCollectedNectar -NNhiddenLayers $hiddenNeurons
+    ./honey_bees.sh -randomSeed $randomSeed -driver metamorphNN -loadNN nn.dat -steps 20000 -display false -printCollectedNectar -NNhiddenLayers $hiddenNeurons
 done
 

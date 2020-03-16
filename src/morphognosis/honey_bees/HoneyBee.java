@@ -446,7 +446,6 @@ public class HoneyBee
       updateMorphognostic();
 
       // Respond.
-      boolean previousHandlingNectar = handlingNectar;
       switch (driver)
       {
       case Driver.AUTOPILOT:
@@ -488,13 +487,6 @@ public class HoneyBee
       default:
          response = driverResponse;
          break;
-      }
-
-      // Start new morphognostic if ending handling of nectar.
-      if (previousHandlingNectar && !handlingNectar)
-      {
-         morphognostic.clear();
-         updateMorphognostic();
       }
 
       // Update metamorphs if handling nectar on autopilot.
