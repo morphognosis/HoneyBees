@@ -13,7 +13,12 @@
 
 package morphognosis.honey_bees;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import de.jannlab.Net;
@@ -22,6 +27,7 @@ import de.jannlab.data.Sample;
 import de.jannlab.data.SampleSet;
 import de.jannlab.generator.LSTMGenerator;
 import de.jannlab.training.GradientDescent;
+import morphognosis.Metamorph;
 import morphognosis.Orientation;
 import de.jannlab.misc.TimeCounter;
 import de.jannlab.tools.ClassificationValidator;
@@ -48,10 +54,16 @@ public class ForagingRNN
       "     [-numHiddenLayers <quantity> (default=" + NUM_HIDDEN_LAYERS + ")]\n" +
       "     [-epochs <quantity> (default=" + EPOCHS + ")]\n" +
       "     [-randomSeed <random number seed> (default=" + RANDOM_SEED + ")]\n" +
+      "     [-exportDataset <filename>]\n" +
       "     [-verbose (default=" + VERBOSE + ")]";
 
    // NN input size.
    public static final int NN_INPUT_SIZE = 35;
+
+   // Dataset file name.
+   private static String           DATASET_FILENAME = null;
+   private static FileOutputStream datasetOutput    = null;
+   private static PrintWriter      datasetWriter    = null;
 
    private static TimeCounter  TC  = new TimeCounter();
    private static SecureRandom rnd = new SecureRandom();
@@ -206,6 +218,19 @@ public class ForagingRNN
             i++;
          }
       }
+      if (datasetWriter != null)
+      {
+         datasetWriter.print("input:\n");
+         for (int j = 0; j < inputData.length; j++)
+         {
+            datasetWriter.print(inputData[j] + "");
+            if (j < inputData.length - 1)
+            {
+               datasetWriter.print(",");
+            }
+         }
+         datasetWriter.print("\n");
+      }
       double[] targetData = new double[targetSeq.size() * HoneyBee.NUM_RESPONSES];
       i = 0;
       for (double[] d : targetSeq)
@@ -216,14 +241,48 @@ public class ForagingRNN
             i++;
          }
       }
+      if (datasetWriter != null)
+      {
+         datasetWriter.print("target:\n");
+         for (int j = 0; j < targetData.length; j++)
+         {
+            datasetWriter.print(targetData[j] + "");
+            if (j < targetData.length - 1)
+            {
+               datasetWriter.print(",");
+            }
+         }
+         datasetWriter.print("\n");
+      }
       return(new Sample(inputData, targetData, NN_INPUT_SIZE, inputSeq.size(),
                         HoneyBee.NUM_RESPONSES, targetSeq.size()));
    }
 
 
-   public static SampleSet generate(World world)
+   // Generate training data.
+   public static SampleSet generateTrainingData(World world)
    {
       SampleSet set = new SampleSet();
+
+      if (DATASET_FILENAME != null)
+      {
+         try
+         {
+            datasetOutput = new FileOutputStream(new File(DATASET_FILENAME));
+         }
+         catch (Exception e)
+         {
+            System.err.println("Cannot open dataset file " + DATASET_FILENAME + ":" + e.getMessage());
+         }
+         if (datasetOutput != null)
+         {
+            datasetWriter = new PrintWriter(new BufferedWriter(new OutputStreamWriter(datasetOutput)));
+            int n = 1;
+            if (!noDanceLearn) { n++; }
+            datasetWriter.write("training set length=" + (Parameters.NUM_FLOWERS * Orientation.NUM_ORIENTATIONS * n) +
+                                ", input size=" + NN_INPUT_SIZE + ", target size=" + HoneyBee.NUM_RESPONSES + "\n");
+         }
+      }
 
       for (int i = 0; i < Parameters.NUM_FLOWERS; i++)
       {
@@ -237,6 +296,16 @@ public class ForagingRNN
       {
          System.out.println("training set size=" + set.size());
       }
+
+      if (datasetWriter != null)
+      {
+         datasetWriter.flush();
+         try {
+            datasetOutput.close();
+         }
+         catch (IOException e) {}
+      }
+
       return(set);
    }
 
@@ -435,6 +504,18 @@ public class ForagingRNN
             }
             continue;
          }
+         if (args[i].equals("-exportDataset"))
+         {
+            i++;
+            if (i >= args.length)
+            {
+               System.err.println("Invalid exportDataset option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            DATASET_FILENAME = args[i];
+            continue;
+         }
          if (args[i].equals("-maxSequenceSize"))
          {
             i++;
@@ -494,8 +575,8 @@ public class ForagingRNN
          System.err.println("Cannot initialize world: " + e.getMessage());
          System.exit(1);
       }
-      if (VERBOSE) { System.out.println("Training samples:"); }
-      SampleSet trainset = generate(world);
+      if (VERBOSE) { System.out.println("Training data:"); }
+      SampleSet trainset = generateTrainingData(world);
 
       //
       // build network.
