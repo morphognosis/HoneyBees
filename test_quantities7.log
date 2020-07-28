@@ -1,0 +1,153 @@
+Test quantities of flowers/bees
+Trials = 10
+test numBees = 7 numFlowers = 7
+trial = 0
+Collected nectar = 1145
+Training metamorph neural network...Error rate=0.020965058236272878
+
+Correctly Classified Instances        2942               97.9035 %
+Incorrectly Classified Instances        63                2.0965 %
+Kappa statistic                          0.972 
+Mean absolute error                      0.0033
+Root mean squared error                  0.0472
+Relative absolute error                  3.0312 %
+Root relative squared error             20.3685 %
+Total Number of Instances             3005     
+
+done
+Collected nectar = 1064
+trial = 1
+Collected nectar = 1793
+Training metamorph neural network...Error rate=0.022009321595028483
+
+Correctly Classified Instances        3777               97.7991 %
+Incorrectly Classified Instances        85                2.2009 %
+Kappa statistic                          0.9689
+Mean absolute error                      0.0033
+Root mean squared error                  0.0487
+Relative absolute error                  3.2871 %
+Root relative squared error             21.6401 %
+Total Number of Instances             3862     
+
+done
+Collected nectar = 1642
+trial = 2
+Collected nectar = 1297
+Training metamorph neural network...Error rate=0.007217610970768676
+
+Correctly Classified Instances        2751               99.2782 %
+Incorrectly Classified Instances        20                0.7218 %
+Kappa statistic                          0.9899
+Mean absolute error                      0.0013
+Root mean squared error                  0.0289
+Relative absolute error                  1.2307 %
+Root relative squared error             12.814  %
+Total Number of Instances             2771     
+
+done
+Collected nectar = 1122
+trial = 3
+Collected nectar = 1647
+Training metamorph neural network...Error rate=0.005632480638347806
+
+Correctly Classified Instances        4237               99.4368 %
+Incorrectly Classified Instances        24                0.5632 %
+Kappa statistic                          0.9923
+Mean absolute error                      0.001 
+Root mean squared error                  0.0249
+Relative absolute error                  0.9894 %
+Root relative squared error             10.9041 %
+Total Number of Instances             4261     
+
+done
+Collected nectar = 1339
+trial = 4
+Collected nectar = 2028
+Training metamorph neural network...Error rate=0.003143491124260355
+
+Correctly Classified Instances        5391               99.6857 %
+Incorrectly Classified Instances        17                0.3143 %
+Kappa statistic                          0.9955
+Mean absolute error                      0.0007
+Root mean squared error                  0.018 
+Relative absolute error                  0.6571 %
+Root relative squared error              8.0148 %
+Total Number of Instances             5408     
+
+done
+Collected nectar = 2166
+trial = 5
+Collected nectar = 906
+Training metamorph neural network...Error rate=0.014285714285714285
+
+Correctly Classified Instances        2760               98.5714 %
+Incorrectly Classified Instances        40                1.4286 %
+Kappa statistic                          0.9808
+Mean absolute error                      0.0024
+Root mean squared error                  0.0385
+Relative absolute error                  2.2287 %
+Root relative squared error             16.7061 %
+Total Number of Instances             2800     
+
+done
+Collected nectar = 891
+trial = 6
+Collected nectar = 2460
+Training metamorph neural network...Error rate=0.0033506449991623386
+
+Correctly Classified Instances        5949               99.6649 %
+Incorrectly Classified Instances        20                0.3351 %
+Kappa statistic                          0.9954
+Mean absolute error                      0.0007
+Root mean squared error                  0.0204
+Relative absolute error                  0.6358 %
+Root relative squared error              8.9743 %
+Total Number of Instances             5969     
+
+done
+Collected nectar = 2562
+trial = 7
+Collected nectar = 2471
+Training metamorph neural network...Error rate=0.0
+
+Correctly Classified Instances        6304              100      %
+Incorrectly Classified Instances         0                0      %
+Kappa statistic                          1     
+Mean absolute error                      0.0002
+Root mean squared error                  0.001 
+Relative absolute error                  0.1926 %
+Root relative squared error              0.4578 %
+Total Number of Instances             6304     
+
+done
+Collected nectar = 2516
+trial = 8
+Collected nectar = 2085
+Training metamorph neural network...Error rate=5.875440658049354E-4
+
+Correctly Classified Instances        5103               99.9412 %
+Incorrectly Classified Instances         3                0.0588 %
+Kappa statistic                          0.9992
+Mean absolute error                      0.0003
+Root mean squared error                  0.0082
+Relative absolute error                  0.3037 %
+Root relative squared error              3.6109 %
+Total Number of Instances             5106     
+
+done
+Collected nectar = 1969
+trial = 9
+Collected nectar = 2078
+Training metamorph neural network...Error rate=0.016172506738544475
+
+Correctly Classified Instances        5840               98.3827 %
+Incorrectly Classified Instances        96                1.6173 %
+Kappa statistic                          0.9778
+Mean absolute error                      0.0025
+Root mean squared error                  0.0419
+Relative absolute error                  2.3878 %
+Root relative squared error             18.3485 %
+Total Number of Instances             5936     
+
+done
+Collected nectar = 1926

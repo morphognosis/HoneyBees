@@ -27,7 +27,6 @@ import de.jannlab.data.Sample;
 import de.jannlab.data.SampleSet;
 import de.jannlab.generator.LSTMGenerator;
 import de.jannlab.training.GradientDescent;
-import morphognosis.Metamorph;
 import morphognosis.Orientation;
 import de.jannlab.misc.TimeCounter;
 import de.jannlab.tools.ClassificationValidator;

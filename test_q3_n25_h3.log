@@ -1,0 +1,190 @@
+trial = 0
+
+C:\Users\Tom\Documents\research\AI\Morphognosis\HoneyBees\work>java -Xmx1024m -cp ../bin/honey_bees.jar morphognosis.honey_bees.Main -randomSeed 0 -saveNN nn.dat -steps 20000 -display false -printCollectedNectar -NNhiddenLayers 25 
+Collected nectar = 347
+Training metamorph neural network...Error rate=0.0
+
+Correctly Classified Instances         768              100      %
+Incorrectly Classified Instances         0                0      %
+Kappa statistic                          1     
+Mean absolute error                      0.0009
+Root mean squared error                  0.0026
+Relative absolute error                  0.7695 %
+Root relative squared error              1.1067 %
+Total Number of Instances              768     
+
+done
+
+C:\Users\Tom\Documents\research\AI\Morphognosis\HoneyBees\work>java -Xmx1024m -cp ../bin/honey_bees.jar morphognosis.honey_bees.Main -randomSeed 0 -driver metamorphNN -loadNN nn.dat -steps 20000 -display false -printCollectedNectar -NNhiddenLayers 25 
+Collected nectar = 452
+trial = 1
+
+C:\Users\Tom\Documents\research\AI\Morphognosis\HoneyBees\work>java -Xmx1024m -cp ../bin/honey_bees.jar morphognosis.honey_bees.Main -randomSeed 1 -saveNN nn.dat -steps 20000 -display false -printCollectedNectar -NNhiddenLayers 25 
+Collected nectar = 349
+Training metamorph neural network...Error rate=0.0
+
+Correctly Classified Instances         919              100      %
+Incorrectly Classified Instances         0                0      %
+Kappa statistic                          1     
+Mean absolute error                      0.0008
+Root mean squared error                  0.0025
+Relative absolute error                  0.7146 %
+Root relative squared error              1.058  %
+Total Number of Instances              919     
+
+done
+
+C:\Users\Tom\Documents\research\AI\Morphognosis\HoneyBees\work>java -Xmx1024m -cp ../bin/honey_bees.jar morphognosis.honey_bees.Main -randomSeed 1 -driver metamorphNN -loadNN nn.dat -steps 20000 -display false -printCollectedNectar -NNhiddenLayers 25 
+Collected nectar = 395
+trial = 2
+
+C:\Users\Tom\Documents\research\AI\Morphognosis\HoneyBees\work>java -Xmx1024m -cp ../bin/honey_bees.jar morphognosis.honey_bees.Main -randomSeed 2 -saveNN nn.dat -steps 20000 -display false -printCollectedNectar -NNhiddenLayers 25 
+Collected nectar = 395
+Training metamorph neural network...Error rate=0.024752475247524754
+
+Correctly Classified Instances         788               97.5248 %
+Incorrectly Classified Instances        20                2.4752 %
+Kappa statistic                          0.9679
+Mean absolute error                      0.0043
+Root mean squared error                  0.0503
+Relative absolute error                  3.8869 %
+Root relative squared error             21.3886 %
+Total Number of Instances              808     
+
+done
+
+C:\Users\Tom\Documents\research\AI\Morphognosis\HoneyBees\work>java -Xmx1024m -cp ../bin/honey_bees.jar morphognosis.honey_bees.Main -randomSeed 2 -driver metamorphNN -loadNN nn.dat -steps 20000 -display false -printCollectedNectar -NNhiddenLayers 25 
+Collected nectar = 476
+trial = 3
+
+C:\Users\Tom\Documents\research\AI\Morphognosis\HoneyBees\work>java -Xmx1024m -cp ../bin/honey_bees.jar morphognosis.honey_bees.Main -randomSeed 3 -saveNN nn.dat -steps 20000 -display false -printCollectedNectar -NNhiddenLayers 25 
+Collected nectar = 240
+Training metamorph neural network...Error rate=0.0
+
+Correctly Classified Instances         613              100      %
+Incorrectly Classified Instances         0                0      %
+Kappa statistic                          1     
+Mean absolute error                      0.001 
+Root mean squared error                  0.0027
+Relative absolute error                  0.8452 %
+Root relative squared error              1.1332 %
+Total Number of Instances              613     
+
+done
+
+C:\Users\Tom\Documents\research\AI\Morphognosis\HoneyBees\work>java -Xmx1024m -cp ../bin/honey_bees.jar morphognosis.honey_bees.Main -randomSeed 3 -driver metamorphNN -loadNN nn.dat -steps 20000 -display false -printCollectedNectar -NNhiddenLayers 25 
+Collected nectar = 194
+trial = 4
+
+C:\Users\Tom\Documents\research\AI\Morphognosis\HoneyBees\work>java -Xmx1024m -cp ../bin/honey_bees.jar morphognosis.honey_bees.Main -randomSeed 4 -saveNN nn.dat -steps 20000 -display false -printCollectedNectar -NNhiddenLayers 25 
+Collected nectar = 441
+Training metamorph neural network...Error rate=0.0
+
+Correctly Classified Instances         967              100      %
+Incorrectly Classified Instances         0                0      %
+Kappa statistic                          1     
+Mean absolute error                      0.0007
+Root mean squared error                  0.002 
+Relative absolute error                  0.6366 %
+Root relative squared error              0.8555 %
+Total Number of Instances              967     
+
+done
+
+C:\Users\Tom\Documents\research\AI\Morphognosis\HoneyBees\work>java -Xmx1024m -cp ../bin/honey_bees.jar morphognosis.honey_bees.Main -randomSeed 4 -driver metamorphNN -loadNN nn.dat -steps 20000 -display false -printCollectedNectar -NNhiddenLayers 25 
+Collected nectar = 464
+trial = 5
+
+C:\Users\Tom\Documents\research\AI\Morphognosis\HoneyBees\work>java -Xmx1024m -cp ../bin/honey_bees.jar morphognosis.honey_bees.Main -randomSeed 5 -saveNN nn.dat -steps 20000 -display false -printCollectedNectar -NNhiddenLayers 25 
+Collected nectar = 467
+Training metamorph neural network...Error rate=0.0
+
+Correctly Classified Instances         851              100      %
+Incorrectly Classified Instances         0                0      %
+Kappa statistic                          1     
+Mean absolute error                      0.0007
+Root mean squared error                  0.002 
+Relative absolute error                  0.6551 %
+Root relative squared error              0.8592 %
+Total Number of Instances              851     
+
+done
+
+C:\Users\Tom\Documents\research\AI\Morphognosis\HoneyBees\work>java -Xmx1024m -cp ../bin/honey_bees.jar morphognosis.honey_bees.Main -randomSeed 5 -driver metamorphNN -loadNN nn.dat -steps 20000 -display false -printCollectedNectar -NNhiddenLayers 25 
+Collected nectar = 467
+trial = 6
+
+C:\Users\Tom\Documents\research\AI\Morphognosis\HoneyBees\work>java -Xmx1024m -cp ../bin/honey_bees.jar morphognosis.honey_bees.Main -randomSeed 6 -saveNN nn.dat -steps 20000 -display false -printCollectedNectar -NNhiddenLayers 25 
+Collected nectar = 161
+Training metamorph neural network...Error rate=0.0
+
+Correctly Classified Instances         653              100      %
+Incorrectly Classified Instances         0                0      %
+Kappa statistic                          1     
+Mean absolute error                      0.001 
+Root mean squared error                  0.0029
+Relative absolute error                  0.873  %
+Root relative squared error              1.2071 %
+Total Number of Instances              653     
+
+done
+
+C:\Users\Tom\Documents\research\AI\Morphognosis\HoneyBees\work>java -Xmx1024m -cp ../bin/honey_bees.jar morphognosis.honey_bees.Main -randomSeed 6 -driver metamorphNN -loadNN nn.dat -steps 20000 -display false -printCollectedNectar -NNhiddenLayers 25 
+Collected nectar = 171
+trial = 7
+
+C:\Users\Tom\Documents\research\AI\Morphognosis\HoneyBees\work>java -Xmx1024m -cp ../bin/honey_bees.jar morphognosis.honey_bees.Main -randomSeed 7 -saveNN nn.dat -steps 20000 -display false -printCollectedNectar -NNhiddenLayers 25 
+Collected nectar = 382
+Training metamorph neural network...Error rate=0.0
+
+Correctly Classified Instances         717              100      %
+Incorrectly Classified Instances         0                0      %
+Kappa statistic                          1     
+Mean absolute error                      0.0008
+Root mean squared error                  0.002 
+Relative absolute error                  0.7195 %
+Root relative squared error              0.8303 %
+Total Number of Instances              717     
+
+done
+
+C:\Users\Tom\Documents\research\AI\Morphognosis\HoneyBees\work>java -Xmx1024m -cp ../bin/honey_bees.jar morphognosis.honey_bees.Main -randomSeed 7 -driver metamorphNN -loadNN nn.dat -steps 20000 -display false -printCollectedNectar -NNhiddenLayers 25 
+Collected nectar = 382
+trial = 8
+
+C:\Users\Tom\Documents\research\AI\Morphognosis\HoneyBees\work>java -Xmx1024m -cp ../bin/honey_bees.jar morphognosis.honey_bees.Main -randomSeed 8 -saveNN nn.dat -steps 20000 -display false -printCollectedNectar -NNhiddenLayers 25 
+Collected nectar = 762
+Training metamorph neural network...Error rate=0.0012970168612191958
+
+Correctly Classified Instances        1540               99.8703 %
+Incorrectly Classified Instances         2                0.1297 %
+Kappa statistic                          0.9983
+Mean absolute error                      0.0007
+Root mean squared error                  0.0116
+Relative absolute error                  0.6361 %
+Root relative squared error              4.9901 %
+Total Number of Instances             1542     
+
+done
+
+C:\Users\Tom\Documents\research\AI\Morphognosis\HoneyBees\work>java -Xmx1024m -cp ../bin/honey_bees.jar morphognosis.honey_bees.Main -randomSeed 8 -driver metamorphNN -loadNN nn.dat -steps 20000 -display false -printCollectedNectar -NNhiddenLayers 25 
+Collected nectar = 715
+trial = 9
+
+C:\Users\Tom\Documents\research\AI\Morphognosis\HoneyBees\work>java -Xmx1024m -cp ../bin/honey_bees.jar morphognosis.honey_bees.Main -randomSeed 9 -saveNN nn.dat -steps 20000 -display false -printCollectedNectar -NNhiddenLayers 25 
+Collected nectar = 617
+Training metamorph neural network...Error rate=0.003843197540353574
+
+Correctly Classified Instances        1296               99.6157 %
+Incorrectly Classified Instances         5                0.3843 %
+Kappa statistic                          0.995 
+Mean absolute error                      0.0012
+Root mean squared error                  0.0194
+Relative absolute error                  1.0754 %
+Root relative squared error              8.2799 %
+Total Number of Instances             1301     
+
+done
+
+C:\Users\Tom\Documents\research\AI\Morphognosis\HoneyBees\work>java -Xmx1024m -cp ../bin/honey_bees.jar morphognosis.honey_bees.Main -randomSeed 9 -driver metamorphNN -loadNN nn.dat -steps 20000 -display false -printCollectedNectar -NNhiddenLayers 25 
+Collected nectar = 546
