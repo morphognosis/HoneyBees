@@ -209,49 +209,55 @@ public class ForagingRNN
       }
       double[] inputData = new double[inputSeq.size() * NN_INPUT_SIZE];
       int i = 0;
+      if (datasetWriter != null)
+      {
+         datasetWriter.print("input:\n");
+      }
       for (double[] d : inputSeq)
       {
          for (int j = 0; j < NN_INPUT_SIZE; j++)
          {
             inputData[i] = d[j];
             i++;
-         }
-      }
-      if (datasetWriter != null)
-      {
-         datasetWriter.print("input:\n");
-         for (int j = 0; j < inputData.length; j++)
-         {
-            datasetWriter.print(inputData[j] + "");
-            if (j < inputData.length - 1)
+            if (datasetWriter != null)
             {
-               datasetWriter.print(",");
+               datasetWriter.print(d[j] + "");
+               if (j < NN_INPUT_SIZE - 1)
+               {
+                  datasetWriter.print(",");
+               }
             }
          }
-         datasetWriter.print("\n");
+         if (datasetWriter != null)
+         {
+            datasetWriter.print("\n");
+         }
       }
       double[] targetData = new double[targetSeq.size() * HoneyBee.NUM_RESPONSES];
       i = 0;
+      if (datasetWriter != null)
+      {
+         datasetWriter.print("target:\n");
+      }
       for (double[] d : targetSeq)
       {
          for (int j = 0; j < HoneyBee.NUM_RESPONSES; j++)
          {
             targetData[i] = d[j];
             i++;
-         }
-      }
-      if (datasetWriter != null)
-      {
-         datasetWriter.print("target:\n");
-         for (int j = 0; j < targetData.length; j++)
-         {
-            datasetWriter.print(targetData[j] + "");
-            if (j < targetData.length - 1)
+            if (datasetWriter != null)
             {
-               datasetWriter.print(",");
+               datasetWriter.print(d[j] + "");
+               if (j < HoneyBee.NUM_RESPONSES - 1)
+               {
+                  datasetWriter.print(",");
+               }
             }
          }
-         datasetWriter.print("\n");
+         if (datasetWriter != null)
+         {
+            datasetWriter.print("\n");
+         }
       }
       return(new Sample(inputData, targetData, NN_INPUT_SIZE, inputSeq.size(),
                         HoneyBee.NUM_RESPONSES, targetSeq.size()));
@@ -629,7 +635,7 @@ public class ForagingRNN
          double[] targetData = s.getTarget();
          for (int j = 0; j < seqLength; j++)
          {
-            System.out.println("step=" + (j + 1));
+            System.out.println("step=" + j);
             Sample s2 = new Sample(inputData, targetData, NN_INPUT_SIZE, j + 1,
                                    HoneyBee.NUM_RESPONSES, j + 1);
             double[] prediction = f.apply(s2);
@@ -645,7 +651,7 @@ public class ForagingRNN
                   maxval        = prediction[k];
                }
             }
-            System.out.println();
+            System.out.println(" (" + HoneyBee.getResponseName(predictionIdx) + ")");
             System.out.print("target: ");
             int targetIdx = -1;
             for (int k = 0, q = j * HoneyBee.NUM_RESPONSES; k < HoneyBee.NUM_RESPONSES; k++)
@@ -656,20 +662,27 @@ public class ForagingRNN
                   targetIdx = k;
                }
             }
-            System.out.println();
+            System.out.println(" (" + HoneyBee.getResponseName(targetIdx) + ")");
             totalResponses++;
             if (targetIdx == predictionIdx)
             {
                correctResponses++;
+               System.out.println("OK");
             }
             else
             {
                forageCorrect = false;
+               System.out.println("error");
             }
          }
          if (forageCorrect)
          {
             correctForages++;
+            System.out.println("forage OK");
+         }
+         else
+         {
+            System.out.println("forage error");
          }
          totalForages++;
       }
@@ -685,7 +698,8 @@ public class ForagingRNN
          System.out.printf(" (%.2f", ((double)correctForages / (double)totalForages) * 100.0);
          System.out.println("%)");
       }
-      //double ratio = f.ratio();
-      //System.out.println("classification results= " + ratio * 100.0 + "%.");
+      //double ratio = f.ratio();;
+      //System.out.printf("classification results=%.2f", ratio * 100.0);
+      //System.out.println("%");
    }
 }
