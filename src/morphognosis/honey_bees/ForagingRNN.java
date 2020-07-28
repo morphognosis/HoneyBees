@@ -1,9 +1,15 @@
 // For conditions of distribution and use, see copyright notice in Main.java
 
 // Foraging RNN.
-// Test the ability of an RNN to track relative location, a skill necessary to return to hive.
-// There are 9 possible responses: 8 orientations plus a forward movement.
-// Classification: the orientation to the initial location.
+// Test the ability of an RNN to forage when allowed to sense its relative location
+// to the hive upon discovering nectar. The RNN must return to the hive and deposit nectar.
+// If surplus nectar was sensed, it must also perform an appropriate dance and move toward
+// the nectar.
+//
+// Input:
+// <nectar presence><nectar carry><orientation><25 (5x5) hive presence>
+// Target:
+// <response>
 
 package morphognosis.honey_bees;
 
@@ -23,313 +29,220 @@ import de.jannlab.tools.ClassificationValidator;
 public class ForagingRNN
 {
    // Parameters.
-   public static double LEARNING_RATE       = 0.001;
-   public static double MOMENTUM            = 0.9;
-   public static int    NUM_HIDDEN_NEURONS  = 5;
-   public static int    NUM_HIDDEN_LAYERS   = 1;
-   public static float  TURN_PROBABILITY    = 0.5f;
-   public static int    NUM_TRAIN           = 1;
-   public static int    NUM_TEST            = 1;
-   public static int    MIN_SEQUENCE_LENGTH = 5;
-   public static int    MAX_SEQUENCE_LENGTH = 15;
-   public static int    EPOCHS      = 200;
-   public static int    RANDOM_SEED = 4517;
+   public static double  LEARNING_RATE      = 0.001;
+   public static double  MOMENTUM           = 0.9;
+   public static int     NUM_HIDDEN_NEURONS = 5;
+   public static int     NUM_HIDDEN_LAYERS  = 1;
+   public static int     EPOCHS             = 200;
+   public static int     RANDOM_SEED        = 4517;
+   public static boolean VERBOSE            = false;
 
    // Usage.
    public static final String Usage =
       "Usage:\n" +
       "    java morphognosis.honey_bees.ForagingRNN\n" +
+      "     [-numFlowers <quantity> (default=" + Parameters.NUM_FLOWERS + ")]\n" +
       "     [-learningRate <float> (default=" + LEARNING_RATE + ")]\n" +
       "     [-momentum <float> (default=" + MOMENTUM + ")]\n" +
       "     [-numHiddenNeurons <quantity> (default=" + NUM_HIDDEN_NEURONS + ")]\n" +
       "     [-numHiddenLayers <quantity> (default=" + NUM_HIDDEN_LAYERS + ")]\n" +
-      "     [-genHoneyBeeData (generate data from honey bee foraging)]\n" +
-      "     [-numTrain <quantity> (default=" + NUM_TRAIN + ")]\n" +
-      "     [-numTest <quantity> (default=" + NUM_TEST + ")]\n" +
-      "     [-minSequenceLength <quantity> (default=" + MIN_SEQUENCE_LENGTH + ")]\n" +
-      "     [-maxSequenceLength <quantity> (default=" + MAX_SEQUENCE_LENGTH + ")]\n" +
-      "     [-turnProbability <probability> (default=" + TURN_PROBABILITY + ")]\n" +
       "     [-epochs <quantity> (default=" + EPOCHS + ")]\n" +
-      "     [-randomSeed <random number seed> (default=" + RANDOM_SEED + ")]";
+      "     [-randomSeed <random number seed> (default=" + RANDOM_SEED + ")]\n" +
+      "     [-verbose (default=" + VERBOSE + ")]";
+
+   // NN input size.
+   public static final int NN_INPUT_SIZE = 35;
 
    private static TimeCounter  TC  = new TimeCounter();
    private static SecureRandom rnd = new SecureRandom();
 
-   // Sample is a sequence of responses, where each response is an orientation (x8) or a forward movement.
-   public static Sample generateSample(World world, boolean verbose)
+   private static int     maxSequenceSize = -1;
+   private static boolean noDanceLearn    = false;
+
+   // Sample input is a sequence of sensor values, target is a sequence of responses.
+   public static Sample generateSample(World world, int flower, int orientation, boolean surplusNectar)
    {
+      world.reset();
       HoneyBee bee = world.bees[0];
 
-      while (bee.response != HoneyBee.DEPOSIT_NECTAR)
+      if (VERBOSE)
       {
-         world.step();
+         System.out.println("generate sequence flower=" + flower + ", " +
+                            "orientation=" + orientation + ", surplus nectar=" + surplusNectar + ":");
       }
-      bee.orientation = Orientation.NORTH;
-      int cx = bee.x;
-      int cy = bee.y;
-      relocateFlower(world);
-      ArrayList<double[]> sequence = new ArrayList<double[]>();
-      boolean             first    = true;
-      while (true)
-      {
-         if (first)
-         {
-            first           = false;
-            bee.orientation = bee.response = rnd.nextInt(Orientation.NUM_ORIENTATIONS);
-         }
-         else
-         {
-            world.step();
-         }
-         if (bee.response == HoneyBee.EXTRACT_NECTAR) { break; }
-         double[] v      = new double[9];
-         v[bee.response] = 1.0;
-         if (verbose)
-         {
-            for (int j = 0; j < 9; j++)
-            {
-               System.out.print(v[j] + " ");
-            }
-            System.out.println();
-         }
-         sequence.add(v);
-      }
-      if (verbose)
-      {
-         System.out.println("sequence length=" + sequence.size());
-      }
-      double[] data = new double[sequence.size() * 9];
-      int i = 0;
-      for (double[] d : sequence)
-      {
-         for (int j = 0; j < 9; j++)
-         {
-            data[i] = d[j];
-            i++;
-         }
-      }
-      double[] target = getTarget(bee.x - cx, bee.y - cy);
-      if (verbose)
-      {
-         System.out.println("target:");
-         for (int j = 0; j < 9; j++)
-         {
-            System.out.print(target[j] + " ");
-         }
-         System.out.println();
-      }
-      return(new Sample(data, target, 9, sequence.size(), 9, 1));
-   }
 
-
-   public static void relocateFlower(World world)
-   {
-      for (int x = 0; x < Parameters.WORLD_WIDTH; x++)
+      // Remove other flowers.
+      int fx = -1;
+      int fy = -1;
+      for (int x = 0, i = 0; x < Parameters.WORLD_WIDTH; x++)
       {
          for (int y = 0; y < Parameters.WORLD_HEIGHT; y++)
          {
-            world.cells[x][y].flower = null;
+            if (world.cells[x][y].flower != null)
+            {
+               if (i == flower)
+               {
+                  fx = x;
+                  fy = y;
+                  world.cells[fx][fy].flower.nectar = true;
+               }
+               else
+               {
+                  world.cells[x][y].flower = null;
+               }
+               i++;
+            }
          }
       }
-      double cx = Parameters.WORLD_WIDTH / 2.0;
-      double cy = Parameters.WORLD_HEIGHT / 2.0;
-      for (int i = 0; i < Parameters.NUM_FLOWERS; i++)
+
+      // Forage to flower.
+      while (world.cells[bee.x][bee.y].flower == null)
       {
-         for (int j = 0; j < 100; j++)
+         world.step();
+      }
+      bee.orientation = orientation;
+      ArrayList<double[]> inputSeq  = new ArrayList<double[]>();
+      ArrayList<double[]> targetSeq = new ArrayList<double[]>();
+      bee.handlingNectar = true;
+      boolean first        = true;
+      int     extractCount = 0;
+      while (bee.handlingNectar)
+      {
+         if ((maxSequenceSize != -1) && (inputSeq.size() >= maxSequenceSize)) { break; }
+         double[] input = new double[NN_INPUT_SIZE];
+         String nectarPresence = "false";
+         if (world.cells[bee.x][bee.y].flower != null)
          {
-            int x = rnd.nextInt(Parameters.WORLD_WIDTH);
-            int y = rnd.nextInt(Parameters.WORLD_HEIGHT);
-            if (Math.sqrt(((double)y - cy) * ((double)y - cy) + ((double)x - cx) * (
-                             (double)x - cx)) <= (double)Parameters.FLOWER_RANGE)
+            if (world.cells[bee.x][bee.y].flower.nectar)
             {
-               Cell cell = world.cells[x][y];
-               if (!cell.hive && (cell.bee == null))
+               input[0]       = 1.0;
+               nectarPresence = "true";
+            }
+         }
+         String nectarCarry = "false";
+         if (bee.nectarCarry)
+         {
+            input[1]    = 1.0;
+            nectarCarry = "true";
+         }
+         int o = bee.orientation;
+         input[2 + bee.orientation] = 1.0;
+         int hx = -1;
+         int hy = -1;
+         int bx = bee.x;
+         int by = bee.y;
+         if (first || world.cells[bee.x][bee.y].hive)
+         {
+            first = false;
+            bx    = bee.x;
+            hx    = bee.x / 4;
+            if (hx > 4) { hx = 4; }
+            hx = 4 - hx;
+            by = bee.y;
+            hy = bee.y / 4;
+            if (hy > 4) { hy = 4; }
+            hy = 4 - hy;
+            input[10 + (hy * 5) + hx] = 1.0;
+         }
+         world.step();
+         if (bee.response == HoneyBee.EXTRACT_NECTAR) { extractCount++; }
+         if (bee.handlingNectar && (extractCount < 2))
+         {
+            if (VERBOSE)
+            {
+               System.out.println("input: ");
+               System.out.println("nectar presence [0]: " + input[0] + " (" + nectarPresence + ")");
+               System.out.println("nectar carry [1]: " + input[1] + " (" + nectarCarry + ")");
+               System.out.print("orientation [2-9]: ");
+               for (int j = 2; j < 10; j++)
                {
-                  Flower flower = new Flower(true, rnd);
-                  cell.flower = flower;
-                  break;
+                  System.out.print(input[j] + " ");
+               }
+               System.out.println("(" + Orientation.toName(o) + ")");
+               System.out.println("hive presence [10-34]:");
+               for (int i = 30, j = NN_INPUT_SIZE, k = 0; k < 5; j -= 5, i = j - 5, k++)
+               {
+                  for ( ; i < j; i++)
+                  {
+                     System.out.print(input[i] + " ");
+                  }
+                  System.out.println();
+               }
+               if (hx != -1)
+               {
+                  System.out.println("(bee=[" + bx + "," + by + "]->[" + (bx / 4) + "," +
+                                     (by / 4) + "], hive=[" + hx + "," + hy + "], index=" +
+                                     (10 + (hy * 5) + hx + ")"));
                }
             }
-            if (j == 99)
+            inputSeq.add(input);
+            world.cells[fx][fy].flower.nectar = surplusNectar;
+            double[] target      = new double[HoneyBee.NUM_RESPONSES];
+            target[bee.response] = 1.0;
+            if (VERBOSE)
             {
-               System.err.println("Cannot place flower in world");
-               System.exit(1);
+               System.out.println("target: ");
+               System.out.print("response: ");
+               for (int j = 0; j < HoneyBee.NUM_RESPONSES; j++)
+               {
+                  System.out.print(target[j] + " ");
+               }
+               System.out.println("(" + HoneyBee.getResponseName(bee.response) + ")");
             }
+            targetSeq.add(target);
          }
       }
+      if (VERBOSE)
+      {
+         System.out.println("sequence length=" + inputSeq.size());
+      }
+      double[] inputData = new double[inputSeq.size() * NN_INPUT_SIZE];
+      int i = 0;
+      for (double[] d : inputSeq)
+      {
+         for (int j = 0; j < NN_INPUT_SIZE; j++)
+         {
+            inputData[i] = d[j];
+            i++;
+         }
+      }
+      double[] targetData = new double[targetSeq.size() * HoneyBee.NUM_RESPONSES];
+      i = 0;
+      for (double[] d : targetSeq)
+      {
+         for (int j = 0; j < HoneyBee.NUM_RESPONSES; j++)
+         {
+            targetData[i] = d[j];
+            i++;
+         }
+      }
+      return(new Sample(inputData, targetData, NN_INPUT_SIZE, inputSeq.size(),
+                        HoneyBee.NUM_RESPONSES, targetSeq.size()));
    }
 
 
-   public static Sample generateSample(final int length, boolean verbose)
-   {
-      double[] data = new double[length * 9];
-      //
-      int x           = 0;
-      int y           = 0;
-      int orientation = 0;
-      if (verbose) { System.out.println("data:"); }
-      for (int i = 0; i < length; i++)
-      {
-         int response = 8;
-         if (rnd.nextFloat() < TURN_PROBABILITY)
-         {
-            response = rnd.nextInt(8);
-         }
-         data[(i * 9) + response] = 1.0;
-         if (verbose)
-         {
-            for (int j = 0; j < 9; j++)
-            {
-               System.out.print(data[(i * 9) + j] + " ");
-            }
-            System.out.println();
-         }
-         if (response < 8)
-         {
-            orientation = response;
-         }
-         else
-         {
-            switch (orientation)
-            {
-            case 0:
-               y++;
-               break;
-
-            case 1:
-               x++;
-               y++;
-               break;
-
-            case 2:
-               x++;
-               break;
-
-            case 3:
-               x++;
-               y--;
-               break;
-
-            case 4:
-               y--;
-               break;
-
-            case 5:
-               x--;
-               y--;
-               break;
-
-            case 6:
-               x--;
-               break;
-
-            case 7:
-               x--;
-               y++;
-               break;
-            }
-         }
-      }
-      //
-      double[] target = getTarget(x, y);
-      if (verbose)
-      {
-         System.out.println("target:");
-         for (int j = 0; j < 9; j++)
-         {
-            System.out.print(target[j] + " ");
-         }
-         System.out.println();
-      }
-      return(new Sample(data, target, 9, length, 9, 1));
-   }
-
-
-   // Generate target from position.
-   public static double[] getTarget(int x, int y)
-   {
-      double[] target = new double[9];
-      if (x > 0)
-      {
-         if (y > 0)
-         {
-            target[1] = 1.0;
-         }
-         else if (y < 0)
-         {
-            target[3] = 1.0;
-         }
-         else
-         {
-            target[2] = 1.0;
-         }
-      }
-      else if (x < 0)
-      {
-         if (y > 0)
-         {
-            target[7] = 1.0;
-         }
-         else if (y < 0)
-         {
-            target[5] = 1.0;
-         }
-         else
-         {
-            target[6] = 1.0;
-         }
-      }
-      else
-      {
-         if (y > 0)
-         {
-            target[0] = 1.0;
-         }
-         else if (y < 0)
-         {
-            target[4] = 1.0;
-         }
-         else
-         {
-            target[8] = 1.0;
-         }
-      }
-      return(target);
-   }
-
-
-   public static SampleSet generate(int n, World world)
+   public static SampleSet generate(World world)
    {
       SampleSet set = new SampleSet();
 
-      //
-      for (int i = 0; i < n; i++)
+      for (int i = 0; i < Parameters.NUM_FLOWERS; i++)
       {
-         set.add(generateSample(world, true));
+         for (int j = 0; j < Orientation.NUM_ORIENTATIONS; j++)
+         {
+            set.add(generateSample(world, i, j, false));
+            if (!noDanceLearn) { set.add(generateSample(world, i, j, true)); }
+         }
       }
-      //
-      return(set);
-   }
-
-
-   public static SampleSet generate(int n)
-   {
-      SampleSet set = new SampleSet();
-
-      //
-      for (int i = 0; i < n; i++)
+      if (VERBOSE)
       {
-         int length = rnd.nextInt((MAX_SEQUENCE_LENGTH - MIN_SEQUENCE_LENGTH + 1)) + MIN_SEQUENCE_LENGTH;
-         set.add(generateSample(length, true));
+         System.out.println("training set size=" + set.size());
       }
-      //
       return(set);
    }
 
 
    public static Net LSTM(final int in, final int hid, int layers, final int out)
    {
-      //
       LSTMGenerator gen = new LSTMGenerator();
 
       gen.inputLayer(in);
@@ -338,18 +251,40 @@ public class ForagingRNN
          gen.hiddenLayer(hid, CellType.SIGMOID, CellType.TANH, CellType.TANH, true);
       }
       gen.outputLayer(out, CellType.TANH);
-      //
       return(gen.generate());
    }
 
 
    public static void main(String[] args) throws IOException
    {
-      boolean genHoneyBeeData = false;
-      boolean gotParm         = false;
-
       for (int i = 0; i < args.length; i++)
       {
+         if (args[i].equals("-numFlowers"))
+         {
+            i++;
+            if (i >= args.length)
+            {
+               System.err.println("Invalid numFlowers option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            try
+            {
+               Parameters.NUM_FLOWERS = Integer.parseInt(args[i]);
+            }
+            catch (NumberFormatException e) {
+               System.err.println("Invalid numFlowers option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            if (Parameters.NUM_FLOWERS < 0)
+            {
+               System.err.println("Invalid numFlowers option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            continue;
+         }
          if (args[i].equals("-learningRate"))
          {
             i++;
@@ -454,144 +389,6 @@ public class ForagingRNN
             }
             continue;
          }
-         if (args[i].equals("-genHoneyBeeData"))
-         {
-            genHoneyBeeData = true;
-            continue;
-         }
-         if (args[i].equals("-numTrain"))
-         {
-            i++;
-            if (i >= args.length)
-            {
-               System.err.println("Invalid numTrain option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            try
-            {
-               NUM_TRAIN = Integer.parseInt(args[i]);
-            }
-            catch (NumberFormatException e) {
-               System.err.println("Invalid numTrain option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            if (NUM_TRAIN < 0)
-            {
-               System.err.println("Invalid numTrain option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            continue;
-         }
-         if (args[i].equals("-numTest"))
-         {
-            i++;
-            if (i >= args.length)
-            {
-               System.err.println("Invalid numTest option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            try
-            {
-               NUM_TEST = Integer.parseInt(args[i]);
-            }
-            catch (NumberFormatException e) {
-               System.err.println("Invalid numTest option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            if (NUM_TEST < 0)
-            {
-               System.err.println("Invalid numTest option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            continue;
-         }
-         if (args[i].equals("-minSequenceLength"))
-         {
-            i++;
-            if (i >= args.length)
-            {
-               System.err.println("Invalid minSequenceLength option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            try
-            {
-               MIN_SEQUENCE_LENGTH = Integer.parseInt(args[i]);
-            }
-            catch (NumberFormatException e) {
-               System.err.println("Invalid minSequenceLength option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            if (MIN_SEQUENCE_LENGTH < 0)
-            {
-               System.err.println("Invalid minSequenceLength option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            gotParm = true;
-            continue;
-         }
-         if (args[i].equals("-maxSequenceLength"))
-         {
-            i++;
-            if (i >= args.length)
-            {
-               System.err.println("Invalid maxSequenceLength option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            try
-            {
-               MAX_SEQUENCE_LENGTH = Integer.parseInt(args[i]);
-            }
-            catch (NumberFormatException e) {
-               System.err.println("Invalid maxSequenceLength option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            if (MAX_SEQUENCE_LENGTH < 0)
-            {
-               System.err.println("Invalid maxSequenceLength option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            gotParm = true;
-            continue;
-         }
-         if (args[i].equals("-turnProbability"))
-         {
-            i++;
-            if (i >= args.length)
-            {
-               System.err.println("Invalid turnProbability option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            try
-            {
-               TURN_PROBABILITY = Float.parseFloat(args[i]);
-            }
-            catch (NumberFormatException e) {
-               System.err.println("Invalid turnProbability option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            if ((TURN_PROBABILITY < 0.0) || (TURN_PROBABILITY > 1.0))
-            {
-               System.err.println("Invalid turnProbability option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            gotParm = true;
-            continue;
-         }
          if (args[i].equals("-epochs"))
          {
             i++;
@@ -638,6 +435,36 @@ public class ForagingRNN
             }
             continue;
          }
+         if (args[i].equals("-maxSequenceSize"))
+         {
+            i++;
+            if (i >= args.length)
+            {
+               System.err.println("Invalid maxSequenceSize option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            try
+            {
+               maxSequenceSize = Integer.parseInt(args[i]);
+            }
+            catch (NumberFormatException e) {
+               System.err.println("Invalid maxSequenceSize option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            continue;
+         }
+         if (args[i].equals("-noDanceLearn"))
+         {
+            noDanceLearn = true;
+            continue;
+         }
+         if (args[i].equals("-verbose"))
+         {
+            VERBOSE = true;
+            continue;
+         }
          if (args[i].equals("-help") || args[i].equals("-h") || args[i].equals("-?"))
          {
             System.out.println(Usage);
@@ -647,22 +474,14 @@ public class ForagingRNN
          System.err.println(Usage);
          System.exit(1);
       }
-      if (genHoneyBeeData && gotParm)
-      {
-         System.err.println("Unnecessary options used with genHoneyBeeData option");
-         System.exit(1);
-      }
-      if (MIN_SEQUENCE_LENGTH > MAX_SEQUENCE_LENGTH)
-      {
-         System.err.println("minSequenceLength cannot be greater than maxSequenceLength");
-         System.exit(1);
-      }
 
       //
-      // generate train and test data.
+      // generate train data.
       //
-      Parameters.NUM_FLOWERS = 1;
-      Parameters.NUM_BEES    = 1;
+      Parameters.WORLD_WIDTH  = 21;
+      Parameters.WORLD_HEIGHT = 21;
+      Parameters.HIVE_RADIUS  = 3;
+      Parameters.NUM_BEES     = 1;
       Parameters.FLOWER_SURPLUS_NECTAR_PROBABILITY = 0.0f;
       rnd.setSeed(RANDOM_SEED);
       World world = null;
@@ -675,34 +494,19 @@ public class ForagingRNN
          System.err.println("Cannot initialize world: " + e.getMessage());
          System.exit(1);
       }
-      SampleSet trainset;
-      SampleSet testset;
-      if (genHoneyBeeData)
-      {
-         System.out.println("Training samples:");
-         trainset = generate(NUM_TRAIN, world);
-         System.out.println("Testing samples:");
-         testset = generate(NUM_TEST, world);
-      }
-      else
-      {
-         System.out.println("Training samples:");
-         trainset = generate(NUM_TRAIN);
-         System.out.println("Testing samples:");
-         testset = generate(NUM_TEST);
-      }
+      if (VERBOSE) { System.out.println("Training samples:"); }
+      SampleSet trainset = generate(world);
+
       //
       // build network.
       //
-      Net net    = LSTM(9, NUM_HIDDEN_NEURONS, NUM_HIDDEN_LAYERS, 9);
-      int length = Math.max(trainset.maxSequenceLength(), testset.maxSequenceLength());
-
-      net.rebuffer(length);
+      Net net       = LSTM(NN_INPUT_SIZE, NUM_HIDDEN_NEURONS, NUM_HIDDEN_LAYERS, HoneyBee.NUM_RESPONSES);
+      int maxlength = trainset.maxSequenceLength();
+      net.rebuffer(maxlength);
       net.initializeWeights();
       //
       // setup network.
       //
-      final int maxlength = Math.max(trainset.maxSequenceLength(), testset.maxSequenceLength());
       net.initializeWeights(rnd);
       net.rebuffer(maxlength);
       //
@@ -723,79 +527,85 @@ public class ForagingRNN
       //
       trainer.train();
       //
-      System.out.println(
-         "training time: " +
-         TC.valueMilliDouble() +
-         " ms."
-         );
+      System.out.println("training time: " + TC.valueMilliDouble() + " ms.");
       //
       // evaluate learning success.
       //
       ClassificationValidator f = new ClassificationValidator(net);
-      int correct = 0;
+      int correctResponses      = 0;
+      int totalResponses        = 0;
+      int correctForages        = 0;
+      int totalForages          = 0;
       int setSize = trainset.size();
+      System.out.println("number of forages=" + setSize);
+      System.out.println("training results:");
       for (int i = 0; i < setSize; i++)
       {
-         Sample s = trainset.get(i);
-         double[] results = f.apply(s);
-         int    maxidx = -1;
-         double maxval = -1.0;
-         for (int j = 0; j < results.length; j++)
+         System.out.println("forage=" + i);
+         boolean forageCorrect = true;
+         Sample  s             = trainset.get(i);
+         int     seqLength     = s.getInputLength();
+         double[] inputData  = s.getInput();
+         double[] targetData = s.getTarget();
+         for (int j = 0; j < seqLength; j++)
          {
-            if ((maxidx == -1) || (maxval < results[j]))
+            System.out.println("step=" + (j + 1));
+            Sample s2 = new Sample(inputData, targetData, NN_INPUT_SIZE, j + 1,
+                                   HoneyBee.NUM_RESPONSES, j + 1);
+            double[] prediction = f.apply(s2);
+            System.out.print("prediction: ");
+            int    predictionIdx = -1;
+            double maxval        = -1.0;
+            for (int k = 0; k < prediction.length; k++)
             {
-               maxidx = j;
-               maxval = results[j];
+               System.out.printf("%.2f ", prediction[k]);
+               if ((predictionIdx == -1) || (maxval < prediction[k]))
+               {
+                  predictionIdx = k;
+                  maxval        = prediction[k];
+               }
+            }
+            System.out.println();
+            System.out.print("target: ");
+            int targetIdx = -1;
+            for (int k = 0, q = j * HoneyBee.NUM_RESPONSES; k < HoneyBee.NUM_RESPONSES; k++)
+            {
+               System.out.print(targetData[q + k] + " ");
+               if (targetData[q + k] == 1.0)
+               {
+                  targetIdx = k;
+               }
+            }
+            System.out.println();
+            totalResponses++;
+            if (targetIdx == predictionIdx)
+            {
+               correctResponses++;
+            }
+            else
+            {
+               forageCorrect = false;
             }
          }
-         double[] t = s.getTarget();
-         int targetidx = 0;
-         for ( ; targetidx < t.length; targetidx++)
+         if (forageCorrect)
          {
-            if (t[targetidx] == 1.0) { break; }
+            correctForages++;
          }
-         if (targetidx == maxidx) { correct++; }
+         totalForages++;
       }
-      System.out.print("trainset results: correct/size=" + correct + "/" + setSize);
-      if (setSize > 0)
+      System.out.print("correct/total responses=" + correctResponses + "/" + totalResponses);
+      if (totalResponses > 0)
       {
-         System.out.print(" (" + ((double)correct / (double)setSize) * 100.0 + "%)");
+         System.out.printf(" (%.2f", ((double)correctResponses / (double)totalResponses) * 100.0);
+         System.out.println("%)");
       }
-      System.out.println();
+      System.out.print("correct/total forages=" + correctForages + "/" + totalForages);
+      if (totalForages > 0)
+      {
+         System.out.printf(" (%.2f", ((double)correctForages / (double)totalForages) * 100.0);
+         System.out.println("%)");
+      }
       //double ratio = f.ratio();
-      //System.out.println("trainset classification result: " + ratio * 100.0 + "%.");
-      f       = new ClassificationValidator(net);
-      correct = 0;
-      setSize = testset.size();
-      for (int i = 0; i < setSize; i++)
-      {
-         Sample s = testset.get(i);
-         double[] results = f.apply(s);
-         int    maxidx = -1;
-         double maxval = -1.0;
-         for (int j = 0; j < results.length; j++)
-         {
-            if ((maxidx == -1) || (maxval < results[j]))
-            {
-               maxidx = j;
-               maxval = results[j];
-            }
-         }
-         double[] t = s.getTarget();
-         int targetidx = 0;
-         for ( ; targetidx < t.length; targetidx++)
-         {
-            if (t[targetidx] == 1.0) { break; }
-         }
-         if (targetidx == maxidx) { correct++; }
-      }
-      System.out.print("testset results: correct/size=" + correct + "/" + setSize);
-      if (setSize > 0)
-      {
-         System.out.print(" (" + ((double)correct / (double)setSize) * 100.0 + "%)");
-      }
-      System.out.println();
-      //ratio = f.ratio();
-      //System.out.println("testset classification result: " + ratio * 100.0 + "%.");
+      //System.out.println("classification results= " + ratio * 100.0 + "%.");
    }
 }
