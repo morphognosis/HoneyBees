@@ -15,8 +15,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Random;
+
 import morphognosis.Metamorph;
 import morphognosis.Morphognostic;
 import morphognosis.Morphognostic.Neighborhood;
@@ -26,17 +27,17 @@ import morphognosis.Utility;
 public class HoneyBee
 {
    // Properties.
-   public int          id;
-   public int          x, y, x2, y2, toX, toY;
-   public int          orientation, orientation2;
-   public boolean      nectarCarry;
-   public int          nectarDistanceDisplay;
-   public boolean      handlingNectar;
-   public float        returnToHiveProbability;
-   public World        world;
-   public int          driver;
-   public int          driverResponse;
-   public SecureRandom random;
+   public int     id;
+   public int     x, y, x2, y2, toX, toY;
+   public int     orientation, orientation2;
+   public boolean nectarCarry;
+   public int     nectarDistanceDisplay;
+   public boolean handlingNectar;
+   public float   returnToHiveProbability;
+   public World   world;
+   public int     driver;
+   public int     driverResponse;
+   public Random  random;
 
    // Sensors.
    public static final int HIVE_PRESENCE_INDEX          = 0;
@@ -105,7 +106,7 @@ public class HoneyBee
    public static boolean debugNN        = false;
 
    // Constructor.
-   public HoneyBee(int id, World world, SecureRandom random)
+   public HoneyBee(int id, World world, Random random)
    {
       this.id = id;
       metamorphDatasetFilename = METAMORPH_DATASET_FILE_BASENAME + "_" + id + ".csv";

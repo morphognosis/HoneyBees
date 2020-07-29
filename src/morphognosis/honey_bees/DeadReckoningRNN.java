@@ -8,8 +8,9 @@
 package morphognosis.honey_bees;
 
 import java.io.IOException;
-import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Random;
+
 import de.jannlab.Net;
 import de.jannlab.core.CellType;
 import de.jannlab.data.Sample;
@@ -54,8 +55,8 @@ public class DeadReckoningRNN
       "     [-randomSeed <random number seed> (default=" + RANDOM_SEED + ")]\n" +
       "     [-verbose (default=" + VERBOSE + ")]";
 
-   private static TimeCounter  TC  = new TimeCounter();
-   private static SecureRandom rnd = new SecureRandom();
+   private static TimeCounter TC     = new TimeCounter();
+   private static Random      random = new Random();
 
    // Sample input is a sequence of responses, where each response is an orientation (x8) or a forward movement.
    // Sample target is direction to origin from destination.
@@ -78,7 +79,7 @@ public class DeadReckoningRNN
          if (first)
          {
             first           = false;
-            bee.orientation = bee.response = rnd.nextInt(Orientation.NUM_ORIENTATIONS);
+            bee.orientation = bee.response = random.nextInt(Orientation.NUM_ORIENTATIONS);
          }
          else
          {
@@ -140,15 +141,15 @@ public class DeadReckoningRNN
       {
          for (int j = 0; j < 100; j++)
          {
-            int x = rnd.nextInt(Parameters.WORLD_WIDTH);
-            int y = rnd.nextInt(Parameters.WORLD_HEIGHT);
+            int x = random.nextInt(Parameters.WORLD_WIDTH);
+            int y = random.nextInt(Parameters.WORLD_HEIGHT);
             if (Math.sqrt(((double)y - cy) * ((double)y - cy) + ((double)x - cx) * (
                              (double)x - cx)) <= (double)Parameters.FLOWER_RANGE)
             {
                Cell cell = world.cells[x][y];
                if (!cell.hive && (cell.bee == null))
                {
-                  Flower flower = new Flower(true, rnd);
+                  Flower flower = new Flower(true, random);
                   cell.flower = flower;
                   break;
                }
@@ -174,9 +175,9 @@ public class DeadReckoningRNN
       for (int i = 0; i < length; i++)
       {
          int response = 8;
-         if (rnd.nextFloat() < TURN_PROBABILITY)
+         if (random.nextFloat() < TURN_PROBABILITY)
          {
-            response = rnd.nextInt(8);
+            response = random.nextInt(8);
          }
          data[(i * 9) + response] = 1.0;
          if (VERBOSE)
@@ -319,7 +320,7 @@ public class DeadReckoningRNN
 
       for (int i = 0; i < n; i++)
       {
-         int length = rnd.nextInt((MAX_SEQUENCE_LENGTH - MIN_SEQUENCE_LENGTH + 1)) + MIN_SEQUENCE_LENGTH;
+         int length = random.nextInt((MAX_SEQUENCE_LENGTH - MIN_SEQUENCE_LENGTH + 1)) + MIN_SEQUENCE_LENGTH;
          set.add(generateSample(length));
       }
       return(set);
@@ -668,7 +669,7 @@ public class DeadReckoningRNN
       Parameters.NUM_FLOWERS = 1;
       Parameters.NUM_BEES    = 1;
       Parameters.FLOWER_SURPLUS_NECTAR_PROBABILITY = 0.0f;
-      rnd.setSeed(RANDOM_SEED);
+      random.setSeed(RANDOM_SEED);
       World world = null;
       try
       {
@@ -707,14 +708,14 @@ public class DeadReckoningRNN
       // setup network.
       //
       final int maxlength = Math.max(trainset.maxSequenceLength(), testset.maxSequenceLength());
-      net.initializeWeights(rnd);
+      net.initializeWeights(random);
       net.rebuffer(maxlength);
       //
       // setup trainer.
       //
       GradientDescent trainer = new GradientDescent();
       trainer.setNet(net);
-      trainer.setRnd(rnd);
+      trainer.setRnd(random);
       trainer.setPermute(true);
       trainer.setTrainingSet(trainset);
       trainer.setLearningRate(LEARNING_RATE);

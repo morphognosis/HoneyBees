@@ -34,7 +34,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.security.SecureRandom;
+import java.util.Random;
+
 import javax.swing.UIManager;
 
 import morphognosis.Morphognosis;
@@ -102,8 +103,8 @@ public class Main
    public static WorldDisplay worldDisplay;
 
    // Random numbers.
-   public static int          randomSeed = DEFAULT_RANDOM_SEED;
-   public static SecureRandom random;
+   public static int    randomSeed = DEFAULT_RANDOM_SEED;
+   public static Random random;
 
    // Reset.
    public static void reset()
@@ -896,7 +897,7 @@ public class Main
       }
 
       // Initialize.
-      random = new SecureRandom();
+      random = new Random();
       random.setSeed(randomSeed);
       try
       {

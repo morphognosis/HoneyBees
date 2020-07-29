@@ -7,18 +7,18 @@ package morphognosis.honey_bees;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.security.SecureRandom;
+import java.util.Random;
 
 import morphognosis.Utility;
 
 public class Flower
 {
-   public boolean      nectar;
-   public int          nectarRegenerationTimer;
-   public SecureRandom random;
+   public boolean nectar;
+   public int     nectarRegenerationTimer;
+   public Random  random;
 
    // Constructor.
-   public Flower(boolean nectar, SecureRandom random)
+   public Flower(boolean nectar, Random random)
    {
       this.nectar             = nectar;
       this.random             = random;

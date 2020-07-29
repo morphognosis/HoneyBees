@@ -4,8 +4,8 @@
 
 package morphognosis.honey_bees;
 
-import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Random;
 
 import morphognosis.Metamorph;
 import morphognosis.Orientation;
@@ -31,8 +31,8 @@ public class World
    public int collectedNectar;
 
    // Random numbers.
-   public SecureRandom random;
-   public int          randomSeed;
+   public Random random;
+   public int    randomSeed;
 
    // Driver.
    int driver;
@@ -44,7 +44,7 @@ public class World
    public World(int randomSeed)
    {
       // Random numbers.
-      random          = new SecureRandom();
+      random          = new Random();
       this.randomSeed = randomSeed;
       random.setSeed(randomSeed);
 
@@ -118,7 +118,7 @@ public class World
    // Reset.
    public void reset()
    {
-      random = new SecureRandom();
+      random = new Random();
       random.setSeed(randomSeed);
       for (int x = 0; x < Parameters.WORLD_WIDTH; x++)
       {

@@ -7,20 +7,20 @@ package morphognosis.honey_bees;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.security.SecureRandom;
+import java.util.Random;
 
 import morphognosis.Utility;
 
 public class Cell
 {
    // Properties.
-   public boolean      hive;
-   public Flower       flower;
-   public HoneyBee     bee;
-   public SecureRandom random;
+   public boolean  hive;
+   public Flower   flower;
+   public HoneyBee bee;
+   public Random   random;
 
    // Constructor.
-   public Cell(SecureRandom random)
+   public Cell(Random random)
    {
       this.random = random;
       hive        = false;

@@ -19,8 +19,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Random;
+
 import de.jannlab.Net;
 import de.jannlab.core.CellType;
 import de.jannlab.data.Sample;
@@ -64,14 +65,15 @@ public class ForagingRNN
    private static FileOutputStream datasetOutput    = null;
    private static PrintWriter      datasetWriter    = null;
 
-   private static TimeCounter  TC  = new TimeCounter();
-   private static SecureRandom rnd = new SecureRandom();
+   private static TimeCounter TC     = new TimeCounter();
+   private static Random      random = new Random();
 
    private static int     maxSequenceSize = -1;
    private static boolean noDanceLearn    = false;
 
    // Sample input is a sequence of sensor values, target is a sequence of responses.
-   public static Sample generateSample(World world, int flower, int orientation, boolean surplusNectar)
+   public static Sample generateSample(World world, int flower,
+                                       int orientation, boolean surplusNectar, int sequence)
    {
       world.reset();
       HoneyBee bee = world.bees[0];
@@ -171,7 +173,7 @@ public class ForagingRNN
                }
                System.out.println("(" + Orientation.toName(o) + ")");
                System.out.println("hive presence [10-34]:");
-               for (int i = 30, j = NN_INPUT_SIZE, k = 0; k < 5; j -= 5, i = j - 5, k++)
+               for (int i = NN_INPUT_SIZE - 5, j = NN_INPUT_SIZE, k = 0; k < 5; j -= 5, i = j - 5, k++)
                {
                   for ( ; i < j; i++)
                   {
@@ -211,6 +213,7 @@ public class ForagingRNN
       int i = 0;
       if (datasetWriter != null)
       {
+         datasetWriter.print("sequence=" + sequence + ", length=" + inputSeq.size() + "\n");
          datasetWriter.print("input:\n");
       }
       for (double[] d : inputSeq)
@@ -269,6 +272,13 @@ public class ForagingRNN
    {
       SampleSet set = new SampleSet();
 
+      int numSequences = Parameters.NUM_FLOWERS * Orientation.NUM_ORIENTATIONS;
+
+      if (!noDanceLearn)
+      {
+         numSequences *= 2;
+      }
+
       if (DATASET_FILENAME != null)
       {
          try
@@ -282,19 +292,23 @@ public class ForagingRNN
          if (datasetOutput != null)
          {
             datasetWriter = new PrintWriter(new BufferedWriter(new OutputStreamWriter(datasetOutput)));
-            int n = 1;
-            if (!noDanceLearn) { n++; }
-            datasetWriter.write("training set length=" + (Parameters.NUM_FLOWERS * Orientation.NUM_ORIENTATIONS * n) +
+            datasetWriter.write("training set size=" + numSequences +
                                 ", input size=" + NN_INPUT_SIZE + ", target size=" + HoneyBee.NUM_RESPONSES + "\n");
          }
       }
 
+      int sequence = 0;
       for (int i = 0; i < Parameters.NUM_FLOWERS; i++)
       {
          for (int j = 0; j < Orientation.NUM_ORIENTATIONS; j++)
          {
-            set.add(generateSample(world, i, j, false));
-            if (!noDanceLearn) { set.add(generateSample(world, i, j, true)); }
+            set.add(generateSample(world, i, j, false, sequence));
+            sequence++;
+            if (!noDanceLearn)
+            {
+               set.add(generateSample(world, i, j, true, sequence));
+               sequence++;
+            }
          }
       }
       if (VERBOSE)
@@ -569,7 +583,7 @@ public class ForagingRNN
       Parameters.HIVE_RADIUS  = 3;
       Parameters.NUM_BEES     = 1;
       Parameters.FLOWER_SURPLUS_NECTAR_PROBABILITY = 0.0f;
-      rnd.setSeed(RANDOM_SEED);
+      random.setSeed(RANDOM_SEED);
       World world = null;
       try
       {
@@ -593,14 +607,14 @@ public class ForagingRNN
       //
       // setup network.
       //
-      net.initializeWeights(rnd);
+      net.initializeWeights(random);
       net.rebuffer(maxlength);
       //
       // setup trainer.
       //
       GradientDescent trainer = new GradientDescent();
       trainer.setNet(net);
-      trainer.setRnd(rnd);
+      trainer.setRnd(random);
       trainer.setPermute(true);
       trainer.setTrainingSet(trainset);
       trainer.setLearningRate(LEARNING_RATE);

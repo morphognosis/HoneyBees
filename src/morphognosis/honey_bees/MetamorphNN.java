@@ -5,8 +5,9 @@
 package morphognosis.honey_bees;
 
 import java.io.File;
-import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Random;
+
 import morphognosis.Metamorph;
 import morphognosis.Morphognostic;
 import weka.classifiers.evaluation.Evaluation;
@@ -25,10 +26,10 @@ public class MetamorphNN
    public int numAttributes;
 
    // Random numbers.
-   public SecureRandom random;
+   public Random random;
 
    // Constructor.
-   public MetamorphNN(SecureRandom random)
+   public MetamorphNN(Random random)
    {
       this.random   = random;
       numAttributes = -1;
