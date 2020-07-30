@@ -584,19 +584,13 @@ public class HoneyBee
          // Cannot locate hive?
          if (morphognostic.locateEvent(3, HIVE_PRESENCE_EVENT, false) == -1)
          {
-            // Drop and ignore nectar and return to hive.
-            sensors[NECTAR_PRESENCE_INDEX] = 0.0f;
+            // Drop nectar and return to hive.
             nectarCarry = false;
             morphognostic.clearEvent(SURPLUS_NECTAR_EVENT);
             returnToHiveProbability = 1.0f;
+            response = moveTo(width / 2, height / 2);
+            return(false);
          }
-      }
-
-      // Turn at edge of world.
-      if ((toX < 0) || (toX >= width) || (toY < 0) || (toY >= height))
-      {
-         response = random.nextInt(Orientation.NUM_ORIENTATIONS);
-         return(false);
       }
 
       // Carrying nectar?
@@ -623,6 +617,13 @@ public class HoneyBee
       {
          response = EXTRACT_NECTAR;
          return(true);
+      }
+
+      // Turn at edge of world.
+      if ((toX < 0) || (toX >= width) || (toY < 0) || (toY >= height))
+      {
+         response = random.nextInt(Orientation.NUM_ORIENTATIONS);
+         return(false);
       }
 
       // Sense nectar dance?

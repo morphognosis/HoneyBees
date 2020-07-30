@@ -68,20 +68,20 @@ public class ForagingRNN
    private static TimeCounter TC     = new TimeCounter();
    private static Random      random = new Random();
 
-   private static int     maxSequenceSize = -1;
-   private static boolean noDanceLearn    = false;
+   private static int     maxSequenceLength = -1;
+   private static boolean noDanceLearn      = false;
 
-   // Sample input is a sequence of sensor values, target is a sequence of responses.
-   public static Sample generateSample(World world, int flower,
-                                       int orientation, boolean surplusNectar, int sequence)
+   // Input is a sequence of sensor values, target is a sequence of responses.
+   public static Sample generateSequence(World world, int flower,
+                                         int orientation, boolean surplusNectar, int sequence)
    {
       world.reset();
       HoneyBee bee = world.bees[0];
 
       if (VERBOSE)
       {
-         System.out.println("generate sequence flower=" + flower + ", " +
-                            "orientation=" + orientation + ", surplus nectar=" + surplusNectar + ":");
+         System.out.println("generate sequence=" + sequence + ", flower=" + flower +
+                            ", orientation=" + orientation + ", surplus nectar=" + surplusNectar + ":");
       }
 
       // Remove other flowers.
@@ -114,14 +114,14 @@ public class ForagingRNN
          world.step();
       }
       bee.orientation = orientation;
-      ArrayList<double[]> inputSeq  = new ArrayList<double[]>();
-      ArrayList<double[]> targetSeq = new ArrayList<double[]>();
-      bee.handlingNectar = true;
-      boolean first        = true;
-      int     extractCount = 0;
-      while (bee.handlingNectar)
+      ArrayList<double[]> inputSeq     = new ArrayList<double[]>();
+      ArrayList<double[]> targetSeq    = new ArrayList<double[]>();
+      int                 extractCount = 0;
+      int                 depositCount = 0;
+      boolean             first        = true;
+      while (first || bee.handlingNectar)
       {
-         if ((maxSequenceSize != -1) && (inputSeq.size() >= maxSequenceSize)) { break; }
+         if ((maxSequenceLength != -1) && (inputSeq.size() >= maxSequenceLength)) { break; }
          double[] input = new double[NN_INPUT_SIZE];
          String nectarPresence = "false";
          if (world.cells[bee.x][bee.y].flower != null)
@@ -159,6 +159,7 @@ public class ForagingRNN
          }
          world.step();
          if (bee.response == HoneyBee.EXTRACT_NECTAR) { extractCount++; }
+         if (bee.response == HoneyBee.DEPOSIT_NECTAR) { depositCount++; }
          if (bee.handlingNectar && (extractCount < 2))
          {
             if (VERBOSE)
@@ -205,6 +206,7 @@ public class ForagingRNN
             targetSeq.add(target);
          }
       }
+      if (depositCount == 0) { return(null); }
       if (VERBOSE)
       {
          System.out.println("sequence length=" + inputSeq.size());
@@ -302,12 +304,42 @@ public class ForagingRNN
       {
          for (int j = 0; j < Orientation.NUM_ORIENTATIONS; j++)
          {
-            set.add(generateSample(world, i, j, false, sequence));
-            sequence++;
+            boolean generated = false;
+            for (int k = 0; k < 5; k++)
+            {
+               Sample s = generateSequence(world, i, j, false, sequence);
+               if (s != null)
+               {
+                  set.add(s);
+                  sequence++;
+                  generated = true;
+                  break;
+               }
+            }
+            if (!generated)
+            {
+               System.err.println("Cannot generate sequence=" + sequence);
+               System.exit(1);
+            }
             if (!noDanceLearn)
             {
-               set.add(generateSample(world, i, j, true, sequence));
-               sequence++;
+               generated = false;
+               for (int k = 0; k < 5; k++)
+               {
+                  Sample s = generateSequence(world, i, j, true, sequence);
+                  if (s != null)
+                  {
+                     set.add(s);
+                     sequence++;
+                     generated = true;
+                     break;
+                  }
+               }
+               if (!generated)
+               {
+                  System.err.println("Cannot generate sequence=" + sequence);
+                  System.exit(1);
+               }
             }
          }
       }
@@ -535,7 +567,7 @@ public class ForagingRNN
             DATASET_FILENAME = args[i];
             continue;
          }
-         if (args[i].equals("-maxSequenceSize"))
+         if (args[i].equals("-maxSequenceLength"))
          {
             i++;
             if (i >= args.length)
@@ -546,7 +578,7 @@ public class ForagingRNN
             }
             try
             {
-               maxSequenceSize = Integer.parseInt(args[i]);
+               maxSequenceLength = Integer.parseInt(args[i]);
             }
             catch (NumberFormatException e) {
                System.err.println("Invalid maxSequenceSize option");
