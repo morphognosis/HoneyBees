@@ -463,16 +463,6 @@ public class HoneyBee
                   }
                   catch (InterruptedException e) {}
                }
-               int checkLongSurplus  = morphognostic.locateEvent(2, SURPLUS_NECTAR_EVENT, false);
-               int checkShortSurplus = morphognostic.locateEvent(1, SURPLUS_NECTAR_EVENT, false);
-               int checkLongDist     = morphognostic.locateEvent(2, NECTAR_LONG_DISTANCE_EVENT, false);
-               int checkShortDist    = morphognostic.locateEvent(1, NECTAR_SHORT_DISTANCE_EVENT, false);
-               int i = 3;
-               for ( ; i < 11; i++)
-               {
-                  if (morphognostic.locateEvent(0, i, false) != -1) { break; }
-               }
-               System.out.println("bee=" + id + ",response=" + response + ",checkLongSurplus=" + checkLongSurplus + ",checkLongDist=" + checkLongDist + ",checkShortSurplus=" + checkShortSurplus + ",checkShortDist=" + checkShortDist + ",checko=" + (i - 3) + ",distanceDisplay=" + nectarDistanceDisplay);
             }
          }
          break;
@@ -539,7 +529,6 @@ public class HoneyBee
    }
 
 
-   int mcnt = 0;
    // Update metamorphs.
    public boolean updateMetamorphs()
    {
