@@ -701,7 +701,7 @@ public class HoneyBee
    // Return -1 if at destination.
    public int moveTo(int dX, int dY)
    {
-      // Facing destination?
+      // At destination?
       if ((dX == x) && (dY == y))
       {
          return(-1);
