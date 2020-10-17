@@ -95,8 +95,8 @@ Exit codes:
 ## Other commands in work folder.
 
 1. foraging_parameter_optimize.bat/.sh: Optimize parameters to favor foraging cooperation.
-2. foraging_rnn.bat/.sh: Test the ability of an RNN to forage, given hive location upon nectar discovery.
-3. dead_reckoning_rnn.bat/.sh: Test the ability of an RNN to track relative location, a skill necessary to return to hive.
+2. foraging_rnn.bat/.sh/.py: Test the ability of an RNN to forage, given hive location upon nectar discovery.
+3. dead_reckoning_rnn.bat/.sh/.py: Test the ability of an RNN to track relative location, a skill necessary to return to hive.
 
 ## Neural network training.
 

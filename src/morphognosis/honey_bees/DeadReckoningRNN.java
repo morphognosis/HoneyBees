@@ -7,56 +7,57 @@
 
 package morphognosis.honey_bees;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Random;
-
-import de.jannlab.Net;
-import de.jannlab.core.CellType;
 import de.jannlab.data.Sample;
 import de.jannlab.data.SampleSet;
-import de.jannlab.generator.LSTMGenerator;
-import de.jannlab.training.GradientDescent;
 import morphognosis.Orientation;
-import de.jannlab.misc.TimeCounter;
-import de.jannlab.tools.ClassificationValidator;
 
 public class DeadReckoningRNN
 {
    // Parameters.
-   public static double  LEARNING_RATE       = 0.001;
-   public static double  MOMENTUM            = 0.9;
-   public static int     NUM_HIDDEN_NEURONS  = 5;
-   public static int     NUM_HIDDEN_LAYERS   = 1;
    public static float   TURN_PROBABILITY    = 0.5f;
    public static int     NUM_TRAIN           = 1;
    public static int     NUM_TEST            = 1;
    public static int     MIN_SEQUENCE_LENGTH = 5;
    public static int     MAX_SEQUENCE_LENGTH = 15;
-   public static int     EPOCHS      = 200;
-   public static int     RANDOM_SEED = 4517;
-   public static boolean VERBOSE     = false;
+   public static int     RANDOM_SEED         = 4517;
+   public static boolean VERBOSE             = false;
+
+   // Dataset.
+   public static String pythonDatasetFilename = "foraging_dataset.py";
+   public static int    padToSequenceLength   = -1;
+
+   // RNN parameters.
+   public static int NUM_NEURONS = 128;
+   public static int NUM_EPOCHS  = 1000;
 
    // Usage.
    public static final String Usage =
       "Usage:\n" +
       "    java morphognosis.honey_bees.DeadReckoningRNN\n" +
-      "     [-learningRate <float> (default=" + LEARNING_RATE + ")]\n" +
-      "     [-momentum <float> (default=" + MOMENTUM + ")]\n" +
-      "     [-numHiddenNeurons <quantity> (default=" + NUM_HIDDEN_NEURONS + ")]\n" +
-      "     [-numHiddenLayers <quantity> (default=" + NUM_HIDDEN_LAYERS + ")]\n" +
       "     [-genHoneyBeeData (generate data from honey bee foraging)]\n" +
       "     [-numTrain <quantity> (default=" + NUM_TRAIN + ")]\n" +
       "     [-numTest <quantity> (default=" + NUM_TEST + ")]\n" +
       "     [-minSequenceLength <quantity> (default=" + MIN_SEQUENCE_LENGTH + ")]\n" +
       "     [-maxSequenceLength <quantity> (default=" + MAX_SEQUENCE_LENGTH + ")]\n" +
       "     [-turnProbability <probability> (default=" + TURN_PROBABILITY + ")]\n" +
-      "     [-epochs <quantity> (default=" + EPOCHS + ")]\n" +
+      "     [-numNeurons <quantity> (default=" + NUM_NEURONS + ")]\n" +
+      "     [-numEpochs <quantity> (default=" + NUM_EPOCHS + ")]\n" +
       "     [-randomSeed <random number seed> (default=" + RANDOM_SEED + ")]\n" +
       "     [-verbose (default=" + VERBOSE + ")]";
 
-   private static TimeCounter TC     = new TimeCounter();
-   private static Random      random = new Random();
+   private static Random random = new Random();
+
+   private static int finalTrainTarget = -1;
+   private static int finalTestTarget  = -1;
+   private static int currentTarget    = -1;
 
    // Sample input is a sequence of responses, where each response is an orientation (x8) or a forward movement.
    // Sample target is direction to origin from destination.
@@ -72,8 +73,9 @@ public class DeadReckoningRNN
       int cx = bee.x;
       int cy = bee.y;
       relocateFlower(world);
-      ArrayList<double[]> sequence = new ArrayList<double[]>();
-      boolean             first    = true;
+      ArrayList<double[]> dataSeq   = new ArrayList<double[]>();
+      ArrayList<double[]> targetSeq = new ArrayList<double[]>();
+      boolean             first     = true;
       while (true)
       {
          if (first)
@@ -86,8 +88,20 @@ public class DeadReckoningRNN
             world.step();
          }
          if (bee.response == HoneyBee.EXTRACT_NECTAR) { break; }
-         double[] v      = new double[9];
+         double[] v      = new double[10];
          v[bee.response] = 1.0;
+         if (VERBOSE)
+         {
+            for (int j = 0; j < 10; j++)
+            {
+               System.out.print(v[j] + " ");
+            }
+            System.out.println();
+         }
+         dataSeq.add(v);
+         v                = new double[9];
+         currentTarget    = getTarget(bee.x - cx, bee.y - cy);
+         v[currentTarget] = 1.0;
          if (VERBOSE)
          {
             for (int j = 0; j < 9; j++)
@@ -96,33 +110,33 @@ public class DeadReckoningRNN
             }
             System.out.println();
          }
-         sequence.add(v);
+         targetSeq.add(v);
       }
       if (VERBOSE)
       {
-         System.out.println("sequence length=" + sequence.size());
+         System.out.println("sequence length=" + dataSeq.size());
       }
-      double[] data = new double[sequence.size() * 9];
+      double[] data = new double[dataSeq.size() * 10];
       int i = 0;
-      for (double[] d : sequence)
+      for (double[] d : dataSeq)
       {
-         for (int j = 0; j < 9; j++)
+         for (int j = 0; j < 10; j++)
          {
             data[i] = d[j];
             i++;
          }
       }
-      double[] target = getTarget(bee.x - cx, bee.y - cy);
-      if (VERBOSE)
+      double[] target = new double[targetSeq.size() * 9];
+      i = 0;
+      for (double[] d : targetSeq)
       {
-         System.out.println("target:");
          for (int j = 0; j < 9; j++)
          {
-            System.out.print(target[j] + " ");
+            target[i] = d[j];
+            i++;
          }
-         System.out.println();
       }
-      return(new Sample(data, target, 9, sequence.size(), 9, 1));
+      return(new Sample(data, target, 10, dataSeq.size(), 9, targetSeq.size()));
    }
 
 
@@ -166,8 +180,9 @@ public class DeadReckoningRNN
 
    public static Sample generateSample(final int length)
    {
-      double[] data = new double[length * 9];
-      //
+      double[] data   = new double[length * 10];
+      double[] target = new double[length * 9];
+
       int x           = 0;
       int y           = 0;
       int orientation = 0;
@@ -179,12 +194,12 @@ public class DeadReckoningRNN
          {
             response = random.nextInt(8);
          }
-         data[(i * 9) + response] = 1.0;
+         data[(i * 10) + response] = 1.0;
          if (VERBOSE)
          {
             for (int j = 0; j < 9; j++)
             {
-               System.out.print(data[(i * 9) + j] + " ");
+               System.out.print(data[(i * 10) + j] + " ");
             }
             System.out.println();
          }
@@ -233,72 +248,76 @@ public class DeadReckoningRNN
                break;
             }
          }
-      }
-      //
-      double[] target = getTarget(x, y);
-      if (VERBOSE)
-      {
-         System.out.println("target:");
-         for (int j = 0; j < 9; j++)
+
+         currentTarget = getTarget(x, y);
+         target[(i * 9) + currentTarget] = 1.0;
+         if (VERBOSE)
          {
-            System.out.print(target[j] + " ");
+            for (int j = 0; j < 9; j++)
+            {
+               System.out.print(target[(i * 9) + j] + " ");
+            }
+            System.out.println();
          }
-         System.out.println();
       }
-      return(new Sample(data, target, 9, length, 9, 1));
+
+      if (padToSequenceLength < length)
+      {
+         padToSequenceLength = length;
+      }
+
+      return(new Sample(data, target, 10, length, 9, length));
    }
 
 
    // Generate target from position.
-   public static double[] getTarget(int x, int y)
+   public static int getTarget(int x, int y)
    {
-      double[] target = new double[9];
       if (x > 0)
       {
          if (y > 0)
          {
-            target[1] = 1.0;
+            return(1);
          }
          else if (y < 0)
          {
-            target[3] = 1.0;
+            return(3);
          }
          else
          {
-            target[2] = 1.0;
+            return(2);
          }
       }
       else if (x < 0)
       {
          if (y > 0)
          {
-            target[7] = 1.0;
+            return(7);
          }
          else if (y < 0)
          {
-            target[5] = 1.0;
+            return(5);
          }
          else
          {
-            target[6] = 1.0;
+            return(6);
          }
       }
       else
       {
          if (y > 0)
          {
-            target[0] = 1.0;
+            return(0);
          }
          else if (y < 0)
          {
-            target[4] = 1.0;
+            return(4);
          }
          else
          {
-            target[8] = 1.0;
+            return(8);
          }
       }
-      return(target);
    }
 
 
@@ -327,19 +346,126 @@ public class DeadReckoningRNN
    }
 
 
-   public static Net LSTM(final int in, final int hid, int layers, final int out)
+   // Export Python dataset.
+   public static void exportPythonDataset(SampleSet trainSet, SampleSet testSet)
    {
-      //
-      LSTMGenerator gen = new LSTMGenerator();
-
-      gen.inputLayer(in);
-      for (int i = 0; i < layers; i++)
+      if (trainSet.size() == 0)
       {
-         gen.hiddenLayer(hid, CellType.SIGMOID, CellType.TANH, CellType.TANH, true);
+         System.err.println("Cannot export python dataset: no data");
+         return;
       }
-      gen.outputLayer(out, CellType.TANH);
-      //
-      return(gen.generate());
+      FileOutputStream datasetOutput = null;
+      PrintWriter      datasetWriter = null;
+      try
+      {
+         datasetOutput = new FileOutputStream(new File(pythonDatasetFilename));
+         datasetWriter = new PrintWriter(new BufferedWriter(new OutputStreamWriter(datasetOutput)));
+         boolean first = true;
+         for (Sample s : trainSet)
+         {
+            double[] inputData = s.getInput();
+            if (first)
+            {
+               first = false;
+               int n = s.getInputLength();
+               datasetWriter.println("X_train_shape = [" + NUM_TRAIN + "," + n + "," + 10 + "]");
+               datasetWriter.print("X_train_seq = [");
+               for (int i = 0, j = inputData.length; i < j; i++)
+               {
+                  if (i == 0)
+                  {
+                     datasetWriter.print(inputData[i] + "");
+                  }
+                  else
+                  {
+                     datasetWriter.print("," + inputData[i]);
+                  }
+               }
+            }
+            else
+            {
+               for (int i = 0, j = inputData.length; i < j; i++)
+               {
+                  datasetWriter.print("," + inputData[i]);
+               }
+            }
+         }
+         datasetWriter.println("]");
+         first = true;
+         for (Sample s : testSet)
+         {
+            double[] inputData = s.getInput();
+            if (first)
+            {
+               first = false;
+               int n = s.getInputLength();
+               datasetWriter.println("X_test_shape = [" + NUM_TEST + "," + n + "," + 10 + "]");
+               datasetWriter.print("X_test_seq = [");
+               for (int i = 0, j = inputData.length; i < j; i++)
+               {
+                  if (i == 0)
+                  {
+                     datasetWriter.print(inputData[i] + "");
+                  }
+                  else
+                  {
+                     datasetWriter.print("," + inputData[i]);
+                  }
+               }
+            }
+            else
+            {
+               for (int i = 0, j = inputData.length; i < j; i++)
+               {
+                  datasetWriter.print("," + inputData[i]);
+               }
+            }
+         }
+         datasetWriter.println("]");
+         first = true;
+         for (Sample s : trainSet)
+         {
+            double[] targetData = s.getTarget();
+            if (first)
+            {
+               first = false;
+               int n = s.getTargetLength();
+               datasetWriter.println("y_shape = [" + NUM_TRAIN + "," + n + "," + 9 + "]");
+               datasetWriter.print("y_seq = [");
+               for (int i = 0, j = targetData.length; i < j; i++)
+               {
+                  if (i == 0)
+                  {
+                     datasetWriter.print(targetData[i] + "");
+                  }
+                  else
+                  {
+                     datasetWriter.print("," + targetData[i]);
+                  }
+               }
+            }
+            else
+            {
+               for (int i = 0, j = targetData.length; i < j; i++)
+               {
+                  datasetWriter.print("," + targetData[i]);
+               }
+            }
+         }
+         datasetWriter.println("]");
+      }
+      catch (Exception e)
+      {
+         System.err.println("Cannot open dataset file " + pythonDatasetFilename + ":" + e.getMessage());
+      }
+      if (datasetWriter != null)
+      {
+         datasetWriter.flush();
+         try {
+            datasetOutput.close();
+         }
+         catch (IOException e) {}
+      }
    }
 
 
@@ -350,110 +476,6 @@ public class DeadReckoningRNN
 
       for (int i = 0; i < args.length; i++)
       {
-         if (args[i].equals("-learningRate"))
-         {
-            i++;
-            if (i >= args.length)
-            {
-               System.err.println("Invalid learningRate option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            try
-            {
-               LEARNING_RATE = Double.parseDouble(args[i]);
-            }
-            catch (NumberFormatException e) {
-               System.err.println("Invalid learningRate option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            if ((LEARNING_RATE < 0.0) || (LEARNING_RATE > 1.0))
-            {
-               System.err.println("Invalid learningRate option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            continue;
-         }
-         if (args[i].equals("-momentum"))
-         {
-            i++;
-            if (i >= args.length)
-            {
-               System.err.println("Invalid momentum option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            try
-            {
-               MOMENTUM = Double.parseDouble(args[i]);
-            }
-            catch (NumberFormatException e) {
-               System.err.println("Invalid momentum option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            if (MOMENTUM < 0.0)
-            {
-               System.err.println("Invalid momentum option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            continue;
-         }
-         if (args[i].equals("-numHiddenNeurons"))
-         {
-            i++;
-            if (i >= args.length)
-            {
-               System.err.println("Invalid numHiddenNeurons option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            try
-            {
-               NUM_HIDDEN_NEURONS = Integer.parseInt(args[i]);
-            }
-            catch (NumberFormatException e) {
-               System.err.println("Invalid numHiddenNeurons option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            if (NUM_HIDDEN_NEURONS < 0)
-            {
-               System.err.println("Invalid numHiddenNeurons option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            continue;
-         }
-         if (args[i].equals("-numHiddenLayers"))
-         {
-            i++;
-            if (i >= args.length)
-            {
-               System.err.println("Invalid numHiddenLayers option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            try
-            {
-               NUM_HIDDEN_LAYERS = Integer.parseInt(args[i]);
-            }
-            catch (NumberFormatException e) {
-               System.err.println("Invalid numHiddenLayers option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            if (NUM_HIDDEN_LAYERS < 0)
-            {
-               System.err.println("Invalid numHiddenLayers option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            continue;
-         }
          if (args[i].equals("-genHoneyBeeData"))
          {
             genHoneyBeeData = true;
@@ -592,27 +614,53 @@ public class DeadReckoningRNN
             gotParm = true;
             continue;
          }
-         if (args[i].equals("-epochs"))
+         if (args[i].equals("-numNeurons"))
          {
             i++;
             if (i >= args.length)
             {
-               System.err.println("Invalid epochs option");
+               System.err.println("Invalid numNeurons option");
                System.err.println(Usage);
                System.exit(1);
             }
             try
             {
-               EPOCHS = Integer.parseInt(args[i]);
+               NUM_NEURONS = Integer.parseInt(args[i]);
             }
             catch (NumberFormatException e) {
-               System.err.println("Invalid epochs option");
+               System.err.println("Invalid numNeurons option");
                System.err.println(Usage);
                System.exit(1);
             }
-            if (EPOCHS < 0)
+            if (NUM_NEURONS < 0)
             {
-               System.err.println("Invalid epochs option");
+               System.err.println("Invalid numNeurons option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            continue;
+         }
+         if (args[i].equals("-numEpochs"))
+         {
+            i++;
+            if (i >= args.length)
+            {
+               System.err.println("Invalid numEpochs option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            try
+            {
+               NUM_EPOCHS = Integer.parseInt(args[i]);
+            }
+            catch (NumberFormatException e) {
+               System.err.println("Invalid numEpochs option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            if (NUM_EPOCHS < 0)
+            {
+               System.err.println("Invalid numEpochs option");
                System.err.println(Usage);
                System.exit(1);
             }
@@ -685,122 +733,130 @@ public class DeadReckoningRNN
       if (genHoneyBeeData)
       {
          if (VERBOSE) { System.out.println("Training samples:"); }
-         trainset = generate(NUM_TRAIN, world);
+         trainset         = generate(NUM_TRAIN, world);
+         finalTrainTarget = currentTarget;
          if (VERBOSE) { System.out.println("Testing samples:"); }
-         testset = generate(NUM_TEST, world);
+         testset         = generate(NUM_TEST, world);
+         finalTestTarget = currentTarget;
       }
       else
       {
          if (VERBOSE) { System.out.println("Training samples:"); }
-         trainset = generate(NUM_TRAIN);
+         trainset         = generate(NUM_TRAIN);
+         finalTrainTarget = currentTarget;
          if (VERBOSE) { System.out.println("Testing samples:"); }
-         testset = generate(NUM_TEST);
+         testset         = generate(NUM_TEST);
+         finalTestTarget = currentTarget;
       }
-      //
-      // build network.
-      //
-      Net net    = LSTM(9, NUM_HIDDEN_NEURONS, NUM_HIDDEN_LAYERS, 9);
-      int length = Math.max(trainset.maxSequenceLength(), testset.maxSequenceLength());
 
-      net.rebuffer(length);
-      net.initializeWeights();
-      //
-      // setup network.
-      //
-      final int maxlength = Math.max(trainset.maxSequenceLength(), testset.maxSequenceLength());
-      net.initializeWeights(random);
-      net.rebuffer(maxlength);
-      //
-      // setup trainer.
-      //
-      GradientDescent trainer = new GradientDescent();
-      trainer.setNet(net);
-      trainer.setRnd(random);
-      trainer.setPermute(true);
-      trainer.setTrainingSet(trainset);
-      trainer.setLearningRate(LEARNING_RATE);
-      trainer.setMomentum(MOMENTUM);
-      trainer.setEpochs(EPOCHS);
-      //
-      TC.reset();
-      //
-      // perform training.
-      //
-      trainer.train();
-      //
-      System.out.println(
-         "training time: " +
-         TC.valueMilliDouble() +
-         " ms."
-         );
-      //
-      // evaluate learning success.
-      //
-      ClassificationValidator f = new ClassificationValidator(net);
-      int correct = 0;
-      int setSize = trainset.size();
-      for (int i = 0; i < setSize; i++)
+      // Pad sequences to max size.
+      if (padToSequenceLength != -1)
       {
-         Sample s = trainset.get(i);
-         double[] results = f.apply(s);
-         int    maxidx = -1;
-         double maxval = -1.0;
-         for (int j = 0; j < results.length; j++)
+         SampleSet sampleSet = new SampleSet();
+         for (Sample s : trainset)
          {
-            if ((maxidx == -1) || (maxval < results[j]))
+            int n = s.getInputLength();
+            if (n < padToSequenceLength)
             {
-               maxidx = j;
-               maxval = results[j];
+               double[] inputData2  = new double[padToSequenceLength * 10];
+               double[] targetData2 = new double[padToSequenceLength * 9];
+               double[] inputData   = s.getInput();
+               double[] targetData  = s.getTarget();
+               for (int i = 0, j = inputData.length; i < j; i++)
+               {
+                  inputData2[i] = inputData[i];
+               }
+               for (int i = 0, j = targetData.length; i < j; i++)
+               {
+                  targetData2[i] = targetData[i];
+               }
+               int i = inputData.length;
+               int t = targetData.length;
+               for (int j = 0, k = padToSequenceLength - n; j < k; j++)
+               {
+                  double[] input = new double[10];
+                  input[9]       = 1.0;
+                  for (int p = 0; p < 10; p++, i++)
+                  {
+                     inputData2[i] = input[p];
+                  }
+                  double[] target          = new double[9];
+                  target[finalTrainTarget] = 1.0;
+                  for (int p = 0; p < 9; p++, t++)
+                  {
+                     targetData2[t] = target[p];
+                  }
+               }
+               Sample s2 = new Sample(inputData2, targetData2, 10, padToSequenceLength,
+                                      9, padToSequenceLength);
+               sampleSet.add(s2);
+            }
+            else
+            {
+               sampleSet.add(s);
             }
          }
-         double[] t = s.getTarget();
-         int targetidx = 0;
-         for ( ; targetidx < t.length; targetidx++)
+         trainset = sampleSet;
+
+         sampleSet = new SampleSet();
+         for (Sample s : testset)
          {
-            if (t[targetidx] == 1.0) { break; }
-         }
-         if (targetidx == maxidx) { correct++; }
-      }
-      System.out.print("trainset results: correct/size=" + correct + "/" + setSize);
-      if (setSize > 0)
-      {
-         System.out.print(" (" + ((double)correct / (double)setSize) * 100.0 + "%)");
-      }
-      System.out.println();
-      //double ratio = f.ratio();
-      //System.out.println("trainset classification result: " + ratio * 100.0 + "%.");
-      f       = new ClassificationValidator(net);
-      correct = 0;
-      setSize = testset.size();
-      for (int i = 0; i < setSize; i++)
-      {
-         Sample s = testset.get(i);
-         double[] results = f.apply(s);
-         int    maxidx = -1;
-         double maxval = -1.0;
-         for (int j = 0; j < results.length; j++)
-         {
-            if ((maxidx == -1) || (maxval < results[j]))
+            int n = s.getInputLength();
+            if (n < padToSequenceLength)
             {
-               maxidx = j;
-               maxval = results[j];
+               double[] inputData2  = new double[padToSequenceLength * 10];
+               double[] targetData2 = new double[padToSequenceLength * 9];
+               double[] inputData   = s.getInput();
+               double[] targetData  = s.getTarget();
+               for (int i = 0, j = inputData.length; i < j; i++)
+               {
+                  inputData2[i] = inputData[i];
+               }
+               for (int i = 0, j = targetData.length; i < j; i++)
+               {
+                  targetData2[i] = targetData[i];
+               }
+               int i = inputData.length;
+               int t = targetData.length;
+               for (int j = 0, k = padToSequenceLength - n; j < k; j++)
+               {
+                  double[] input = new double[10];
+                  input[9]       = 1.0;
+                  for (int p = 0; p < 10; p++, i++)
+                  {
+                     inputData2[i] = input[p];
+                  }
+                  double[] target         = new double[9];
+                  target[finalTestTarget] = 1.0;
+                  for (int p = 0; p < 9; p++, t++)
+                  {
+                     targetData2[t] = target[p];
+                  }
+               }
+               Sample s2 = new Sample(inputData2, targetData2, 10, padToSequenceLength,
+                                      9, padToSequenceLength);
+               sampleSet.add(s2);
+            }
+            else
+            {
+               sampleSet.add(s);
             }
          }
-         double[] t = s.getTarget();
-         int targetidx = 0;
-         for ( ; targetidx < t.length; targetidx++)
-         {
-            if (t[targetidx] == 1.0) { break; }
-         }
-         if (targetidx == maxidx) { correct++; }
+         testset = sampleSet;
       }
-      System.out.print("testset results: correct/size=" + correct + "/" + setSize);
-      if (setSize > 0)
+
+      // Export Python dataset.
+      exportPythonDataset(trainset, testset);
+
+      // Run RNN.
+      ProcessBuilder processBuilder = new ProcessBuilder("python", "foraging_rnn.py",
+                                                         "-n", (NUM_NEURONS + ""), "-e", (NUM_EPOCHS + ""));
+      processBuilder.inheritIO();
+      Process process = processBuilder.start();
+      try
       {
-         System.out.print(" (" + ((double)correct / (double)setSize) * 100.0 + "%)");
+         process.waitFor();
       }
-      System.out.println();
-      //ratio = f.ratio();
-      //System.out.println("testset classification result: " + ratio * 100.0 + "%.");
+      catch (InterruptedException e) {}
    }
 }

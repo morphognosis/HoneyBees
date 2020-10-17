@@ -21,62 +21,48 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Random;
-
-import de.jannlab.Net;
-import de.jannlab.core.CellType;
 import de.jannlab.data.Sample;
 import de.jannlab.data.SampleSet;
-import de.jannlab.generator.LSTMGenerator;
-import de.jannlab.training.GradientDescent;
 import morphognosis.Orientation;
-import de.jannlab.misc.TimeCounter;
-import de.jannlab.tools.ClassificationValidator;
 
 public class ForagingRNN
 {
-   // Parameters.
-   public static double  LEARNING_RATE      = 0.001;
-   public static double  MOMENTUM           = 0.9;
-   public static int     NUM_HIDDEN_NEURONS = 5;
-   public static int     NUM_HIDDEN_LAYERS  = 1;
-   public static int     EPOCHS             = 200;
-   public static int     RANDOM_SEED        = 4517;
-   public static boolean VERBOSE            = false;
-
-   // Usage.
-   public static final String Usage =
-      "Usage:\n" +
-      "    java morphognosis.honey_bees.ForagingRNN\n" +
-      "     [-numFlowers <quantity> (default=" + Parameters.NUM_FLOWERS + ")]\n" +
-      "     [-learningRate <float> (default=" + LEARNING_RATE + ")]\n" +
-      "     [-momentum <float> (default=" + MOMENTUM + ")]\n" +
-      "     [-numHiddenNeurons <quantity> (default=" + NUM_HIDDEN_NEURONS + ")]\n" +
-      "     [-numHiddenLayers <quantity> (default=" + NUM_HIDDEN_LAYERS + ")]\n" +
-      "     [-epochs <quantity> (default=" + EPOCHS + ")]\n" +
-      "     [-randomSeed <random number seed> (default=" + RANDOM_SEED + ")]\n" +
-      "     [-exportCsvDataset <filename>]\n" +
-      "     [-exportPythonDataset <filename>]\n" +
-      "     [-verbose (default=" + VERBOSE + ")]\n" +
-      "     [-useFlowerIds (default=false)]\n" +
-      "     [-maxSequenceLength (default=-1(off))]\n" +
-      "     [-fixedOrientation (default=-1(off))]\n" +
-      "     [-noDanceLearn (default=false)]";
-
-   // NN input size.
-   public static int NN_INPUT_SIZE = 35;
-
    // Datasets.
-   private static String CSVdatasetFilename    = null;
-   private static String pythonDatasetFilename = null;
+   public static String CSVdatasetFilename    = "foraging_dataset.csv";
+   public static String pythonDatasetFilename = "foraging_dataset.py";
 
-   private static TimeCounter TC     = new TimeCounter();
-   private static Random      random = new Random();
+   // RNN parameters.
+   public static int NN_INPUT_SIZE = 35;
+   public static int NUM_NEURONS   = 128;
+   public static int NUM_EPOCHS    = 1000;
 
    // Options.
    public static boolean useFlowerIds      = false;
    public static int     maxSequenceLength = -1;
    public static int     fixedOrientation  = -1;
    public static boolean noDanceLearn      = false;
+
+   // Random numbers.
+   public static int     RANDOM_SEED = 4517;
+   private static Random random      = new Random();
+
+   // Verbose mode.
+   public static boolean VERBOSE = false;
+
+   // Usage.
+   public static final String Usage =
+      "Usage:\n" +
+      "    java morphognosis.honey_bees.ForagingRNN\n" +
+      "     [-numFlowers <quantity> (default=" + Parameters.NUM_FLOWERS + ")]\n" +
+      "     [-numNeurons <quantity> (default=" + NUM_NEURONS + ")]\n" +
+      "     [-numEpochs <quantity> (default=" + NUM_EPOCHS + ")]\n" +
+      "     [-useFlowerIds (default=false)]\n" +
+      "     [-maxSequenceLength (default=-1(off))]\n" +
+      "     [-fixedOrientation (default=-1(off))]\n" +
+      "     [-noDanceLearn (default=false)]\n" +
+      "     [-randomSeed <random number seed> (default=" + RANDOM_SEED + ")]\n" +
+      "     [-exportCsvDataset [<filename> (default=" + CSVdatasetFilename + ")]]\n" +
+      "     [-verbose (default=" + VERBOSE + ")]";
 
    // Input is a sequence of sensor values, target is a sequence of responses.
    public static Sample generateSequence(World world, int flower,
@@ -416,18 +402,6 @@ public class ForagingRNN
          System.out.println("training set size=" + sampleSet.size());
       }
 
-      // Export CSV dataset?
-      if (CSVdatasetFilename != null)
-      {
-         exportCsvDataset(sampleSet);
-      }
-
-      // Export Python dataset?
-      if (pythonDatasetFilename != null)
-      {
-         exportPythonDataset(sampleSet);
-      }
-
       return(sampleSet);
    }
 
@@ -527,8 +501,39 @@ public class ForagingRNN
             {
                first = false;
                int n = s.getInputLength();
-               datasetWriter.println("X_shape = [" + numSequences + "," + n + "," + NN_INPUT_SIZE + "]");
-               datasetWriter.print("X_seq = [");
+               datasetWriter.println("X_train_shape = [" + numSequences + "," + n + "," + NN_INPUT_SIZE + "]");
+               datasetWriter.print("X_train_seq = [");
+               for (int i = 0, j = inputData.length; i < j; i++)
+               {
+                  if (i == 0)
+                  {
+                     datasetWriter.print(inputData[i] + "");
+                  }
+                  else
+                  {
+                     datasetWriter.print("," + inputData[i]);
+                  }
+               }
+            }
+            else
+            {
+               for (int i = 0, j = inputData.length; i < j; i++)
+               {
+                  datasetWriter.print("," + inputData[i]);
+               }
+            }
+         }
+         datasetWriter.println("]");
+         first = true;
+         for (Sample s : sampleSet)
+         {
+            double[] inputData = s.getInput();
+            if (first)
+            {
+               first = false;
+               int n = s.getInputLength();
+               datasetWriter.println("X_test_shape = [" + numSequences + "," + n + "," + NN_INPUT_SIZE + "]");
+               datasetWriter.print("X_test_seq = [");
                for (int i = 0, j = inputData.length; i < j; i++)
                {
                   if (i == 0)
@@ -597,22 +602,10 @@ public class ForagingRNN
    }
 
 
-   public static Net LSTM(final int in, final int hid, int layers, final int out)
-   {
-      LSTMGenerator gen = new LSTMGenerator();
-
-      gen.inputLayer(in);
-      for (int i = 0; i < layers; i++)
-      {
-         gen.hiddenLayer(hid, CellType.SIGMOID, CellType.TANH, CellType.TANH, true);
-      }
-      gen.outputLayer(out, CellType.TANH);
-      return(gen.generate());
-   }
-
-
    public static void main(String[] args) throws IOException
    {
+      boolean CSVexport = false;
+
       for (int i = 0; i < args.length; i++)
       {
          if (args[i].equals("-numFlowers"))
@@ -641,131 +634,53 @@ public class ForagingRNN
             }
             continue;
          }
-         if (args[i].equals("-learningRate"))
+         if (args[i].equals("-numNeurons"))
          {
             i++;
             if (i >= args.length)
             {
-               System.err.println("Invalid learningRate option");
+               System.err.println("Invalid numNeurons option");
                System.err.println(Usage);
                System.exit(1);
             }
             try
             {
-               LEARNING_RATE = Double.parseDouble(args[i]);
+               NUM_NEURONS = Integer.parseInt(args[i]);
             }
             catch (NumberFormatException e) {
-               System.err.println("Invalid learningRate option");
+               System.err.println("Invalid numNeurons option");
                System.err.println(Usage);
                System.exit(1);
             }
-            if ((LEARNING_RATE < 0.0) || (LEARNING_RATE > 1.0))
+            if (NUM_NEURONS < 0)
             {
-               System.err.println("Invalid learningRate option");
+               System.err.println("Invalid numNeurons option");
                System.err.println(Usage);
                System.exit(1);
             }
             continue;
          }
-         if (args[i].equals("-momentum"))
+         if (args[i].equals("-numEpochs"))
          {
             i++;
             if (i >= args.length)
             {
-               System.err.println("Invalid momentum option");
+               System.err.println("Invalid numEpochs option");
                System.err.println(Usage);
                System.exit(1);
             }
             try
             {
-               MOMENTUM = Double.parseDouble(args[i]);
+               NUM_EPOCHS = Integer.parseInt(args[i]);
             }
             catch (NumberFormatException e) {
-               System.err.println("Invalid momentum option");
+               System.err.println("Invalid numEpochs option");
                System.err.println(Usage);
                System.exit(1);
             }
-            if (MOMENTUM < 0.0)
+            if (NUM_EPOCHS < 0)
             {
-               System.err.println("Invalid momentum option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            continue;
-         }
-         if (args[i].equals("-numHiddenNeurons"))
-         {
-            i++;
-            if (i >= args.length)
-            {
-               System.err.println("Invalid numHiddenNeurons option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            try
-            {
-               NUM_HIDDEN_NEURONS = Integer.parseInt(args[i]);
-            }
-            catch (NumberFormatException e) {
-               System.err.println("Invalid numHiddenNeurons option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            if (NUM_HIDDEN_NEURONS < 0)
-            {
-               System.err.println("Invalid numHiddenNeurons option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            continue;
-         }
-         if (args[i].equals("-numHiddenLayers"))
-         {
-            i++;
-            if (i >= args.length)
-            {
-               System.err.println("Invalid numHiddenLayers option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            try
-            {
-               NUM_HIDDEN_LAYERS = Integer.parseInt(args[i]);
-            }
-            catch (NumberFormatException e) {
-               System.err.println("Invalid numHiddenLayers option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            if (NUM_HIDDEN_LAYERS < 0)
-            {
-               System.err.println("Invalid numHiddenLayers option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            continue;
-         }
-         if (args[i].equals("-epochs"))
-         {
-            i++;
-            if (i >= args.length)
-            {
-               System.err.println("Invalid epochs option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            try
-            {
-               EPOCHS = Integer.parseInt(args[i]);
-            }
-            catch (NumberFormatException e) {
-               System.err.println("Invalid epochs option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            if (EPOCHS < 0)
-            {
-               System.err.println("Invalid epochs option");
+               System.err.println("Invalid numEpochs option");
                System.err.println(Usage);
                System.exit(1);
             }
@@ -793,26 +708,19 @@ public class ForagingRNN
          }
          if (args[i].equals("-exportCsvDataset"))
          {
+            CSVexport = true;
             i++;
-            if (i >= args.length)
+            if (i < args.length)
             {
-               System.err.println("Invalid exportCsvDataset option");
-               System.err.println(Usage);
-               System.exit(1);
+               if (!args[i].startsWith("-"))
+               {
+                  CSVdatasetFilename = args[i];
+               }
+               else
+               {
+                  i--;
+               }
             }
-            CSVdatasetFilename = args[i];
-            continue;
-         }
-         if (args[i].equals("-exportPythonDataset"))
-         {
-            i++;
-            if (i >= args.length)
-            {
-               System.err.println("Invalid exportPythonDataset option");
-               System.err.println(Usage);
-               System.exit(1);
-            }
-            pythonDatasetFilename = args[i];
             continue;
          }
          if (args[i].equals("-maxSequenceLength"))
@@ -916,125 +824,26 @@ public class ForagingRNN
          System.exit(1);
       }
       if (VERBOSE) { System.out.println("Training data:"); }
-      SampleSet trainset = generateTrainingData(world);
+      SampleSet dataset = generateTrainingData(world);
 
-      //
-      // build network.
-      //
-      Net net       = LSTM(NN_INPUT_SIZE, NUM_HIDDEN_NEURONS, NUM_HIDDEN_LAYERS, HoneyBee.NUM_RESPONSES);
-      int maxlength = trainset.maxSequenceLength();
-      net.rebuffer(maxlength);
-      net.initializeWeights();
-      //
-      // setup network.
-      //
-      net.initializeWeights(random);
-      net.rebuffer(maxlength);
-      //
-      // setup trainer.
-      //
-      GradientDescent trainer = new GradientDescent();
-      trainer.setNet(net);
-      trainer.setRnd(random);
-      trainer.setPermute(true);
-      trainer.setTrainingSet(trainset);
-      trainer.setLearningRate(LEARNING_RATE);
-      trainer.setMomentum(MOMENTUM);
-      trainer.setEpochs(EPOCHS);
-      //
-      TC.reset();
-      //
-      // perform training.
-      //
-      trainer.train();
-      //
-      System.out.println("training time: " + TC.valueMilliDouble() + " ms.");
-      //
-      // evaluate learning success.
-      //
-      ClassificationValidator f = new ClassificationValidator(net);
-      int correctResponses      = 0;
-      int totalResponses        = 0;
-      int correctForages        = 0;
-      int totalForages          = 0;
-      int setSize = trainset.size();
-      System.out.println("number of forages=" + setSize);
-      System.out.println("training results:");
-      for (int i = 0; i < setSize; i++)
+      // Export CSV dataset?
+      if (CSVexport)
       {
-         System.out.println("forage=" + i);
-         boolean forageCorrect = true;
-         Sample  s             = trainset.get(i);
-         int     seqLength     = s.getInputLength();
-         double[] inputData  = s.getInput();
-         double[] targetData = s.getTarget();
-         for (int j = 0; j < seqLength; j++)
-         {
-            System.out.println("step=" + j);
-            Sample s2 = new Sample(inputData, targetData, NN_INPUT_SIZE, j + 1,
-                                   HoneyBee.NUM_RESPONSES, j + 1);
-            double[] prediction = f.apply(s2);
-            System.out.print("prediction: ");
-            int    predictionIdx = -1;
-            double maxval        = -1.0;
-            for (int k = 0; k < prediction.length; k++)
-            {
-               System.out.printf("%.2f ", prediction[k]);
-               if ((predictionIdx == -1) || (maxval < prediction[k]))
-               {
-                  predictionIdx = k;
-                  maxval        = prediction[k];
-               }
-            }
-            System.out.println(" (" + HoneyBee.getResponseName(predictionIdx) + ")");
-            System.out.print("target: ");
-            int targetIdx = -1;
-            for (int k = 0, q = j * HoneyBee.NUM_RESPONSES; k < HoneyBee.NUM_RESPONSES; k++)
-            {
-               System.out.print(targetData[q + k] + " ");
-               if (targetData[q + k] == 1.0)
-               {
-                  targetIdx = k;
-               }
-            }
-            System.out.println(" (" + HoneyBee.getResponseName(targetIdx) + ")");
-            totalResponses++;
-            if (targetIdx == predictionIdx)
-            {
-               correctResponses++;
-               System.out.println("OK");
-            }
-            else
-            {
-               forageCorrect = false;
-               System.out.println("error");
-            }
-         }
-         if (forageCorrect)
-         {
-            correctForages++;
-            System.out.println("forage OK");
-         }
-         else
-         {
-            System.out.println("forage error");
-         }
-         totalForages++;
+         exportCsvDataset(dataset);
       }
-      System.out.print("correct/total responses=" + correctResponses + "/" + totalResponses);
-      if (totalResponses > 0)
+
+      // Export Python dataset.
+      exportPythonDataset(dataset);
+
+      // Run RNN.
+      ProcessBuilder processBuilder = new ProcessBuilder("python", "foraging_rnn.py",
+                                                         "-n", (NUM_NEURONS + ""), "-e", (NUM_EPOCHS + ""));
+      processBuilder.inheritIO();
+      Process process = processBuilder.start();
+      try
       {
-         System.out.printf(" (%.2f", ((double)correctResponses / (double)totalResponses) * 100.0);
-         System.out.println("%)");
+         process.waitFor();
       }
-      System.out.print("correct/total forages=" + correctForages + "/" + totalForages);
-      if (totalForages > 0)
-      {
-         System.out.printf(" (%.2f", ((double)correctForages / (double)totalForages) * 100.0);
-         System.out.println("%)");
-      }
-      //double ratio = f.ratio();;
-      //System.out.printf("classification results=%.2f", ratio * 100.0);
-      //System.out.println("%");
+      catch (InterruptedException e) {}
    }
 }
