@@ -7,7 +7,7 @@
 // the nectar.
 //
 // Input:
-// <nectar presence><nectar carry><orientation (x8)><hive presence (25=5x5)>
+// <nectar presence><nectar carry><orientation (x8)><hive presence (49=7x7)>
 // Target:
 // <response>
 
@@ -32,7 +32,7 @@ public class ForagingRNN
    public static String pythonDatasetFilename = "foraging_dataset.py";
 
    // RNN parameters.
-   public static int NN_INPUT_SIZE = 35;
+   public static int NN_INPUT_SIZE = 60;
    public static int NUM_NEURONS   = 128;
    public static int NUM_EPOCHS    = 1000;
 
@@ -41,6 +41,7 @@ public class ForagingRNN
    public static int     maxSequenceLength = -1;
    public static int     fixedOrientation  = -1;
    public static boolean noDanceLearn      = false;
+   public static boolean displaceTestSet   = false;
 
    // Random numbers.
    public static int     RANDOM_SEED = 4517;
@@ -60,13 +61,14 @@ public class ForagingRNN
       "     [-maxSequenceLength (default=-1(off))]\n" +
       "     [-fixedOrientation (default=-1(off))]\n" +
       "     [-noDanceLearn (default=false)]\n" +
+      "     [-displaceTestSet (default=false)]\n" +
       "     [-randomSeed <random number seed> (default=" + RANDOM_SEED + ")]\n" +
       "     [-exportCsvDataset [<filename> (default=" + CSVdatasetFilename + ")]]\n" +
       "     [-verbose (default=" + VERBOSE + ")]";
 
    // Input is a sequence of sensor values, target is a sequence of responses.
    public static Sample generateSequence(World world, int flower,
-                                         int orientation, boolean surplusNectar)
+                                         int orientation, boolean surplusNectar, boolean displace)
    {
       world.reset();
       HoneyBee bee = world.bees[0];
@@ -161,14 +163,91 @@ public class ForagingRNN
             if (first || world.cells[bee.x][bee.y].hive)
             {
                bx = bee.x;
-               hx = bee.x / 4;
-               if (hx > 4) { hx = 4; }
-               hx = 4 - hx;
+               hx = bee.x / 3;
+               if (hx > 6) { hx = 6; }
                by = bee.y;
-               hy = bee.y / 4;
-               if (hy > 4) { hy = 4; }
-               hy = 4 - hy;
-               input[10 + (hy * 5) + hx] = 1.0;
+               hy = bee.y / 3;
+               if (hy > 6) { hy = 6; }
+               if (displace)
+               {
+                  boolean done = false;
+                  for (int attempt = 0; attempt < 10 && !done; attempt++)
+                  {
+                     switch (random.nextInt() % 8)
+                     {
+                     case 0:
+                        if (hy < 6)
+                        {
+                           hy++;
+                           done = true;
+                        }
+                        break;
+
+                     case 1:
+                        if ((hx < 6) && (hy < 6))
+                        {
+                           hx++;
+                           hy++;
+                           done = true;
+                        }
+                        break;
+
+                     case 2:
+                        if (hx < 6)
+                        {
+                           hx++;
+                           done = true;
+                        }
+                        break;
+
+                     case 3:
+                        if ((hx < 6) && (hy > 0))
+                        {
+                           hx++;
+                           hy--;
+                           done = true;
+                        }
+                        break;
+
+                     case 4:
+                        if (hy > 0)
+                        {
+                           hy--;
+                           done = true;
+                        }
+                        break;
+
+                     case 5:
+                        if ((hx > 0) && (hy > 0))
+                        {
+                           hx--;
+                           hy--;
+                           done = true;
+                        }
+                        break;
+
+                     case 6:
+                        if (hx > 0)
+                        {
+                           hx--;
+                           done = true;
+                        }
+                        break;
+
+                     case 7:
+                        if ((hx > 0) && (hy < 6))
+                        {
+                           hx--;
+                           hy++;
+                           done = true;
+                        }
+                        break;
+                     }
+                  }
+               }
+               hx = 6 - hx;
+               hy = 6 - hy;
+               input[10 + (hy * 7) + hx] = 1.0;
             }
          }
          first = false;
@@ -219,8 +298,8 @@ public class ForagingRNN
                }
                else
                {
-                  System.out.println("hive presence [10-34]:");
-                  for (int i = NN_INPUT_SIZE - 5, j = NN_INPUT_SIZE, k = 0; k < 5; j -= 5, i = j - 5, k++)
+                  System.out.println("hive presence [11-59]:");
+                  for (int i = NN_INPUT_SIZE - 7, j = NN_INPUT_SIZE, k = 0; k < 7; j -= 7, i = j - 7, k++)
                   {
                      for ( ; i < j; i++)
                      {
@@ -230,9 +309,9 @@ public class ForagingRNN
                   }
                   if (hx != -1)
                   {
-                     System.out.println("(bee=[" + bx + "," + by + "]->[" + (bx / 4) + "," +
-                                        (by / 4) + "], hive=[" + hx + "," + hy + "], index=" +
-                                        (10 + (hy * 5) + hx + ")"));
+                     System.out.println("(bee=[" + bx + "," + by + "]->[" + (bx / 6) + "," +
+                                        (by / 6) + "], hive=[" + hx + "," + hy + "], index=" +
+                                        (10 + (hy * 7) + hx + ")"));
                   }
                }
             }
@@ -285,7 +364,7 @@ public class ForagingRNN
 
 
    // Generate training data.
-   public static SampleSet generateTrainingData(World world)
+   public static SampleSet generateSampleSet(World world, boolean displace)
    {
       SampleSet sampleSet = new SampleSet();
 
@@ -303,7 +382,7 @@ public class ForagingRNN
             boolean generated = false;
             for (int k = 0; k < 5; k++)
             {
-               Sample s = generateSequence(world, i, orientation, false);
+               Sample s = generateSequence(world, i, orientation, false, displace);
                if (s != null)
                {
                   sampleSet.add(s);
@@ -326,7 +405,7 @@ public class ForagingRNN
                generated = false;
                for (int k = 0; k < 5; k++)
                {
-                  Sample s = generateSequence(world, i, orientation, true);
+                  Sample s = generateSequence(world, i, orientation, true, displace);
                   if (s != null)
                   {
                      sampleSet.add(s);
@@ -407,7 +486,7 @@ public class ForagingRNN
 
 
    // Export CSV dataset.
-   public static void exportCsvDataset(SampleSet sampleSet)
+   public static void exportCsvDataset(SampleSet trainSet, SampleSet testSet)
    {
       int numSequences = Parameters.NUM_FLOWERS * Orientation.NUM_ORIENTATIONS;
 
@@ -429,7 +508,35 @@ public class ForagingRNN
          datasetWriter.write("training set size=" + numSequences +
                              ", input size=" + NN_INPUT_SIZE + ", target size=" + HoneyBee.NUM_RESPONSES + "\n");
          int sequence = 0;
-         for (Sample s : sampleSet)
+         for (Sample s : trainSet)
+         {
+            int n = s.getInputLength();
+            datasetWriter.print("sequence=" + sequence++ + ", length=" + n + "\n");
+            datasetWriter.print("input:\n");
+            double[] inputData = s.getInput();
+            for (int i = 0; i < n; i++)
+            {
+               for (int j = i * NN_INPUT_SIZE, k = j + NN_INPUT_SIZE; j < k; j++)
+               {
+                  datasetWriter.print(inputData[j] + " ");
+               }
+               datasetWriter.println();
+            }
+            datasetWriter.print("target:\n");
+            double[] targetData = s.getTarget();
+            for (int i = 0; i < n; i++)
+            {
+               for (int j = i * HoneyBee.NUM_RESPONSES, k = j + HoneyBee.NUM_RESPONSES; j < k; j++)
+               {
+                  datasetWriter.print(targetData[j] + " ");
+               }
+               datasetWriter.println();
+            }
+         }
+         datasetWriter.write("testing set size=" + numSequences +
+                             ", input size=" + NN_INPUT_SIZE + ", target size=" + HoneyBee.NUM_RESPONSES + "\n");
+         sequence = 0;
+         for (Sample s : testSet)
          {
             int n = s.getInputLength();
             datasetWriter.print("sequence=" + sequence++ + ", length=" + n + "\n");
@@ -471,9 +578,9 @@ public class ForagingRNN
 
 
    // Export Python dataset.
-   public static void exportPythonDataset(SampleSet sampleSet)
+   public static void exportPythonDataset(SampleSet trainSet, SampleSet testSet)
    {
-      if (sampleSet.size() == 0)
+      if ((trainSet.size() == 0) || (testSet.size() == 0))
       {
          System.err.println("Cannot export python dataset: no data");
          return;
@@ -494,7 +601,7 @@ public class ForagingRNN
          datasetOutput = new FileOutputStream(new File(pythonDatasetFilename));
          datasetWriter = new PrintWriter(new BufferedWriter(new OutputStreamWriter(datasetOutput)));
          boolean first = true;
-         for (Sample s : sampleSet)
+         for (Sample s : trainSet)
          {
             double[] inputData = s.getInput();
             if (first)
@@ -525,7 +632,7 @@ public class ForagingRNN
          }
          datasetWriter.println("]");
          first = true;
-         for (Sample s : sampleSet)
+         for (Sample s : testSet)
          {
             double[] inputData = s.getInput();
             if (first)
@@ -556,7 +663,7 @@ public class ForagingRNN
          }
          datasetWriter.println("]");
          first = true;
-         for (Sample s : sampleSet)
+         for (Sample s : trainSet)
          {
             double[] targetData = s.getTarget();
             if (first)
@@ -604,7 +711,8 @@ public class ForagingRNN
 
    public static void main(String[] args) throws IOException
    {
-      boolean CSVexport = false;
+      boolean displaceTestSet = false;
+      boolean CSVexport       = false;
 
       for (int i = 0; i < args.length; i++)
       {
@@ -789,6 +897,11 @@ public class ForagingRNN
             noDanceLearn = true;
             continue;
          }
+         if (args[i].equals("-displaceTestSet"))
+         {
+            displaceTestSet = true;
+            continue;
+         }
          if (args[i].equals("-help") || args[i].equals("-h") || args[i].equals("-?"))
          {
             System.out.println(Usage);
@@ -804,7 +917,7 @@ public class ForagingRNN
       //
       if (useFlowerIds)
       {
-         NN_INPUT_SIZE -= 24;
+         NN_INPUT_SIZE -= 49;
          NN_INPUT_SIZE += Parameters.NUM_FLOWERS;
       }
       Parameters.WORLD_WIDTH  = 21;
@@ -824,16 +937,28 @@ public class ForagingRNN
          System.exit(1);
       }
       if (VERBOSE) { System.out.println("Training data:"); }
-      SampleSet dataset = generateTrainingData(world);
+      SampleSet trainSet = generateSampleSet(world, false);
+      world = null;
+      try
+      {
+         world = new World(RANDOM_SEED);
+      }
+      catch (Exception e)
+      {
+         System.err.println("Cannot initialize world: " + e.getMessage());
+         System.exit(1);
+      }
+      if (VERBOSE) { System.out.println("Testing data:"); }
+      SampleSet testSet = generateSampleSet(world, displaceTestSet);
 
       // Export CSV dataset?
       if (CSVexport)
       {
-         exportCsvDataset(dataset);
+         exportCsvDataset(trainSet, testSet);
       }
 
       // Export Python dataset.
-      exportPythonDataset(dataset);
+      exportPythonDataset(trainSet, testSet);
 
       // Run RNN.
       ProcessBuilder processBuilder = new ProcessBuilder("python", "foraging_rnn.py",

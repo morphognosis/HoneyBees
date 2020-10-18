@@ -13,11 +13,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.Random;
 import de.jannlab.data.Sample;
 import de.jannlab.data.SampleSet;
-import morphognosis.Orientation;
 
 public class DeadReckoningRNN
 {
@@ -42,7 +40,6 @@ public class DeadReckoningRNN
    public static final String Usage =
       "Usage:\n" +
       "    java morphognosis.honey_bees.DeadReckoningRNN\n" +
-      "     [-genHoneyBeeData (generate data from honey bee foraging)]\n" +
       "     [-numTrain <quantity> (default=" + NUM_TRAIN + ")]\n" +
       "     [-numTest <quantity> (default=" + NUM_TEST + ")]\n" +
       "     [-minSequenceLength <quantity> (default=" + MIN_SEQUENCE_LENGTH + ")]\n" +
@@ -61,123 +58,6 @@ public class DeadReckoningRNN
 
    // Sample input is a sequence of responses, where each response is an orientation (x8) or a forward movement.
    // Sample target is direction to origin from destination.
-   public static Sample generateSample(World world)
-   {
-      HoneyBee bee = world.bees[0];
-
-      while (bee.response != HoneyBee.DEPOSIT_NECTAR)
-      {
-         world.step();
-      }
-      bee.orientation = Orientation.NORTH;
-      int cx = bee.x;
-      int cy = bee.y;
-      relocateFlower(world);
-      ArrayList<double[]> dataSeq   = new ArrayList<double[]>();
-      ArrayList<double[]> targetSeq = new ArrayList<double[]>();
-      boolean             first     = true;
-      while (true)
-      {
-         if (first)
-         {
-            first           = false;
-            bee.orientation = bee.response = random.nextInt(Orientation.NUM_ORIENTATIONS);
-         }
-         else
-         {
-            world.step();
-         }
-         if (bee.response == HoneyBee.EXTRACT_NECTAR) { break; }
-         double[] v      = new double[10];
-         v[bee.response] = 1.0;
-         if (VERBOSE)
-         {
-            for (int j = 0; j < 10; j++)
-            {
-               System.out.print(v[j] + " ");
-            }
-            System.out.println();
-         }
-         dataSeq.add(v);
-         v                = new double[9];
-         currentTarget    = getTarget(bee.x - cx, bee.y - cy);
-         v[currentTarget] = 1.0;
-         if (VERBOSE)
-         {
-            for (int j = 0; j < 9; j++)
-            {
-               System.out.print(v[j] + " ");
-            }
-            System.out.println();
-         }
-         targetSeq.add(v);
-      }
-      if (VERBOSE)
-      {
-         System.out.println("sequence length=" + dataSeq.size());
-      }
-      double[] data = new double[dataSeq.size() * 10];
-      int i = 0;
-      for (double[] d : dataSeq)
-      {
-         for (int j = 0; j < 10; j++)
-         {
-            data[i] = d[j];
-            i++;
-         }
-      }
-      double[] target = new double[targetSeq.size() * 9];
-      i = 0;
-      for (double[] d : targetSeq)
-      {
-         for (int j = 0; j < 9; j++)
-         {
-            target[i] = d[j];
-            i++;
-         }
-      }
-      return(new Sample(data, target, 10, dataSeq.size(), 9, targetSeq.size()));
-   }
-
-
-   public static void relocateFlower(World world)
-   {
-      for (int x = 0; x < Parameters.WORLD_WIDTH; x++)
-      {
-         for (int y = 0; y < Parameters.WORLD_HEIGHT; y++)
-         {
-            world.cells[x][y].flower = null;
-         }
-      }
-      double cx = Parameters.WORLD_WIDTH / 2.0;
-      double cy = Parameters.WORLD_HEIGHT / 2.0;
-      for (int i = 0; i < Parameters.NUM_FLOWERS; i++)
-      {
-         for (int j = 0; j < 100; j++)
-         {
-            int x = random.nextInt(Parameters.WORLD_WIDTH);
-            int y = random.nextInt(Parameters.WORLD_HEIGHT);
-            if (Math.sqrt(((double)y - cy) * ((double)y - cy) + ((double)x - cx) * (
-                             (double)x - cx)) <= (double)Parameters.FLOWER_RANGE)
-            {
-               Cell cell = world.cells[x][y];
-               if (!cell.hive && (cell.bee == null))
-               {
-                  Flower flower = new Flower(true, random);
-                  cell.flower = flower;
-                  break;
-               }
-            }
-            if (j == 99)
-            {
-               System.err.println("Cannot place flower in world");
-               System.exit(1);
-            }
-         }
-      }
-   }
-
-
    public static Sample generateSample(final int length)
    {
       double[] data   = new double[length * 10];
@@ -321,18 +201,6 @@ public class DeadReckoningRNN
    }
 
 
-   public static SampleSet generate(int n, World world)
-   {
-      SampleSet set = new SampleSet();
-
-      for (int i = 0; i < n; i++)
-      {
-         set.add(generateSample(world));
-      }
-      return(set);
-   }
-
-
    public static SampleSet generate(int n)
    {
       SampleSet set = new SampleSet();
@@ -471,16 +339,8 @@ public class DeadReckoningRNN
 
    public static void main(String[] args) throws IOException
    {
-      boolean genHoneyBeeData = false;
-      boolean gotParm         = false;
-
       for (int i = 0; i < args.length; i++)
       {
-         if (args[i].equals("-genHoneyBeeData"))
-         {
-            genHoneyBeeData = true;
-            continue;
-         }
          if (args[i].equals("-numTrain"))
          {
             i++;
@@ -557,7 +417,6 @@ public class DeadReckoningRNN
                System.err.println(Usage);
                System.exit(1);
             }
-            gotParm = true;
             continue;
          }
          if (args[i].equals("-maxSequenceLength"))
@@ -584,7 +443,6 @@ public class DeadReckoningRNN
                System.err.println(Usage);
                System.exit(1);
             }
-            gotParm = true;
             continue;
          }
          if (args[i].equals("-turnProbability"))
@@ -611,7 +469,6 @@ public class DeadReckoningRNN
                System.err.println(Usage);
                System.exit(1);
             }
-            gotParm = true;
             continue;
          }
          if (args[i].equals("-numNeurons"))
@@ -700,11 +557,6 @@ public class DeadReckoningRNN
          System.err.println(Usage);
          System.exit(1);
       }
-      if (genHoneyBeeData && gotParm)
-      {
-         System.err.println("Unnecessary options used with genHoneyBeeData option");
-         System.exit(1);
-      }
       if (MIN_SEQUENCE_LENGTH > MAX_SEQUENCE_LENGTH)
       {
          System.err.println("minSequenceLength cannot be greater than maxSequenceLength");
@@ -718,36 +570,14 @@ public class DeadReckoningRNN
       Parameters.NUM_BEES    = 1;
       Parameters.FLOWER_SURPLUS_NECTAR_PROBABILITY = 0.0f;
       random.setSeed(RANDOM_SEED);
-      World world = null;
-      try
-      {
-         world = new World(RANDOM_SEED);
-      }
-      catch (Exception e)
-      {
-         System.err.println("Cannot initialize world: " + e.getMessage());
-         System.exit(1);
-      }
       SampleSet trainset;
       SampleSet testset;
-      if (genHoneyBeeData)
-      {
-         if (VERBOSE) { System.out.println("Training samples:"); }
-         trainset         = generate(NUM_TRAIN, world);
-         finalTrainTarget = currentTarget;
-         if (VERBOSE) { System.out.println("Testing samples:"); }
-         testset         = generate(NUM_TEST, world);
-         finalTestTarget = currentTarget;
-      }
-      else
-      {
-         if (VERBOSE) { System.out.println("Training samples:"); }
-         trainset         = generate(NUM_TRAIN);
-         finalTrainTarget = currentTarget;
-         if (VERBOSE) { System.out.println("Testing samples:"); }
-         testset         = generate(NUM_TEST);
-         finalTestTarget = currentTarget;
-      }
+      if (VERBOSE) { System.out.println("Training samples:"); }
+      trainset         = generate(NUM_TRAIN);
+      finalTrainTarget = currentTarget;
+      if (VERBOSE) { System.out.println("Testing samples:"); }
+      testset         = generate(NUM_TEST);
+      finalTestTarget = currentTarget;
 
       // Pad sequences to max size.
       if (padToSequenceLength != -1)
