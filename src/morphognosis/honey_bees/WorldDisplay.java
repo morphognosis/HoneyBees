@@ -797,7 +797,6 @@ public class WorldDisplay extends JFrame
             {
                beeDashboard.update();
             }
-
             return;
          }
 

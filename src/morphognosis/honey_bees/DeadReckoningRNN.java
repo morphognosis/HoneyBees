@@ -11,6 +11,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.Random;
@@ -222,6 +223,8 @@ public class DeadReckoningRNN
          System.err.println("Cannot export python dataset: no data");
          return;
       }
+      String oldlinesep = System.getProperty("line.separator");
+      System.setProperty("line.separator", "\n");
       FileOutputStream datasetOutput = null;
       PrintWriter      datasetWriter = null;
       try
@@ -334,6 +337,7 @@ public class DeadReckoningRNN
          }
          catch (IOException e) {}
       }
+      System.setProperty("line.separator", oldlinesep);
    }
 
 
@@ -679,6 +683,29 @@ public class DeadReckoningRNN
       exportPythonDataset(trainset, testset);
 
       // Run RNN.
+      try
+      {
+         InputStream in = ClassLoader.getSystemClassLoader().getResourceAsStream("foraging_rnn.py");
+         if (in == null)
+         {
+            System.err.println("Cannot access foraging_rnn.py");
+            System.exit(1);
+         }
+         File             pythonScript = new File("foraging_rnn.py");
+         FileOutputStream out          = new FileOutputStream(pythonScript);
+         byte[] buffer = new byte[1024];
+         int bytesRead;
+         while ((bytesRead = in.read(buffer)) != -1)
+         {
+            out.write(buffer, 0, bytesRead);
+         }
+         out.close();
+      }
+      catch (Exception e)
+      {
+         System.err.println("Cannot create foraging_rnn.py");
+         System.exit(1);
+      }
       ProcessBuilder processBuilder = new ProcessBuilder("python", "foraging_rnn.py",
                                                          "-n", (NUM_NEURONS + ""), "-e", (NUM_EPOCHS + ""));
       processBuilder.inheritIO();

@@ -68,6 +68,3 @@ for seq in range(X_test_shape[0]):
     else:
         print('error')
 
-
-
-

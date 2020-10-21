@@ -17,6 +17,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -498,7 +499,8 @@ public class ForagingRNN
       {
          numSequences *= 2;
       }
-
+      String oldlinesep = System.getProperty("line.separator");
+      System.setProperty("line.separator", "\n");
       FileOutputStream datasetOutput = null;
       PrintWriter      datasetWriter = null;
       try
@@ -518,7 +520,11 @@ public class ForagingRNN
             {
                for (int j = i * NN_INPUT_SIZE, k = j + NN_INPUT_SIZE; j < k; j++)
                {
-                  datasetWriter.print(inputData[j] + " ");
+                  datasetWriter.print(inputData[j] + "");
+                  if (j < k - 1)
+                  {
+                     datasetWriter.print(",");
+                  }
                }
                datasetWriter.println();
             }
@@ -528,7 +534,11 @@ public class ForagingRNN
             {
                for (int j = i * HoneyBee.NUM_RESPONSES, k = j + HoneyBee.NUM_RESPONSES; j < k; j++)
                {
-                  datasetWriter.print(targetData[j] + " ");
+                  datasetWriter.print(targetData[j] + "");
+                  if (j < k - 1)
+                  {
+                     datasetWriter.print(",");
+                  }
                }
                datasetWriter.println();
             }
@@ -546,7 +556,11 @@ public class ForagingRNN
             {
                for (int j = i * NN_INPUT_SIZE, k = j + NN_INPUT_SIZE; j < k; j++)
                {
-                  datasetWriter.print(inputData[j] + " ");
+                  datasetWriter.print(inputData[j] + "");
+                  if (j < k - 1)
+                  {
+                     datasetWriter.print(",");
+                  }
                }
                datasetWriter.println();
             }
@@ -556,7 +570,11 @@ public class ForagingRNN
             {
                for (int j = i * HoneyBee.NUM_RESPONSES, k = j + HoneyBee.NUM_RESPONSES; j < k; j++)
                {
-                  datasetWriter.print(targetData[j] + " ");
+                  datasetWriter.print(targetData[j] + "");
+                  if (j < k - 1)
+                  {
+                     datasetWriter.print(",");
+                  }
                }
                datasetWriter.println();
             }
@@ -574,6 +592,7 @@ public class ForagingRNN
          }
          catch (IOException e) {}
       }
+      System.setProperty("line.separator", oldlinesep);
    }
 
 
@@ -594,6 +613,8 @@ public class ForagingRNN
       {
          numSequences *= 2;
       }
+      String oldlinesep = System.getProperty("line.separator");
+      System.setProperty("line.separator", "\n");
       FileOutputStream datasetOutput = null;
       PrintWriter      datasetWriter = null;
       try
@@ -706,6 +727,7 @@ public class ForagingRNN
          }
          catch (IOException e) {}
       }
+      System.setProperty("line.separator", oldlinesep);
    }
 
 
@@ -961,6 +983,29 @@ public class ForagingRNN
       exportPythonDataset(trainSet, testSet);
 
       // Run RNN.
+      try
+      {
+         InputStream in = ClassLoader.getSystemClassLoader().getResourceAsStream("foraging_rnn.py");
+         if (in == null)
+         {
+            System.err.println("Cannot access foraging_rnn.py");
+            System.exit(1);
+         }
+         File             pythonScript = new File("foraging_rnn.py");
+         FileOutputStream out          = new FileOutputStream(pythonScript);
+         byte[] buffer = new byte[1024];
+         int bytesRead;
+         while ((bytesRead = in.read(buffer)) != -1)
+         {
+            out.write(buffer, 0, bytesRead);
+         }
+         out.close();
+      }
+      catch (Exception e)
+      {
+         System.err.println("Cannot create foraging_rnn.py");
+         System.exit(1);
+      }
       ProcessBuilder processBuilder = new ProcessBuilder("python", "foraging_rnn.py",
                                                          "-n", (NUM_NEURONS + ""), "-e", (NUM_EPOCHS + ""));
       processBuilder.inheritIO();

@@ -4,4 +4,4 @@ cp ../res/images/honeybee.png morphognosis/honey_bees
 cp ../res/images/flower.png morphognosis/honey_bees
 cp ../res/images/nectar.png morphognosis/honey_bees
 cp ../res/sounds/bees.wav morphognosis/honey_bees
-jar cvfm ../bin/honey_bees.jar honey_bees.mf morphognosis de
+jar cvfm ../bin/honey_bees.jar honey_bees.mf morphognosis de foraging_rnn.py

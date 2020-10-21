@@ -1044,6 +1044,8 @@ public class HoneyBee
       {
          throw new IOException("Cannot open output file " + filename + ":" + e.getMessage());
       }
+      String oldlinesep = System.getProperty("line.separator");
+      System.setProperty("line.separator", "\n");
       PrintWriter writer = new PrintWriter(new BufferedWriter(new OutputStreamWriter(output)));
       for (int i = 0; i < morphognostic.NUM_NEIGHBORHOODS; i++)
       {
@@ -1069,6 +1071,7 @@ public class HoneyBee
       }
       writer.flush();
       output.close();
+      System.setProperty("line.separator", oldlinesep);
    }
 
 
