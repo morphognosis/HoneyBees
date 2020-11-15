@@ -70,24 +70,28 @@ public class Main
       "        [-NNmomentum <quantity> (default=" + Parameters.NN_MOMENTUM + ")]\n" +
       "        [-NNhiddenLayers <quantity> (default=\"" + Parameters.NN_HIDDEN_LAYERS + "\")]\n" +
       "        [-NNtrainingTime <quantity> (default=" + Parameters.NN_TRAINING_TIME + ")]\n" +
-      "     [-driver <autopilot | metamorphDB | metamorphNN | local_override> (honey bees driver: default=autopilot)]\n" +
+      "     [-driver autopilot | none | metamorphDB | metamorphNN | metamorphGoalSeekingDB | metamorphGoalSeekingNN | local_override> (honey bees driver: default=autopilot)]\n" +
       "     [-randomSeed <random number seed> (default=" + DEFAULT_RANDOM_SEED + ")]\n" +
       "     [-printCollectedNectar]\n" +
       "     [-save <file name>]\n" +
-      "     [-saveNN <metamorph neural network model file name>]\n" +
-      "     [-loadNN <metamorph neural network model file name>]\n" +
-      "     [-writeMetamorphDataset [<file name>] (write metamorph dataset file, default=" + HoneyBee.METAMORPH_DATASET_FILE_BASENAME + ".csv)]\n" +
+      "     [-saveNN <metamorph neural network file name>]\n" +
+      "     [-loadNN <metamorph neural network file name>]\n" +
+      "     [-saveGoalSeekingNN <metamorph goal-seeking neural network file name>]\n" +
+      "     [-loadGoalSeekingNN <metamorph goal-seeking neural network file name>]\n" +
+      "     [-writeMetamorphDataset [<file name>] (write metamorph dataset file, default=" + World.METAMORPH_DATASET_FILE_BASENAME + ".csv)]\n" +
       "  Resume run:\n" +
       "    java morphognosis.honey_bees.Main\n" +
       "      -load <file name>\n" +
       "     [-steps <steps> | -display (default)]\n" +
-      "     [-driver autopilot | metamorphDB | metamorphNN | local_override>\n\t(default=autopilot)]\n" +
+      "     [-driver autopilot | none | metamorphDB | metamorphNN | metamorphGoalSeekingDB | metamorphGoalSeekingNN | local_override>\n\t(default=autopilot)]\n" +
       "     [-randomSeed <random number seed>]\n" +
       "     [-printCollectedNectar]\n" +
       "     [-save <file name>]\n" +
-      "     [-saveNN <metamorph neural network model file name>]\n" +
-      "     [-loadNN <metamorph neural network model file name>]\n" +
-      "     [-writeMetamorphDataset [<file name>] (write metamorph dataset file, default=" + HoneyBee.METAMORPH_DATASET_FILE_BASENAME + ".csv)]\n" +
+      "     [-saveNN <metamorph neural network file name>]\n" +
+      "     [-loadNN <metamorph neural network file name>]\n" +
+      "     [-saveGoalSeekingNN <metamorph goal-seeking neural network file name>]\n" +
+      "     [-loadGoalSeekingNN <metamorph goal-seeking neural network file name>]\n" +
+      "     [-writeMetamorphDataset [<file name>] (write metamorph dataset file, default=" + World.METAMORPH_DATASET_FILE_BASENAME + ".csv)]\n" +
       "  Print parameters:\n" +
       "    java morphognosis.honey_bees.Main -printParameters\n" +
       "  Version:\n" +
@@ -276,13 +280,15 @@ public class Main
       boolean printCollectedNectar = false;
       String  loadfile             = null;
       String  savefile             = null;
-      boolean display         = true;
-      boolean gotParm         = false;
-      boolean printParms      = false;
-      String  NNloadfile      = null;
-      String  NNsavefile      = null;
-      boolean gotDatasetParm  = false;
-      String  datasetFilename = HoneyBee.METAMORPH_DATASET_FILE_BASENAME + ".csv";
+      boolean display               = true;
+      boolean gotParm               = false;
+      boolean printParms            = false;
+      String  NNloadfile            = null;
+      String  NNsavefile            = null;
+      String  goalSeekingNNloadfile = null;
+      String  goalSeekingNNsavefile = null;
+      boolean gotDatasetParm        = false;
+      String  datasetFilename       = World.METAMORPH_DATASET_FILE_BASENAME + ".csv";
 
       for (int i = 0; i < args.length; i++)
       {
@@ -404,7 +410,7 @@ public class Main
                System.err.println(Usage);
                System.exit(1);
             }
-            if (Parameters.HIVE_RADIUS < 1)
+            if (Parameters.HIVE_RADIUS < 0)
             {
                System.err.println("Invalid hive radius");
                System.err.println(Usage);
@@ -426,6 +432,10 @@ public class Main
             {
                driver = Driver.AUTOPILOT;
             }
+            else if (args[i].equals("none"))
+            {
+               driver = Driver.NONE;
+            }
             else if (args[i].equals("metamorphDB"))
             {
                driver = Driver.METAMORPH_DB;
@@ -433,6 +443,14 @@ public class Main
             else if (args[i].equals("metamorphNN"))
             {
                driver = Driver.METAMORPH_NN;
+            }
+            else if (args[i].equals("metamorphGoalSeekingDB"))
+            {
+               driver = Driver.METAMORPH_GOAL_SEEKING_DB;
+            }
+            else if (args[i].equals("metamorphGoalSeekingNN"))
+            {
+               driver = Driver.METAMORPH_GOAL_SEEKING_NN;
             }
             else if (args[i].equals("local_override"))
             {
@@ -811,6 +829,48 @@ public class Main
             else
             {
                System.err.println("Duplicate saveNN option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            continue;
+         }
+         if (args[i].equals("-loadGoalSeekingNN"))
+         {
+            i++;
+            if (i >= args.length)
+            {
+               System.err.println("Invalid loadGoalSeekingNN option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            if (goalSeekingNNloadfile == null)
+            {
+               goalSeekingNNloadfile = args[i];
+            }
+            else
+            {
+               System.err.println("Duplicate loadGoalSeekingNN option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            continue;
+         }
+         if (args[i].equals("-saveGoalSeekingNN"))
+         {
+            i++;
+            if (i >= args.length)
+            {
+               System.err.println("Invalid saveGoalSeekingNN option");
+               System.err.println(Usage);
+               System.exit(1);
+            }
+            if (goalSeekingNNsavefile == null)
+            {
+               goalSeekingNNsavefile = args[i];
+            }
+            else
+            {
+               System.err.println("Duplicate saveGoalSeekingNN option");
                System.err.println(Usage);
                System.exit(1);
             }

@@ -914,11 +914,6 @@ public class ForagingRNN
             }
             continue;
          }
-         if (args[i].equals("-noDanceLearn"))
-         {
-            noDanceLearn = true;
-            continue;
-         }
          if (args[i].equals("-displaceTestSet"))
          {
             displaceTestSet = true;

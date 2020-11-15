@@ -5,21 +5,17 @@
 package morphognosis.honey_bees;
 
 import java.awt.BorderLayout;
-import java.awt.Checkbox;
 import java.awt.Choice;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
-import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -33,10 +29,9 @@ public class HoneyBeeDashboard extends JFrame
    private static final long serialVersionUID = 0L;
 
    // Components.
-   StatusPanel              status;
-   DriverPanel              driver;
-   MorphognosticDisplay     morphognostic;
-   MetamorphOperationsPanel metamorphOperations;
+   StatusPanel          status;
+   DriverPanel          driver;
+   MorphognosticDisplay morphognostic;
 
    // Target honey bee.
    HoneyBee bee;
@@ -64,8 +59,6 @@ public class HoneyBeeDashboard extends JFrame
       basePanel.add(driver);
       morphognostic = new MorphognosticDisplay(bee.id, bee.morphognostic);
       basePanel.add(morphognostic);
-      metamorphOperations = new MetamorphOperationsPanel();
-      basePanel.add(metamorphOperations);
       pack();
       setLocation();
       setVisible(false);
@@ -298,8 +291,11 @@ public class HoneyBeeDashboard extends JFrame
          driverChoice = new Choice();
          driverPanel.add(driverChoice);
          driverChoice.add("autopilot");
+         driverChoice.add("none");
          driverChoice.add("metamorphDB");
          driverChoice.add("metamorphNN");
+         driverChoice.add("metamorphGoalSeekingDB");
+         driverChoice.add("metamorphGoalSeekingNN");
          driverChoice.addItemListener(this);
          JPanel datasetpanel = new JPanel();
          datasetpanel.setLayout(new FlowLayout(FlowLayout.LEFT));
@@ -322,96 +318,6 @@ public class HoneyBeeDashboard extends JFrame
             {
                bee.driver = bee.world.driver;
                driverChoice.select(bee.world.driver);
-            }
-            return;
-         }
-      }
-   }
-
-   // Metamorph operations panel.
-   class MetamorphOperationsPanel extends JPanel implements ActionListener, ItemListener
-   {
-      private static final long serialVersionUID = 0L;
-
-      // Components.
-      JButton  clearMetamorphsButton;
-      JButton  writeMetamorphDatasetButton;
-      Checkbox trainNNcheck;
-
-      // Constructor.
-      public MetamorphOperationsPanel()
-      {
-         setLayout(new BorderLayout());
-         setBorder(BorderFactory.createTitledBorder(
-                      BorderFactory.createLineBorder(Color.black), "Metamorph operations"));
-         JPanel clearMetamorphsPanel = new JPanel();
-         clearMetamorphsPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
-         add(clearMetamorphsPanel, BorderLayout.NORTH);
-         clearMetamorphsButton = new JButton("Clear");
-         clearMetamorphsButton.addActionListener(this);
-         clearMetamorphsPanel.add(clearMetamorphsButton);
-         JPanel writeMetamorphDatasetPanel = new JPanel();
-         writeMetamorphDatasetPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
-         add(writeMetamorphDatasetPanel, BorderLayout.CENTER);
-         writeMetamorphDatasetButton = new JButton("Write to " + bee.metamorphDatasetFilename);
-         writeMetamorphDatasetButton.addActionListener(this);
-         writeMetamorphDatasetPanel.add(writeMetamorphDatasetButton);
-         JPanel trainNNpanel = new JPanel();
-         trainNNpanel.setLayout(new FlowLayout(FlowLayout.LEFT));
-         add(trainNNpanel, BorderLayout.SOUTH);
-         trainNNpanel.add(new JLabel("Train neural network:"));
-         trainNNcheck = new Checkbox();
-         trainNNcheck.setState(false);
-         trainNNcheck.addItemListener(this);
-         trainNNpanel.add(trainNNcheck);
-      }
-
-
-      // Button listener.
-      public void actionPerformed(ActionEvent evt)
-      {
-         if ((JButton)evt.getSource() == clearMetamorphsButton)
-         {
-            bee.metamorphs.clear();
-            return;
-         }
-
-         if ((JButton)evt.getSource() == writeMetamorphDatasetButton)
-         {
-            try
-            {
-               bee.writeMetamorphDataset(bee.metamorphDatasetFilename, false);
-            }
-            catch (Exception e)
-            {
-               worldDisplay.setMessage("Cannot write metamorph dataset to file " + bee.metamorphDatasetFilename + ": " + e.getMessage());
-            }
-            return;
-         }
-      }
-
-
-      // Choice listener.
-      public void itemStateChanged(ItemEvent evt)
-      {
-         Object source = evt.getSource();
-
-         if (source instanceof Checkbox && ((Checkbox)source == trainNNcheck))
-         {
-            if (trainNNcheck.getState())
-            {
-               try
-               {
-                  worldDisplay.setMessage("Training metamorph neural network...");
-                  paint(getGraphics());
-                  bee.trainMetamorphNN();
-                  worldDisplay.setMessage(null);
-               }
-               catch (Exception e)
-               {
-                  worldDisplay.setMessage("Cannot train metamorph neural network: " + e.getMessage());
-               }
-               trainNNcheck.setState(false);
             }
             return;
          }

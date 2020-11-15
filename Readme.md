@@ -62,26 +62,30 @@ Usage:
       Metamorph Weka neural network parameters:
         [-NNlearningRate <quantity> (default=0.1)]
         [-NNmomentum <quantity> (default=0.2)]
-        [-NNhiddenLayers <quantity> (default="100")]
+        [-NNhiddenLayers <quantity> (default="50")]
         [-NNtrainingTime <quantity> (default=5000)]
-     [-driver <autopilot | metamorphDB | metamorphNN | local_override> (honey bees driver: default=autopilot)]
+     [-driver autopilot | none | metamorphDB | metamorphNN | metamorphGoalSeekingDB | metamorphGoalSeekingNN | local_override> (honey bees driver: default=autopilot)]
      [-randomSeed <random number seed> (default=4517)]
      [-printCollectedNectar]
      [-save <file name>]
-     [-saveNN <metamorph neural network model file name>]
-     [-loadNN <metamorph neural network model file name>]
+     [-saveNN <metamorph neural network file name>]
+     [-loadNN <metamorph neural network file name>]
+     [-saveGoalSeekingNN <metamorph goal-seeking neural network file name>]
+     [-loadGoalSeekingNN <metamorph goal-seeking neural network file name>]
      [-writeMetamorphDataset [<file name>] (write metamorph dataset file, default=metamorphs.csv)]
   Resume run:
     java morphognosis.honey_bees.Main
       -load <file name>
      [-steps <steps> | -display (default)]
-     [-driver autopilot | metamorphDB | metamorphNN | local_override>
+     [-driver autopilot | none | metamorphDB | metamorphNN | metamorphGoalSeekingDB | metamorphGoalSeekingNN | local_override>
         (default=autopilot)]
      [-randomSeed <random number seed>]
      [-printCollectedNectar]
      [-save <file name>]
-     [-saveNN <metamorph neural network model file name>]
-     [-loadNN <metamorph neural network model file name>]
+     [-saveNN <metamorph neural network file name>]
+     [-loadNN <metamorph neural network file name>]
+     [-saveGoalSeekingNN <metamorph goal-seeking neural network file name>]
+     [-loadGoalSeekingNN <metamorph goal-seeking neural network file name>]
      [-writeMetamorphDataset [<file name>] (write metamorph dataset file, default=metamorphs.csv)]
   Print parameters:
     java morphognosis.honey_bees.Main -printParameters

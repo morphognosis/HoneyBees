@@ -5,6 +5,7 @@ package morphognosis;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 
 // Metamorph.
 public class Metamorph
@@ -16,12 +17,16 @@ public class Metamorph
    public int    response;
    public String responseName;
 
+   // Causal effects.
+   public ArrayList<Integer> effectIndexes;
+
    // Constructors.
    public Metamorph(Morphognostic morphognostic, int response)
    {
       this.morphognostic = morphognostic;
       this.response      = response;
       responseName       = "";
+      effectIndexes      = new ArrayList<Integer>();
    }
 
 
@@ -30,6 +35,7 @@ public class Metamorph
       this.morphognostic = morphognostic;
       this.response      = response;
       this.responseName  = responseName;
+      effectIndexes      = new ArrayList<Integer>();
    }
 
 
@@ -54,6 +60,12 @@ public class Metamorph
       morphognostic.save(output);
       Utility.saveInt(output, response);
       Utility.saveString(output, responseName);
+      int n = effectIndexes.size();
+      Utility.saveInt(output, n);
+      for (int i : effectIndexes)
+      {
+         Utility.saveInt(output, i);
+      }
       output.flush();
    }
 
@@ -65,7 +77,12 @@ public class Metamorph
       int           response      = Utility.loadInt(input);
       String        responseName  = Utility.loadString(input);
       Metamorph     metamorph     = new Metamorph(morphognostic, response, responseName);
+      int           n             = Utility.loadInt(input);
 
+      for (int i = 0; i < n; i++)
+      {
+         metamorph.effectIndexes.add(Utility.loadInt(input));
+      }
       return(metamorph);
    }
 

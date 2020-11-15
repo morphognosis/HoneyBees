@@ -7,10 +7,10 @@ package morphognosis.honey_bees;
 import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Canvas;
-import java.awt.Checkbox;
 import java.awt.Choice;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -685,7 +685,8 @@ public class WorldDisplay extends JFrame
       JLabel    nectarCounter;
       JButton   clearMetamorphsButton;
       JButton   writeMetamorphDatasetButton;
-      Checkbox  trainNNcheck;
+      JCheckBox trainNNcheck;
+      JCheckBox trainGoalSeekingNNcheck;
 
       // Constructor.
       Controls()
@@ -715,8 +716,11 @@ public class WorldDisplay extends JFrame
          driverChoice = new Choice();
          panel.add(driverChoice);
          driverChoice.add("autopilot");
+         driverChoice.add("none");
          driverChoice.add("metamorphDB");
          driverChoice.add("metamorphNN");
+         driverChoice.add("metamorphGoalSeekingDB");
+         driverChoice.add("metamorphGoalSeekingNN");
          driverChoice.add("local override");
          driverChoice.select(world.driver);
          driverChoice.addItemListener(this);
@@ -731,19 +735,28 @@ public class WorldDisplay extends JFrame
          controlsPanel.add(panel, BorderLayout.SOUTH);
          add(controlsPanel, BorderLayout.NORTH);
          panel = new JPanel();
+         panel.setLayout(new BorderLayout());
          panel.setBorder(BorderFactory.createTitledBorder(
                             BorderFactory.createLineBorder(Color.black), "Metamorph operations"));
+         JPanel subPanel = new JPanel();
+         subPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+         panel.add(subPanel, BorderLayout.NORTH);
          clearMetamorphsButton = new JButton("Clear");
          clearMetamorphsButton.addActionListener(this);
-         panel.add(clearMetamorphsButton);
-         writeMetamorphDatasetButton = new JButton("Write to " + HoneyBee.METAMORPH_DATASET_FILE_BASENAME + ".csv");
+         subPanel.add(clearMetamorphsButton);
+         writeMetamorphDatasetButton = new JButton("Write to " + World.METAMORPH_DATASET_FILE_BASENAME + ".csv");
          writeMetamorphDatasetButton.addActionListener(this);
-         panel.add(writeMetamorphDatasetButton);
-         panel.add(new JLabel("Train neural network:"));
-         trainNNcheck = new Checkbox();
-         trainNNcheck.setState(false);
+         subPanel.add(writeMetamorphDatasetButton);
+         subPanel = new JPanel();
+         subPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+         panel.add(subPanel, BorderLayout.SOUTH);
+         subPanel.add(new JLabel("Train:"));
+         trainNNcheck = new JCheckBox("Neural network", false);
          trainNNcheck.addItemListener(this);
-         panel.add(trainNNcheck);
+         subPanel.add(trainNNcheck);
+         trainGoalSeekingNNcheck = new JCheckBox("Goal-seeking neural network", false);
+         trainGoalSeekingNNcheck.addItemListener(this);
+         subPanel.add(trainGoalSeekingNNcheck);
          add(panel, BorderLayout.SOUTH);
       }
 
@@ -818,7 +831,7 @@ public class WorldDisplay extends JFrame
          // Write metamorph dataset?
          if ((JButton)evt.getSource() == writeMetamorphDatasetButton)
          {
-            String filename = HoneyBee.METAMORPH_DATASET_FILE_BASENAME + ".csv";
+            String filename = World.METAMORPH_DATASET_FILE_BASENAME + ".csv";
             try
             {
                world.writeMetamorphDataset(filename);
@@ -865,24 +878,47 @@ public class WorldDisplay extends JFrame
             return;
          }
 
-         if (source instanceof Checkbox && ((Checkbox)source == trainNNcheck))
+         if (source instanceof JCheckBox)
          {
-            if (trainNNcheck.getState())
+            if ((JCheckBox)source == trainNNcheck)
             {
-               try
+               if (trainNNcheck.isSelected())
                {
-                  setMessage("Training metamorph neural network...");
-                  paint(getGraphics());
-                  world.trainMetamorphNN();
-                  setMessage(null);
+                  try
+                  {
+                     setMessage("Training metamorph neural network...");
+                     paint(getGraphics());
+                     world.trainMetamorphNN();
+                     setMessage(null);
+                  }
+                  catch (Exception e)
+                  {
+                     setMessage("Cannot train metamorph neural network: " + e.getMessage());
+                  }
+                  trainNNcheck.setSelected(false);
                }
-               catch (Exception e)
-               {
-                  setMessage("Cannot train metamorph neural network: " + e.getMessage());
-               }
-               trainNNcheck.setState(false);
+               return;
             }
-            return;
+
+            if ((JCheckBox)source == trainGoalSeekingNNcheck)
+            {
+               if (trainGoalSeekingNNcheck.isSelected())
+               {
+                  try
+                  {
+                     setMessage("Training goal-seeking metamorph neural network...");
+                     paint(getGraphics());
+                     //world.trainMetamorphNN();
+                     setMessage(null);
+                  }
+                  catch (Exception e)
+                  {
+                     setMessage("Cannot train goal-seeking metamorph neural network: " + e.getMessage());
+                  }
+                  trainGoalSeekingNNcheck.setSelected(false);
+               }
+               return;
+            }
          }
       }
    }

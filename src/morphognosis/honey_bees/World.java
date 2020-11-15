@@ -8,16 +8,22 @@ import java.util.ArrayList;
 import java.util.Random;
 
 import morphognosis.Metamorph;
+import morphognosis.Morphognostic;
 import morphognosis.Orientation;
 import morphognosis.Utility;
+import morphognosis.Morphognostic.Neighborhood;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 
 public class World
 {
@@ -37,8 +43,19 @@ public class World
    // Driver.
    int driver;
 
+   // Metamorphs.
+   public Metamorph            currentMetamorph;
+   public ArrayList<Metamorph> metamorphs;
+
    // Metamorph neural network.
    public MetamorphNN metamorphNN;
+
+   // Metamorph dataset file name.
+   public static String METAMORPH_DATASET_FILE_BASENAME = "metamorphs";
+   public String        metamorphDatasetFilename;
+
+   // Maximum distance between equivalent morphognostics.
+   public static float EQUIVALENT_MORPHOGNOSTIC_DISTANCE = 0.0f;
 
    // Constructor.
    public World(int randomSeed)
@@ -49,16 +66,15 @@ public class World
       random.setSeed(randomSeed);
 
       // Create cells.
-      double cx = Parameters.WORLD_WIDTH / 2.0;
-      double cy = Parameters.WORLD_HEIGHT / 2.0;
+      int cx = Parameters.WORLD_WIDTH / 2;
+      int cy = Parameters.WORLD_HEIGHT / 2;
       cells = new Cell[Parameters.WORLD_WIDTH][Parameters.WORLD_HEIGHT];
       for (int x = 0; x < Parameters.WORLD_WIDTH; x++)
       {
          for (int y = 0; y < Parameters.WORLD_HEIGHT; y++)
          {
             cells[x][y] = new Cell(random);
-            if (Math.sqrt(((double)y - cy) * ((double)y - cy) + ((double)x - cx) * (
-                             (double)x - cx)) <= (double)Parameters.HIVE_RADIUS)
+            if ((Math.abs(x - cx) + Math.abs(y - cy)) <= Parameters.HIVE_RADIUS)
             {
                cells[x][y].hive = true;
             }
@@ -110,6 +126,10 @@ public class World
       // Nectar collector.
       collectedNectar = 0;
 
+      // Create metamorphs.
+      currentMetamorph = null;
+      metamorphs       = new ArrayList<Metamorph>();
+
       // Initialize driver.
       driver = Driver.AUTOPILOT;
    }
@@ -155,7 +175,8 @@ public class World
             bees[i].reset();
          }
       }
-      collectedNectar = 0;
+      collectedNectar  = 0;
+      currentMetamorph = null;
    }
 
 
@@ -191,6 +212,21 @@ public class World
       {
          bees[i].save(writer);
       }
+      if (currentMetamorph != null)
+      {
+         Utility.saveInt(writer, 1);
+         currentMetamorph.save(writer);
+      }
+      else
+      {
+         Utility.saveInt(writer, 0);
+      }
+      Utility.saveInt(writer, metamorphs.size());
+      for (Metamorph m : metamorphs)
+      {
+         m.save(writer);
+      }
+      Utility.saveFloat(writer, EQUIVALENT_MORPHOGNOSTIC_DISTANCE);
       Utility.saveInt(writer, collectedNectar);
       writer.flush();
    }
@@ -228,6 +264,21 @@ public class World
       {
          bees[i].load(reader);
       }
+      if (Utility.loadInt(reader) == 1)
+      {
+         currentMetamorph = Metamorph.load(reader);
+      }
+      else
+      {
+         currentMetamorph = null;
+      }
+      metamorphs.clear();
+      int n = Utility.loadInt(reader);
+      for (int i = 0; i < n; i++)
+      {
+         metamorphs.add(Metamorph.load(reader));
+      }
+      EQUIVALENT_MORPHOGNOSTIC_DISTANCE = Utility.loadFloat(reader);
       collectedNectar = Utility.loadInt(reader);
    }
 
@@ -267,11 +318,7 @@ public class World
 
       for (int i = 0; i < Parameters.NUM_BEES; i++)
       {
-         // Update landmarks.
          HoneyBee bee = bees[i];
-         bee.landmarkMap[bee.x][bee.y] = true;
-
-         // Cycle bee.
          responses[i] = bee.cycle(getSensors(bee));
       }
 
@@ -453,40 +500,50 @@ public class World
    }
 
 
+   // Update metamorphs.
+   public void updateMetamorphs(Morphognostic morphognostic, int response)
+   {
+      Metamorph metamorph = new Metamorph(morphognostic.clone(), response, HoneyBee.getResponseName(response));
+
+      metamorph.morphognostic.orientation = Orientation.NORTH;
+      int foundIdx = -1;
+      for (int i = 0, j = metamorphs.size(); i < j; i++)
+      {
+         Metamorph m = metamorphs.get(i);
+         if (m.morphognostic.compare(metamorph.morphognostic) <= EQUIVALENT_MORPHOGNOSTIC_DISTANCE)
+         {
+            foundIdx = i;
+            break;
+         }
+      }
+      if (foundIdx == -1)
+      {
+         metamorphs.add(metamorph);
+         foundIdx = metamorphs.size() - 1;
+      }
+      if (currentMetamorph != null)
+      {
+         for (int i = 0, j = currentMetamorph.effectIndexes.size(); i < j; i++)
+         {
+            if (currentMetamorph.effectIndexes.get(i) == foundIdx)
+            {
+               foundIdx = -1;
+               break;
+            }
+         }
+         if (foundIdx != -1)
+         {
+            currentMetamorph.effectIndexes.add(foundIdx);
+         }
+      }
+   }
+
+
    // Train metamorph neural network.
    public void trainMetamorphNN()
    {
-      // Create cumulative list of metamorphs.
-      ArrayList<Metamorph> metamorphs = new ArrayList<Metamorph>();
-      for (HoneyBee bee : bees)
-      {
-         for (Metamorph metamorph : bee.metamorphs)
-         {
-            boolean found = false;
-            for (Metamorph m : metamorphs)
-            {
-               if (m.morphognostic.compare(metamorph.morphognostic) <= HoneyBee.EQUIVALENT_MORPHOGNOSTIC_DISTANCE)
-               {
-                  found = true;
-                  break;
-               }
-            }
-            if (!found)
-            {
-               metamorphs.add(metamorph);
-            }
-         }
-      }
-
-      // Create and train neural network.
       metamorphNN = new MetamorphNN(random);
       metamorphNN.train(metamorphs);
-
-      // Distribute model to bees.
-      for (HoneyBee bee : bees)
-      {
-         bee.metamorphNN = metamorphNN;
-      }
    }
 
 
@@ -512,45 +569,97 @@ public class World
          metamorphNN = new MetamorphNN(random);
       }
       metamorphNN.loadModel(filename);
-
-      // Distribute model to bees.
-      for (HoneyBee bee : bees)
-      {
-         bee.metamorphNN = metamorphNN;
-      }
    }
 
 
    // Clear metamorphs.
    public void clearMetamorphs()
    {
-      if (bees != null)
-      {
-         for (int i = 0; i < bees.length; i++)
-         {
-            if (bees[i] != null)
-            {
-               bees[i].metamorphs.clear();
-            }
-         }
-      }
+      metamorphs.clear();
+      currentMetamorph = null;
    }
 
 
-   // Write metamorph dataset.
+   // Write metamporph dataset.
    public void writeMetamorphDataset(String filename) throws Exception
    {
-      if (bees != null)
+      FileOutputStream output;
+
+      try
       {
-         boolean append = false;
-         for (int i = 0; i < bees.length; i++)
+         output = new FileOutputStream(new File(filename));
+      }
+      catch (Exception e)
+      {
+         throw new IOException("Cannot open output file " + filename + ":" + e.getMessage());
+      }
+      if (metamorphs.size() > 0)
+      {
+         Morphognostic morphognostic = metamorphs.get(0).morphognostic;
+         String        oldlinesep    = System.getProperty("line.separator");
+         System.setProperty("line.separator", "\n");
+         PrintWriter writer = new PrintWriter(new BufferedWriter(new OutputStreamWriter(output)));
+         for (int i = 0; i < morphognostic.NUM_NEIGHBORHOODS; i++)
          {
-            if (bees[i] != null)
+            int n = morphognostic.neighborhoods.get(i).sectors.length;
+            for (int x = 0; x < n; x++)
             {
-               bees[i].writeMetamorphDataset(filename, append);
-               append = true;
+               for (int y = 0; y < n; y++)
+               {
+                  for (int d = 0; d < morphognostic.eventDimensions; d++)
+                  {
+                     for (int j = 0; j < morphognostic.eventValueDimensions[d]; j++)
+                     {
+                        writer.print(i + "-" + x + "-" + y + "-" + d + "-" + j + ",");
+                     }
+                  }
+               }
+            }
+         }
+         writer.println("response");
+         for (Metamorph m : metamorphs)
+         {
+            writer.println(morphognostic2csv(m.morphognostic) + "," + m.response);
+         }
+         writer.flush();
+         writer.close();
+         System.setProperty("line.separator", oldlinesep);
+      }
+      output.close();
+   }
+
+
+   // Flatten morphognostic to csv string.
+   public String morphognostic2csv(Morphognostic morphognostic)
+   {
+      String  output    = "";
+      boolean skipComma = true;
+      int     dx        = 0;
+
+      for (int i = 0; i < morphognostic.NUM_NEIGHBORHOODS; i++)
+      {
+         Neighborhood neighborhood = morphognostic.neighborhoods.get(i);
+         float[][][] densities = neighborhood.rectifySectorValueDensities();
+         int n = neighborhood.sectors.length;
+         for (int j = 0, j2 = n * n; j < j2; j++)
+         {
+            for (int d = dx, d2 = morphognostic.eventDimensions; d < d2; d++)
+            {
+               for (int k = 0, k2 = morphognostic.eventValueDimensions[d]; k < k2; k++)
+               {
+                  if (skipComma)
+                  {
+                     skipComma = false;
+                  }
+                  else
+                  {
+                     output += ",";
+                  }
+                  output += (densities[j][d][k] + "");
+               }
             }
          }
       }
+      return(output);
    }
 }
