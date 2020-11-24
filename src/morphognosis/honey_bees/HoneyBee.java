@@ -53,6 +53,10 @@ public class HoneyBee
    public static final int NUM_RESPONSES = WAIT + 1;
    int response;
 
+   // Goal-seeking parameters.
+   public static final float DEPOSIT_NECTAR_GOAL_VALUE  = 1.0f;
+   public static final float GOAL_VALUE_DISCOUNT_FACTOR = 0.9f;
+
    // Event symbols.
    public static final int HIVE_PRESENCE_EVENT         = 0;
    public static final int SURPLUS_NECTAR_EVENT        = 2;
@@ -396,7 +400,7 @@ public class HoneyBee
       switch (driver)
       {
       case Driver.AUTOPILOT:
-         handlingNectar = autopilotResponse();
+         handlingNectar = autopilotResponse(false);
          if (debugAutopilot)
          {
             if (handlingNectar)
@@ -413,10 +417,6 @@ public class HoneyBee
          }
          break;
 
-      case Driver.NONE:
-         response = random.nextInt(NUM_RESPONSES);
-         break;
-
       case Driver.METAMORPH_DB:
          metamorphDBresponse();
          break;
@@ -425,8 +425,26 @@ public class HoneyBee
          metamorphNNresponse();
          break;
 
+      case Driver.AUTOPILOT_GOAL_SEEKING:
+         handlingNectar = autopilotResponse(true);
+         if (debugAutopilot)
+         {
+            if (handlingNectar)
+            {
+               if (response == EXTRACT_NECTAR)
+               {
+                  try
+                  {
+                     Thread.sleep(3000);
+                  }
+                  catch (InterruptedException e) {}
+               }
+            }
+         }
+         break;
+
       case Driver.METAMORPH_GOAL_SEEKING_DB:
-         response = WAIT;
+         metamorphGoalSeekingDBresponse();
          break;
 
       case Driver.METAMORPH_GOAL_SEEKING_NN:
@@ -439,12 +457,26 @@ public class HoneyBee
       }
 
       // Update metamorphs if learning.
-      if ((driver == Driver.NONE) || ((driver == Driver.AUTOPILOT) && handlingNectar))
+      if ((driver == Driver.AUTOPILOT_GOAL_SEEKING) || ((driver == Driver.AUTOPILOT) && handlingNectar))
       {
-         world.updateMetamorphs(morphognostic, response);
+         world.updateMetamorphs(morphognostic, response, goalValue(sensors, response));
       }
 
       return(response);
+   }
+
+
+   // Determine sensory-response goal value.
+   public float goalValue(float[] sensors, int response)
+   {
+      if ((sensors[HIVE_PRESENCE_INDEX] == 1.0f) && nectarCarry && (response == DEPOSIT_NECTAR))
+      {
+         return(DEPOSIT_NECTAR_GOAL_VALUE);
+      }
+      else
+      {
+         return(0.0f);
+      }
    }
 
 
@@ -489,7 +521,7 @@ public class HoneyBee
 
    // Autopilot response.
    // Returns: true if handling nectar; false if randomly foraging.
-   public boolean autopilotResponse()
+   public boolean autopilotResponse(boolean goalSeeking)
    {
       int width  = Parameters.WORLD_WIDTH;
       int height = Parameters.WORLD_HEIGHT;
@@ -616,13 +648,37 @@ public class HoneyBee
       }
 
       // Continue foraging.
-      if (random.nextFloat() < Parameters.BEE_TURN_PROBABILITY)
+      if (goalSeeking)
       {
-         response = random.nextInt(Orientation.NUM_ORIENTATIONS);
+         // Fly directly to flower.
+         for (int x = 0; x < Parameters.WORLD_WIDTH; x++)
+         {
+            for (int y = 0; y < Parameters.WORLD_HEIGHT; y++)
+            {
+               if (world.cells[x][y].flower != null)
+               {
+                  if ((response = moveTo(x, y)) == -1)
+                  {
+                     response = WAIT;
+                  }
+                  return(false);
+               }
+            }
+         }
+         response = WAIT;
+         return(false);
       }
       else
       {
-         response = FORWARD;
+         // Semi-random foraging.
+         if (random.nextFloat() < Parameters.BEE_TURN_PROBABILITY)
+         {
+            response = random.nextInt(Orientation.NUM_ORIENTATIONS);
+         }
+         else
+         {
+            response = FORWARD;
+         }
       }
       return(false);
    }
@@ -850,7 +906,7 @@ public class HoneyBee
    public void metamorphDBresponse()
    {
       // Handling nectar?
-      if (handlingNectar = autopilotResponse())
+      if (handlingNectar = autopilotResponse(false))
       {
          Metamorph metamorph = null;
          float     d         = 0.0f;
@@ -904,7 +960,7 @@ public class HoneyBee
    public void metamorphNNresponse()
    {
       // Handling nectar?
-      if (handlingNectar = autopilotResponse())
+      if (handlingNectar = autopilotResponse(false))
       {
          if (world.metamorphNN != null)
          {
@@ -950,6 +1006,62 @@ public class HoneyBee
             System.err.println("Must train metamorph neural network");
             response = WAIT;
          }
+      }
+   }
+
+
+   // Get goal-seeking DB response.
+   public void metamorphGoalSeekingDBresponse()
+   {
+      Metamorph metamorph    = null;
+      float     minCompare   = 0.0f;
+      float     maxGoalValue = 0.0f;
+
+      for (int i = 0, j = world.metamorphs.size(); i < j; i++)
+      {
+         Metamorph m       = world.metamorphs.get(i);
+         float     compare = m.morphognostic.compare(morphognostic);
+         if (metamorph == null)
+         {
+            metamorph    = m;
+            minCompare   = compare;
+            maxGoalValue = metamorph.goalValue;
+         }
+         else if (compare < minCompare)
+         {
+            metamorph    = m;
+            minCompare   = compare;
+            maxGoalValue = metamorph.goalValue;
+         }
+         else if (compare == minCompare)
+         {
+            if (m.goalValue > maxGoalValue)
+            {
+               metamorph    = m;
+               maxGoalValue = metamorph.goalValue;
+            }
+         }
+      }
+      if (metamorph != null)
+      {
+         response = metamorph.response;
+      }
+      else
+      {
+         response = WAIT;
+      }
+      if (debugDB)
+      {
+         if (response == EXTRACT_NECTAR)
+         {
+            try
+            {
+               Thread.sleep(3000);
+            }
+            catch (InterruptedException e) {}
+         }
+         int checkLongDist = morphognostic.locateEvent(2, NECTAR_LONG_DISTANCE_EVENT, false);
+         System.out.println("bee=" + id + ",response=" + response + ",checkLongDist=" + checkLongDist);
       }
    }
 

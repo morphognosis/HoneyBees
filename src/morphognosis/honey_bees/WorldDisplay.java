@@ -716,9 +716,9 @@ public class WorldDisplay extends JFrame
          driverChoice = new Choice();
          panel.add(driverChoice);
          driverChoice.add("autopilot");
-         driverChoice.add("none");
          driverChoice.add("metamorphDB");
          driverChoice.add("metamorphNN");
+         driverChoice.add("autopilotGoalSeeking");
          driverChoice.add("metamorphGoalSeekingDB");
          driverChoice.add("metamorphGoalSeekingNN");
          driverChoice.add("local override");

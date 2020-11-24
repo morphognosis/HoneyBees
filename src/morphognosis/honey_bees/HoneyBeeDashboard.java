@@ -291,9 +291,9 @@ public class HoneyBeeDashboard extends JFrame
          driverChoice = new Choice();
          driverPanel.add(driverChoice);
          driverChoice.add("autopilot");
-         driverChoice.add("none");
          driverChoice.add("metamorphDB");
          driverChoice.add("metamorphNN");
+         driverChoice.add("autopilotGoalSeeking");
          driverChoice.add("metamorphGoalSeekingDB");
          driverChoice.add("metamorphGoalSeekingNN");
          driverChoice.addItemListener(this);

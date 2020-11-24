@@ -44,7 +44,7 @@ public class World
    int driver;
 
    // Metamorphs.
-   public Metamorph            currentMetamorph;
+   public int currentMetamorphIdx;
    public ArrayList<Metamorph> metamorphs;
 
    // Metamorph neural network.
@@ -127,8 +127,8 @@ public class World
       collectedNectar = 0;
 
       // Create metamorphs.
-      currentMetamorph = null;
-      metamorphs       = new ArrayList<Metamorph>();
+      currentMetamorphIdx = -1;
+      metamorphs          = new ArrayList<Metamorph>();
 
       // Initialize driver.
       driver = Driver.AUTOPILOT;
@@ -175,8 +175,8 @@ public class World
             bees[i].reset();
          }
       }
-      collectedNectar  = 0;
-      currentMetamorph = null;
+      collectedNectar     = 0;
+      currentMetamorphIdx = -1;
    }
 
 
@@ -212,15 +212,7 @@ public class World
       {
          bees[i].save(writer);
       }
-      if (currentMetamorph != null)
-      {
-         Utility.saveInt(writer, 1);
-         currentMetamorph.save(writer);
-      }
-      else
-      {
-         Utility.saveInt(writer, 0);
-      }
+      Utility.saveInt(writer, currentMetamorphIdx);
       Utility.saveInt(writer, metamorphs.size());
       for (Metamorph m : metamorphs)
       {
@@ -264,14 +256,7 @@ public class World
       {
          bees[i].load(reader);
       }
-      if (Utility.loadInt(reader) == 1)
-      {
-         currentMetamorph = Metamorph.load(reader);
-      }
-      else
-      {
-         currentMetamorph = null;
-      }
+      currentMetamorphIdx = Utility.loadInt(reader);
       metamorphs.clear();
       int n = Utility.loadInt(reader);
       for (int i = 0; i < n; i++)
@@ -501,9 +486,10 @@ public class World
 
 
    // Update metamorphs.
-   public void updateMetamorphs(Morphognostic morphognostic, int response)
+   public void updateMetamorphs(Morphognostic morphognostic, int response, float goalValue)
    {
-      Metamorph metamorph = new Metamorph(morphognostic.clone(), response, HoneyBee.getResponseName(response));
+      Metamorph metamorph = new Metamorph(morphognostic.clone(), response,
+                                          goalValue, HoneyBee.getResponseName(response));
 
       metamorph.morphognostic.orientation = Orientation.NORTH;
       int foundIdx = -1;
@@ -521,8 +507,9 @@ public class World
          metamorphs.add(metamorph);
          foundIdx = metamorphs.size() - 1;
       }
-      if (currentMetamorph != null)
+      if (currentMetamorphIdx != -1)
       {
+         Metamorph currentMetamorph = metamorphs.get(currentMetamorphIdx);
          for (int i = 0, j = currentMetamorph.effectIndexes.size(); i < j; i++)
          {
             if (currentMetamorph.effectIndexes.get(i) == foundIdx)
@@ -534,6 +521,27 @@ public class World
          if (foundIdx != -1)
          {
             currentMetamorph.effectIndexes.add(foundIdx);
+            metamorphs.get(foundIdx).causeIndexes.add(currentMetamorphIdx);
+
+            // Propagate goal value.
+            propagateGoalValue(currentMetamorph, metamorphs.get(foundIdx).goalValue);
+         }
+      }
+      currentMetamorphIdx = foundIdx;
+   }
+
+
+   // Propagate goal value.
+   public void propagateGoalValue(Metamorph metamorph, float effectGoalValue)
+   {
+      float v = effectGoalValue * HoneyBee.GOAL_VALUE_DISCOUNT_FACTOR;
+
+      if (v > metamorph.goalValue)
+      {
+         metamorph.goalValue = v;
+         for (int i = 0, j = metamorph.causeIndexes.size(); i < j; i++)
+         {
+            propagateGoalValue(metamorphs.get(metamorph.causeIndexes.get(i)), v);
          }
       }
    }
@@ -576,7 +584,7 @@ public class World
    public void clearMetamorphs()
    {
       metamorphs.clear();
-      currentMetamorph = null;
+      currentMetamorphIdx = -1;
    }
 
 
