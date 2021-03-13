@@ -1,4 +1,4 @@
-javac -classpath "../lib/morphognosis.jar;../lib/weka.jar" -d . ../src/de/jannlab/misc/*.java ../src/de/jannlab/data/*.java ../src/morphognosis/*.java ../src/morphognosis/honey_bees/*.java
+javac -classpath "../lib/weka.jar" -d . ../src/de/jannlab/misc/*.java ../src/de/jannlab/data/*.java ../src/morphognosis/*.java ../src/morphognosis/honey_bees/*.java
 copy ..\res\images\honeybee.png morphognosis\honey_bees
 copy ..\res\images\flower.png morphognosis\honey_bees
 copy ..\res\images\nectar.png morphognosis\honey_bees
