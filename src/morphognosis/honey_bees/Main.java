@@ -70,7 +70,7 @@ public class Main
       "        [-NNmomentum <quantity> (default=" + Parameters.NN_MOMENTUM + ")]\n" +
       "        [-NNhiddenLayers <quantity> (default=\"" + Parameters.NN_HIDDEN_LAYERS + "\")]\n" +
       "        [-NNtrainingTime <quantity> (default=" + Parameters.NN_TRAINING_TIME + ")]\n" +
-      "     [-driver autopilot | metamorphDB | metamorphNN | autopilotGoalSeeking | metamorphGoalSeekingDB | metamorphGoalSeekingNN | local_override> (honey bees driver: default=autopilot)]\n" +
+      "     [-driver <autopilot | metamorphDB | metamorphNN | autopilotGoalSeeking | metamorphGoalSeekingDB | metamorphGoalSeekingNN | local_override> (honey bees driver: default=autopilot)]\n" +
       "     [-randomSeed <random number seed> (default=" + DEFAULT_RANDOM_SEED + ")]\n" +
       "     [-printCollectedNectar]\n" +
       "     [-save <file name>]\n" +
@@ -83,7 +83,7 @@ public class Main
       "    java morphognosis.honey_bees.Main\n" +
       "      -load <file name>\n" +
       "     [-steps <steps> | -display (default)]\n" +
-      "     [-driver autopilot | metamorphDB | metamorphNN | autopilotGoalSeeking | metamorphGoalSeekingDB | metamorphGoalSeekingNN | local_override>\n\t(default=autopilot)]\n" +
+      "     [-driver <autopilot | metamorphDB | metamorphNN | autopilotGoalSeeking | metamorphGoalSeekingDB | metamorphGoalSeekingNN | local_override>\n\t(default=autopilot)]\n" +
       "     [-randomSeed <random number seed>]\n" +
       "     [-printCollectedNectar]\n" +
       "     [-save <file name>]\n" +
